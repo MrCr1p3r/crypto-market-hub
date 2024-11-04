@@ -1,0 +1,109 @@
+# Build Folders
+bin/
+obj/
+
+# User-Specific Files
+*.user
+*.vs
+.vscode/
+.idea/
+
+# Dependency Directories
+packages/
+node_modules/
+
+# Log Files
+*.log
+
+# Compiled Files
+*.exe
+*.dll
+*.pdb
+*.app
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# Rider IDE Files
+.idea/
+*.sln.iml
+
+# Visual Studio Files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Resharper Files
+_ReSharper*/
+*.DotSettings.user
+
+# NuGet Packages
+*.nupkg
+# Uncomment if you have a packages directory for NuGet
+# packages/
+
+# Project Lock Files
+project.lock.json
+project.fragment.lock.json
+
+# Azure Functions Files
+local.settings.json
+
+# Visual Studio Code Workspace
+.vscode/
+
+# Entity Framework Migrations
+Migrations/
+
+# Temporary Files
+*.tmp
+*.bak
+*.swp
+*.lock
+
+# Coverage Reports
+coverage/
+*.coverage
+*.coveragexml
+*.codecov
+
+# IDE Specific Files
+*.sublime-workspace
+*.sublime-project
+
+# Publish Output
+publish/
+wwwroot/
+
+# Exclude database files
+*.mdf
+*.ldf
+
+# Exclude Generated Files
+_generated/
+
+# Exclude Secrets
+secrets.json
+
+# Ignore all environment configuration files
+.env
+.env.*
+
+# JetBrains Rider IDE files
+.idea/
+*.sln.iml
+
+# Hidden system files
+**/.DS_Store
+**/Thumbs.db
+
+# npm debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Any sensitive or config files
+secrets.json
