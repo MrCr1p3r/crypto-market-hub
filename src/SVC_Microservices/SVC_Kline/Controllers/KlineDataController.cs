@@ -19,7 +19,7 @@ namespace SVC_Kline.Controllers
         /// </summary>
         /// <param name="klineData">The KlineData object to insert.</param>
         /// <returns>A status indicating the result of the operation.</returns>
-        [HttpPut("insert")]
+        [HttpPost("insert")]
         public async Task<IActionResult> InsertKlineData([FromBody] KlineData klineData)
         {
             await _repository.InsertKlineData(klineData);
