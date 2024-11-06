@@ -1,6 +1,7 @@
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoMapper;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Kline.Models.Entities;
 using SVC_Kline.Models.Input;
@@ -19,20 +20,17 @@ public class KlineDataRepositoryTests
     {
         _fixture = new Fixture().Customize(new AutoMoqCustomization());
 
-        // Set up the DbContext with an in-memory database
         var options = new DbContextOptionsBuilder<KlineDataDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase")
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         _context = new KlineDataDbContext(options);
 
-        // Set up AutoMapper
         var config = new MapperConfiguration(cfg =>
         {
-            cfg.CreateMap<KlineData, KlineDataEntity>();
+            cfg.CreateMap<KlineData, KlineDataEntity>().ReverseMap();
         });
         _mapper = config.CreateMapper();
 
-        // Initialize the repository with the in-memory context and AutoMapper
         _repository = new KlineDataRepository(_context, _mapper);
     }
 
@@ -50,5 +48,54 @@ public class KlineDataRepositoryTests
         var entity = await _context.KlineData.FirstOrDefaultAsync(e => e.IdTradePair == klineData.IdTradePair);
         Assert.NotNull(entity);
         Assert.Equal(klineDataEntity.OpenPrice, entity.OpenPrice);
+    }
+
+    [Fact]
+    public async Task InsertManyKlineData_ShouldAddEntitiesToDatabase()
+    {
+        // Arrange
+        var klineDataList = _fixture.CreateMany<KlineData>(5).ToList();
+
+        // Act
+        await _repository.InsertManyKlineData(klineDataList);
+
+        // Assert
+        var entities = await _context.KlineData.ToListAsync();
+        entities.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task GetAllKlineData_ShouldReturnAllEntities()
+    {
+        // Arrange
+        var klineDataEntities = _fixture.CreateMany<KlineDataEntity>(3).ToList();
+        await _context.KlineData.AddRangeAsync(klineDataEntities);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var klineDataList = await _repository.GetAllKlineData();
+
+        // Assert
+        klineDataList.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task DeleteKlineDataForTradingPair_ShouldRemoveEntities()
+    {
+        // Arrange
+        var klineDataEntities = _fixture.CreateMany<KlineDataEntity>(3).ToList();
+        klineDataEntities[0].IdTradePair = 1;
+        klineDataEntities[1].IdTradePair = 1;
+        klineDataEntities[2].IdTradePair = 2;
+        await _context.KlineData.AddRangeAsync(klineDataEntities);
+        await _context.SaveChangesAsync();
+
+        // Act
+        await _repository.DeleteKlineDataForTradingPair(1);
+
+        // Assert
+        var remainingEntities = await _context.KlineData.ToListAsync();
+        remainingEntities.Should().ContainSingle();
+        remainingEntities[0].IdTradePair.Should().Be(2);
     }
 }
