@@ -7,7 +7,7 @@ using SVC_Kline.Controllers;
 using SVC_Kline.Models.Input;
 using SVC_Kline.Repositories.Interfaces;
 
-namespace SVC_Kline.Tests.Controllers;
+namespace SVC_Kline.Tests.Unit.Controllers;
 
 public class KlineDataControllerTests
 {

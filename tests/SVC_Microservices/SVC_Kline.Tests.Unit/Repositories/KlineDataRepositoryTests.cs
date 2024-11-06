@@ -7,7 +7,7 @@ using SVC_Kline.Models.Entities;
 using SVC_Kline.Models.Input;
 using SVC_Kline.Repositories;
 
-namespace SVC_Kline.Tests.Repositories;
+namespace SVC_Kline.Tests.Unit.Repositories;
 
 public class KlineDataRepositoryTests
 {

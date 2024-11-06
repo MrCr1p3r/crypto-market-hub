@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SVC_Kline.Tests\SVC_Kline.Tests.csproj" />
+    <ProjectReference Include="..\SVC_Kline.Tests.Unit\SVC_Kline.Tests.Unit.csproj" />
   </ItemGroup>
 
 </Project>

@@ -13,7 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{77FDCD3D
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SVC_Microservices", "SVC_Microservices", "{E1CA78D8-ABDA-429F-B9F7-ABB12A028248}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVC_Kline.Tests", "tests\SVC_Microservices\SVC_Kline.Tests\SVC_Kline.Tests.csproj", "{712CD9E8-3279-4638-9977-6C21701D4D46}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVC_Kline.Tests.Unit", "tests\SVC_Microservices\SVC_Kline.Tests.Unit\SVC_Kline.Tests.Unit.csproj", "{712CD9E8-3279-4638-9977-6C21701D4D46}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVC_Kline.Tests.Integration", "tests\SVC_Microservices\SVC_Kline.Tests.Integration\SVC_Kline.Tests.Integration.csproj", "{F6F8A6DB-5F2D-4A42-96E5-FAD8147172D7}"
 EndProject
