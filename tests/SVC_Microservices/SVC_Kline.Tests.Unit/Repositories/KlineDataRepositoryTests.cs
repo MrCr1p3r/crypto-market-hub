@@ -5,6 +5,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Kline.Models.Entities;
 using SVC_Kline.Models.Input;
+using SVC_Kline.Models.Output;
 using SVC_Kline.Repositories;
 
 namespace SVC_Kline.Tests.Unit.Repositories;
@@ -27,7 +28,8 @@ public class KlineDataRepositoryTests
 
         var config = new MapperConfiguration(cfg =>
         {
-            cfg.CreateMap<KlineData, KlineDataEntity>().ReverseMap();
+            cfg.CreateMap<KlineDataNew, KlineDataEntity>();
+            cfg.CreateMap<KlineDataEntity, KlineData>();
         });
         _mapper = config.CreateMapper();
 
@@ -38,7 +40,7 @@ public class KlineDataRepositoryTests
     public async Task InsertKlineData_ShouldAddEntityToDatabase()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineData>();
+        var klineData = _fixture.Create<KlineDataNew>();
         var klineDataEntity = _mapper.Map<KlineDataEntity>(klineData);
 
         // Act
@@ -46,15 +48,15 @@ public class KlineDataRepositoryTests
 
         // Assert
         var entity = await _context.KlineData.FirstOrDefaultAsync(e => e.IdTradePair == klineData.IdTradePair);
-        Assert.NotNull(entity);
-        Assert.Equal(klineDataEntity.OpenPrice, entity.OpenPrice);
+        entity.Should().NotBeNull();
+        entity!.OpenPrice.Should().Be(klineDataEntity.OpenPrice);
     }
 
     [Fact]
     public async Task InsertManyKlineData_ShouldAddEntitiesToDatabase()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineData>(5).ToList();
+        var klineDataList = _fixture.CreateMany<KlineDataNew>(5).ToList();
 
         // Act
         await _repository.InsertManyKlineData(klineDataList);

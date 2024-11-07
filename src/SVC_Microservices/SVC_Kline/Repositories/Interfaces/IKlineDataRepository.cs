@@ -1,4 +1,5 @@
 using SVC_Kline.Models.Input;
+using SVC_Kline.Models.Output;
 
 namespace SVC_Kline.Repositories.Interfaces;
 
@@ -11,13 +12,13 @@ public interface IKlineDataRepository
     /// Inserts a new Kline data entry into the database.
     /// </summary>
     /// <param name="klineData">The KlineData object to insert.</param>
-    Task InsertKlineData(KlineData klineData);
+    Task InsertKlineData(KlineDataNew klineData);
 
     /// <summary>
     /// Inserts multiple Kline data entries into the database.
     /// </summary>
     /// <param name="klineDataList">The list of KlineData objects to insert.</param>
-    Task InsertManyKlineData(IEnumerable<KlineData> klineDataList);
+    Task InsertManyKlineData(IEnumerable<KlineDataNew> klineDataList);
 
     /// <summary>
     /// Retrieves all Kline data entries from the database.

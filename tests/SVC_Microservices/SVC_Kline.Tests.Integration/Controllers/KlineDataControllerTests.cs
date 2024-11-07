@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using AutoFixture;
 using FluentAssertions;
 using SVC_Kline.Models.Input;
+using SVC_Kline.Models.Output;
 using SVC_Kline.Tests.Integration.Factories;
 
 namespace SVC_Kline.Tests.Integration.Controllers;
@@ -17,7 +18,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task InsertKlineData_ReturnsOk()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineData>();
+        var klineData = _fixture.Create<KlineDataNew>();
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/KlineData/insert", klineData);
@@ -32,7 +33,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task InsertManyKlineData_ReturnsOk()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineData>(5);
+        var klineDataList = _fixture.CreateMany<KlineDataNew>(5);
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/KlineData/insertMany", klineDataList);
@@ -59,7 +60,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task DeleteKlineDataForTradingPair_ReturnsOk()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineData>();
+        var klineData = _fixture.Create<KlineDataNew>();
         await _client.PostAsJsonAsync("/api/KlineData/insert", klineData);
 
         // Act

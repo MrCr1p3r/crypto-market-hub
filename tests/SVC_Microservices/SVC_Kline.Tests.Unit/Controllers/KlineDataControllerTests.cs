@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SVC_Kline.Controllers;
 using SVC_Kline.Models.Input;
+using SVC_Kline.Models.Output;
 using SVC_Kline.Repositories.Interfaces;
 
 namespace SVC_Kline.Tests.Unit.Controllers;
@@ -26,7 +27,7 @@ public class KlineDataControllerTests
     public async Task InsertKlineData_CallsRepository()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineData>();
+        var klineData = _fixture.Create<KlineDataNew>();
 
         // Act
         await _controller.InsertKlineData(klineData);
@@ -39,7 +40,7 @@ public class KlineDataControllerTests
     public async Task InsertKlineData_ValidData_ReturnsOkResult()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineData>();
+        var klineData = _fixture.Create<KlineDataNew>();
 
         // Act
         var result = await _controller.InsertKlineData(klineData);
@@ -53,7 +54,7 @@ public class KlineDataControllerTests
     public async Task InsertManyKlineData_CallsRepository()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineData>(5).ToList();
+        var klineDataList = _fixture.CreateMany<KlineDataNew>(5).ToList();
 
         // Act
         await _controller.InsertManyKlineData(klineDataList);
@@ -66,7 +67,7 @@ public class KlineDataControllerTests
     public async Task InsertManyKlineData_ValidData_ReturnsOkResult()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineData>(5).ToList();
+        var klineDataList = _fixture.CreateMany<KlineDataNew>(5).ToList();
 
         // Act
         var result = await _controller.InsertManyKlineData(klineDataList);

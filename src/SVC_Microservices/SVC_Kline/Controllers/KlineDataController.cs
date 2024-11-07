@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SVC_Kline.Models.Input;
+using SVC_Kline.Models.Output;
 using SVC_Kline.Repositories.Interfaces;
 
 namespace SVC_Kline.Controllers;
@@ -23,7 +24,7 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> InsertKlineData([FromBody] KlineData klineData)
+    public async Task<IActionResult> InsertKlineData([FromBody] KlineDataNew klineData)
     {
         await _repository.InsertKlineData(klineData);
         return Ok("Kline data inserted successfully.");
@@ -38,7 +39,7 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> InsertManyKlineData([FromBody] IEnumerable<KlineData> klineDataList)
+    public async Task<IActionResult> InsertManyKlineData([FromBody] IEnumerable<KlineDataNew> klineDataList)
     {
         await _repository.InsertManyKlineData(klineDataList);
         return Ok("Multiple Kline data entries inserted successfully.");

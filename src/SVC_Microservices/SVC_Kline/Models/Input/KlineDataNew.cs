@@ -1,9 +1,9 @@
 namespace SVC_Kline.Models.Input;
 
 /// <summary>
-/// Represents Kline (candlestick) data for a trading pair.
+/// Represents Kline (candlestick) data for a trading pair for a new entry in the db.
 /// </summary>
-public class KlineData
+public class KlineDataNew
 {
     /// <summary>
     /// Id of the trade pair for which the Kline data is recorded.

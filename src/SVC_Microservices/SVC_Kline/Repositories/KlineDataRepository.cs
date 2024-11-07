@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SVC_Kline.Models.Entities;
 using SVC_Kline.Models.Input;
+using SVC_Kline.Models.Output;
 using SVC_Kline.Repositories.Interfaces;
 
 namespace SVC_Kline.Repositories;
@@ -17,7 +18,7 @@ public class KlineDataRepository(KlineDataDbContext context, IMapper mapper) : I
     private readonly IMapper _mapper = mapper;
 
     /// <inheritdoc />
-    public async Task InsertKlineData(KlineData klineData)
+    public async Task InsertKlineData(KlineDataNew klineData)
     {
         var klineDataEntity = _mapper.Map<KlineDataEntity>(klineData);
         await _context.KlineData.AddAsync(klineDataEntity);
@@ -25,7 +26,7 @@ public class KlineDataRepository(KlineDataDbContext context, IMapper mapper) : I
     }
 
     /// <inheritdoc />
-    public async Task InsertManyKlineData(IEnumerable<KlineData> klineDataList)
+    public async Task InsertManyKlineData(IEnumerable<KlineDataNew> klineDataList)
     {
         var klineDataEntities = _mapper.Map<IEnumerable<KlineDataEntity>>(klineDataList);
         await _context.KlineData.AddRangeAsync(klineDataEntities);

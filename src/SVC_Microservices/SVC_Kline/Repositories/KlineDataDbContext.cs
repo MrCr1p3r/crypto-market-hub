@@ -6,9 +6,6 @@ namespace SVC_Kline.Repositories;
 /// <summary>
 /// The DbContext class for managing database operations related to Kline data.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the KlineDataDbContext class.
-/// </remarks>
 /// <param name="options">The options to configure the DbContext.</param>
 public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : DbContext(options)
 {
