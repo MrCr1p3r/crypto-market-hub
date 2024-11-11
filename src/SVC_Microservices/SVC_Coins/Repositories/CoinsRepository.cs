@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Models.Entities;
 using SVC_Coins.Models.Input;
@@ -8,19 +7,17 @@ using SVC_Coins.Repositories.Interfaces;
 namespace SVC_Coins.Repositories;
 
 /// <summary>
-/// Repository for handling operations related to coins using Entity Framework and AutoMapper.
+/// Repository for handling operations related to coins using Entity Framework.
 /// </summary>
 /// <param name="context">The DbContext used for database operations.</param>
-/// <param name="mapper">The AutoMapper instance used for mapping models.</param>
-public class CoinsRepository(CoinsDbContext context, IMapper mapper) : ICoinsRepository
+public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
 {
     private readonly CoinsDbContext _context = context;
-    private readonly IMapper _mapper = mapper;
 
     /// <inheritdoc />
     public async Task InsertCoin(CoinNew klineData)
     {
-        var coinEntity = _mapper.Map<CoinEntity>(klineData);
+        var coinEntity = Mapping.ToCoinEntity(klineData);
         await _context.Coins.AddAsync(coinEntity);
         await _context.SaveChangesAsync();
     }
@@ -32,8 +29,7 @@ public class CoinsRepository(CoinsDbContext context, IMapper mapper) : ICoinsRep
             .Include(c => c.TradingPairs)
             .ToListAsync();
 
-        var coins = _mapper.Map<IEnumerable<Coin>>(coinsWithTradingPairs);
-
+        var coins = coinsWithTradingPairs.Select(Mapping.ToCoin);
         return coins;
     }
 
@@ -48,5 +44,35 @@ public class CoinsRepository(CoinsDbContext context, IMapper mapper) : ICoinsRep
         _context.Coins.RemoveRange(coinToDelete);
 
         await _context.SaveChangesAsync();
+    }
+
+    private static class Mapping
+    {
+        public static CoinEntity ToCoinEntity(CoinNew coinNew) => new()
+        {
+            Name = coinNew.Name,
+            Symbol = coinNew.Symbol
+        };
+
+        public static Coin ToCoin(CoinEntity coinEntity) => new()
+        {
+            Id = coinEntity.Id,
+            Name = coinEntity.Name,
+            Symbol = coinEntity.Symbol,
+            TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair).ToList()
+        };
+
+        public static TradingPair ToTradingPair(TradingPairEntity tradingPairEntity) => new()
+        {
+            Id = tradingPairEntity.Id,
+            CoinQuote = ToTradingPairCoin(tradingPairEntity.CoinQuote)
+        };
+
+        public static TradingPairCoin ToTradingPairCoin(CoinEntity coinEntity) => new()
+        {
+            Id = coinEntity.Id,
+            Name = coinEntity.Name,
+            Symbol = coinEntity.Symbol
+        };
     }
 }

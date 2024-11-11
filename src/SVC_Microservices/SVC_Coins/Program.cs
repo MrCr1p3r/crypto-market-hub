@@ -1,12 +1,7 @@
-using System.Runtime.CompilerServices;
-using System.Text.Json.Serialization;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
-using SVC_Coins.Mappings;
 using SVC_Coins.Repositories;
 using SVC_Coins.Repositories.Interfaces;
-
-//[assembly: InternalsVisibleTo("SVC_Coins.Tests.Integration")]
 
 public class Program
 {
@@ -19,13 +14,8 @@ public class Program
         // Add services to the container.
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddControllers();
-        // builder.Services.AddControllers().AddJsonOptions(options => TODO: It should now work without it but it does
-        // {
-        //     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        // });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-        builder.Services.AddAutoMapper(typeof(CoinsMappingProfile));
         builder.Services.AddDbContext<CoinsDbContext>(options =>
             options.UseSqlServer(
                 $"Server={Environment.GetEnvironmentVariable("DB_SERVER")};" +

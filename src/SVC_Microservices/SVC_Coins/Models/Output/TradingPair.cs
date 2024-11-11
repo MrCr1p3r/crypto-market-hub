@@ -13,5 +13,5 @@ public class TradingPair
     /// <summary>
     /// The data of the quote coin in the trading pair.
     /// </summary>
-    public required Coin CoinQuote { get; set; }
+    public required TradingPairCoin CoinQuote { get; set; }
 }
