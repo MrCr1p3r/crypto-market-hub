@@ -1,5 +1,4 @@
 using AutoFixture;
-using AutoFixture.AutoMoq;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -39,7 +38,7 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task InsertKlineData_ValidData_ReturnsOkResult()
+    public async Task InsertCoin_ReturnsOkResult()
     {
         // Arrange
         var coin = _fixture.Create<CoinNew>();
@@ -106,5 +105,32 @@ public class CoinsControllerTests
         // Assert
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().Be($"Coin with ID {idCoin} deleted successfully.");
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_CallsRepository()
+    {
+        // Arrange
+        var tradingPair = _fixture.Create<TradingPairNew>();
+
+        // Act
+        await _controller.InsertTradingPair(tradingPair);
+
+        // Assert
+        _mockRepository.Verify(repo => repo.InsertTradingPair(tradingPair), Times.Once);
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_ReturnsOkResult()
+    {
+        // Arrange
+        var tradingPair = _fixture.Create<TradingPairNew>();
+
+        // Act
+        var result = await _controller.InsertTradingPair(tradingPair);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().Be("Trading pair inserted successfully.");
     }
 }

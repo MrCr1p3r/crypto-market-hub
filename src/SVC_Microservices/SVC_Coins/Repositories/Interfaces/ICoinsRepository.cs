@@ -11,8 +11,8 @@ public interface ICoinsRepository
     /// <summary>
     /// Inserts a new Coin entry into the database.
     /// </summary>
-    /// <param name="klineData">The Coin object to insert.</param>
-    Task InsertCoin(CoinNew klineData);
+    /// <param name="coin">The Coin object to insert.</param>
+    Task InsertCoin(CoinNew coin);
 
     /// <summary>
     /// Retrieves all coins from the database.
@@ -25,4 +25,10 @@ public interface ICoinsRepository
     /// </summary>
     /// <param name="idCoin">The ID of the coin to delete.</param>
     Task DeleteCoin(int idCoin);
+
+    /// <summary>
+    /// Inserts a new trading pair entry into the database.
+    /// </summary>
+    /// <param name="tradingPair">The trading pair object to insert.</param>
+    Task InsertTradingPair(TradingPairNew tradingPair);
 }

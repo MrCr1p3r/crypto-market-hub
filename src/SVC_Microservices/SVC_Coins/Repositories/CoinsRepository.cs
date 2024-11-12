@@ -15,9 +15,9 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     private readonly CoinsDbContext _context = context;
 
     /// <inheritdoc />
-    public async Task InsertCoin(CoinNew klineData)
+    public async Task InsertCoin(CoinNew coin)
     {
-        var coinEntity = Mapping.ToCoinEntity(klineData);
+        var coinEntity = Mapping.ToCoinEntity(coin);
         await _context.Coins.AddAsync(coinEntity);
         await _context.SaveChangesAsync();
     }
@@ -43,6 +43,14 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         var coinToDelete = _context.Coins.Where(coin => coin.Id == idCoin);
         _context.Coins.RemoveRange(coinToDelete);
 
+        await _context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task InsertTradingPair(TradingPairNew tradingPair)
+    {
+        var tradingPairEntity = Mapping.ToTradingPairEntity(tradingPair);
+        await _context.TradingPairs.AddAsync(tradingPairEntity);
         await _context.SaveChangesAsync();
     }
 
@@ -73,6 +81,12 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
             Id = coinEntity.Id,
             Name = coinEntity.Name,
             Symbol = coinEntity.Symbol
+        };
+
+        public static TradingPairEntity ToTradingPairEntity(TradingPairNew tradingPair) => new()
+        {
+            IdCoinMain = tradingPair.IdCoinMain,
+            IdCoinQuote = tradingPair.IdCoinQuote,
         };
     }
 }

@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Models.Entities;
 using SVC_Coins.Models.Input;
+using SVC_Coins.Models.Output;
 using SVC_Coins.Repositories;
 
 namespace SVC_Coins.Tests.Unit.Repositories;
@@ -37,11 +38,8 @@ public class CoinsRepositoryTests
         await _repository.InsertCoin(coinNew);
 
         // Assert
-        var entity = await _context.Coins.FirstOrDefaultAsync(e => e.Symbol == coinNew.Symbol &&
-                                                                    e.Name == coinNew.Name);
-        entity.Should().NotBeNull();
-        entity!.Name.Should().Be(coinNew.Name);
-        entity.Symbol.Should().Be(coinNew.Symbol);
+        var exists = await _context.Coins.AnyAsync(e => e.Symbol == coinNew.Symbol && e.Name == coinNew.Name);
+        exists.Should().BeTrue();
     }
 
     [Fact]
@@ -100,7 +98,7 @@ public class CoinsRepositoryTests
         var coin2 = new CoinEntity { Id = 2, Name = "Ethereum", Symbol = "ETH" };
         var coin3 = new CoinEntity { Id = 3, Name = "Tether", Symbol = "USDT" };
 
-        await _context.Coins.AddRangeAsync(new[] { coin1, coin2, coin3 });
+        await _context.Coins.AddRangeAsync([coin1, coin2, coin3]);
         await _context.SaveChangesAsync();
 
         var coinToDelete = coin2;
@@ -131,7 +129,7 @@ public class CoinsRepositoryTests
             CoinQuote = coin3
         };
 
-        await _context.TradingPairs.AddRangeAsync(new[] { tradingPair1, tradingPair2, tradingPair3 });
+        await _context.TradingPairs.AddRangeAsync([tradingPair1, tradingPair2, tradingPair3]);
         await _context.SaveChangesAsync();
 
         // Act
@@ -147,6 +145,22 @@ public class CoinsRepositoryTests
 
         var remainingTradingPairs = await _context.TradingPairs.ToListAsync();
         remainingTradingPairs.Should().HaveCount(1);
-        remainingTradingPairs.Should().NotContain(tp => tp.IdCoinMain == coinToDeleteId || tp.IdCoinQuote == coinToDeleteId);
+        remainingTradingPairs.Should().NotContain(tp 
+            => tp.IdCoinMain == coinToDeleteId || tp.IdCoinQuote == coinToDeleteId);
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_ShouldAddTradingPairToDatabase()
+    {
+        // Arrange
+        var tradingPairNew = _fixture.Create<TradingPairNew>();
+
+        //Act
+        await _repository.InsertTradingPair(tradingPairNew);
+
+        //Assert
+        var exists = await _context.TradingPairs.AnyAsync(entity 
+            => entity.IdCoinMain == tradingPairNew.IdCoinMain && entity.IdCoinQuote == tradingPairNew.IdCoinQuote);
+        exists.Should().BeTrue();
     }
 }

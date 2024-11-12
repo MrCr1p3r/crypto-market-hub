@@ -75,4 +75,19 @@ public class CoinsControllerTests : IClassFixture<CustomWebApplicationFactory>
         coinsList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
         coinsList.Should().NotContain(c => c.Id == insertedCoin.Id);
     }
+
+    [Fact]
+    public async Task InsertTradingPair_ReturnsOk()
+    {
+        // Arrange
+        var tradingPairNew = _fixture.Create<TradingPairNew>();
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/Coins/tradingPair/insert", tradingPairNew);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var responseBody = await response.Content.ReadAsStringAsync();
+        responseBody.Should().Contain("Trading pair inserted successfully.");
+    }
 }

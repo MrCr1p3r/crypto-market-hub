@@ -56,4 +56,19 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
         await _repository.DeleteCoin(idCoin);
         return Ok($"Coin with ID {idCoin} deleted successfully.");
     }
+
+    /// <summary>
+    /// Inserts new trading pair into the database.
+    /// </summary>
+    /// <param name="tradingPair">The trading pair object to insert.</param>
+    /// <returns>A status indicating the result of the operation.</returns>
+    [HttpPost("tradingPair/insert")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> InsertTradingPair([FromBody] TradingPairNew tradingPair)
+    {
+        await _repository.InsertTradingPair(tradingPair);
+        return Ok("Trading pair inserted successfully.");
+    }
 }
