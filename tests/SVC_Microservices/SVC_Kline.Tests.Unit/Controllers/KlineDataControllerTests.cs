@@ -106,8 +106,6 @@ public class KlineDataControllerTests
             .Which.Value.Should().BeEquivalentTo(klineDataList);
     }
 
-
-
     [Fact]
     public async Task DeleteKlineDataForTradingPair_CallsRepository()
     {
