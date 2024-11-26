@@ -49,6 +49,45 @@ public class BybitClient(IHttpClientFactory httpClientFactory) : IExchangeClient
         });
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<string>> GetAllListedCoins()
+    {
+        var endpoint = "/v5/market/instruments-info?category=linear";
+        var response = await _httpClient.GetAsync(endpoint);
+        response.EnsureSuccessStatusCode();
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        using JsonDocument document = JsonDocument.Parse(responseBody);
+
+        if (!document.RootElement.TryGetProperty("result", out JsonElement result))
+        {
+            return [];
+        }
+
+        if (!result.TryGetProperty("list", out JsonElement list))
+        {
+            return [];
+        }
+
+        var baseCoins = new HashSet<string>();
+
+        foreach (var instrument in list.EnumerateArray())
+        {
+            if (!instrument.TryGetProperty("baseCoin", out JsonElement baseCoinElement))
+            {
+                continue;
+            }
+            var baseCoin = baseCoinElement.GetString();
+            if (!string.IsNullOrEmpty(baseCoin))
+            {
+                baseCoins.Add(baseCoin);
+            }
+        }
+
+        return baseCoins;
+    }
+
     private static class Mapping
     {
         public static string ToBybitTimeFrame(ExchangeKlineInterval interval) => interval switch

@@ -69,4 +69,48 @@ public class ExchangesControllerTests
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().BeEquivalentTo(new List<KlineData>());
     }
+
+    [Fact]
+    public async Task GetAllListedCoins_CallsDataCollector()
+    {
+        // Arrange
+        var expectedCoins = _fixture.Create<IEnumerable<string>>();
+        _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
+
+        // Act
+        await _controller.GetAllListedCoins();
+
+        // Assert
+        _mockDataCollector.Verify(dc => dc.GetAllListedCoins(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_ReturnsOkResultWithExpectedData()
+    {
+        // Arrange
+        var expectedCoins = _fixture.Create<IEnumerable<string>>();
+        _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
+
+        // Act
+        var result = await _controller.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(expectedCoins);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_ReturnsOkResultWithEmptyListWhenNoCoins()
+    {
+        // Arrange
+        var expectedCoins = new List<string>();
+        _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
+
+        // Act
+        var result = await _controller.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().BeEquivalentTo(expectedCoins);
+    }
 }

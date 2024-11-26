@@ -143,6 +143,203 @@ public class BybitClientTests
         result.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task GetAllListedCoins_ReturnsExpectedData()
+    {
+        // Arrange
+        var expectedBaseCoins = new List<string> { "BTC", "ETH", "XRP" };
+
+        var instruments = expectedBaseCoins.Select(baseCoin => new Dictionary<string, object>
+        {
+            { "symbol", baseCoin + "USDT" },
+            { "baseCoin", baseCoin },
+            { "quoteCoin", "USDT" },
+        }).ToList();
+
+        var responseContent = new
+        {
+            result = new
+            {
+                list = instruments
+            }
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(expectedBaseCoins);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_EmptyList_ReturnsEmptyCollection()
+    {
+        // Arrange
+        var responseContent = new
+        {
+            result = new
+            {
+                list = new List<object>()
+            }
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_MissingResultProperty_ReturnsEmptyCollection()
+    {
+        // Arrange
+        var responseContent = new
+        {
+            // "result" property is missing
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_MissingListProperty_ReturnsEmptyCollection()
+    {
+        // Arrange
+        var responseContent = new
+        {
+            result = new
+            {
+                // "list" property is missing
+            }
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_NullOrEmptyBaseCoin_Ignored()
+    {
+        // Arrange
+        var instruments = new List<Dictionary<string, object>>
+        {
+            new() {
+                { "symbol", "BTCUSDT" },
+                { "baseCoin", "BTC" },
+                { "quoteCoin", "USDT" }
+            },
+            new() {
+                { "symbol", "XRPUSDT" },
+                { "baseCoin", "" }, // Empty baseCoin
+                { "quoteCoin", "USDT" }
+            },
+            new() {
+                { "symbol", "BNBUSDT" },
+                // Missing "baseCoin" property
+                { "quoteCoin", "USDT" }
+            }
+        };
+
+        var responseContent = new
+        {
+            result = new
+            {
+                list = instruments
+            }
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().ContainSingle();
+        result.First().Should().Be("BTC");
+    }
+
     private static class Mapping
     {
         public static long CalculateCloseTime(string openTimeString, ExchangeKlineInterval interval)

@@ -42,6 +42,39 @@ public class MexcClient(IHttpClientFactory httpClientFactory) : IExchangeClient
         }) ?? [];
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<string>> GetAllListedCoins()
+    {
+        var endpoint = "/api/v3/exchangeInfo";
+        var response = await _httpClient.GetAsync(endpoint);
+        response.EnsureSuccessStatusCode();
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        using JsonDocument document = JsonDocument.Parse(responseBody);
+        if (!document.RootElement.TryGetProperty("symbols", out JsonElement symbols))
+        {
+            return [];
+        }
+
+        var baseAssets = new HashSet<string>();
+
+        foreach (var symbol in symbols.EnumerateArray())
+        {
+            if (!symbol.TryGetProperty("baseAsset", out JsonElement baseAssetElement))
+            {
+                continue;
+            }
+            var baseAsset = baseAssetElement.GetString();
+            if (!string.IsNullOrEmpty(baseAsset))
+            {
+                baseAssets.Add(baseAsset);
+            }
+        }
+
+        return baseAssets;
+    }
+
     private static class Mapping
     {
         public static string ToMexcTimeFrame(ExchangeKlineInterval timeFrame) => timeFrame switch

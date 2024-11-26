@@ -1,3 +1,5 @@
+using SVC_External.Clients;
+using SVC_External.Clients.Interfaces;
 using SVC_External.DataCollectors;
 using SVC_External.DataCollectors.Interfaces;
 
@@ -26,6 +28,9 @@ public class Program
         {
             client.BaseAddress = new Uri("https://api.mexc.com");
         });
+        builder.Services.AddScoped<IExchangeClient, BinanceClient>();
+        builder.Services.AddScoped<IExchangeClient, BybitClient>();
+        builder.Services.AddScoped<IExchangeClient, MexcClient>();
         builder.Services.AddScoped<IExchangesDataCollector, ExchangesDataCollector>();
 
         var app = builder.Build();

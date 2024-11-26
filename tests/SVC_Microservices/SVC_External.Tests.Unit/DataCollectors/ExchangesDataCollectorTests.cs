@@ -115,6 +115,49 @@ public class ExchangesDataCollectorTests
         result.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task GetAllListedCoins_CallsGetAllListedCoinsOnEachClient()
+    {
+        // Act
+        await _dataCollector.GetAllListedCoins();
+
+        // Assert
+        _firstClientMock.Verify(c => c.GetAllListedCoins(), Times.Once);
+        _secondClientMock.Verify(c => c.GetAllListedCoins(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_ReturnsCombinedDistinctCoins()
+    {
+        // Arrange
+        var firstClientCoins = new List<string> { "BTC", "ETH", "XRP", "BTC" };
+        var secondClientCoins = new List<string> { "ETH", "LTC", "ADA", "ETH" };
+        var expectedCoins = new[] { "BTC", "ETH", "XRP", "LTC", "ADA" };
+
+        _firstClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync(firstClientCoins);
+        _secondClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync(secondClientCoins);
+
+        // Act
+        var result = await _dataCollector.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedCoins);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_ClientsReturnEmptyLists_ReturnsEmptyCollection()
+    {
+        // Arrange
+        _firstClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync([]);
+        _secondClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync([]);
+
+        // Act
+        var result = await _dataCollector.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
     private static class Mapping
     {
         public static KlineDataRequestFormatted ToFormattedRequest(KlineDataRequest request) => new()

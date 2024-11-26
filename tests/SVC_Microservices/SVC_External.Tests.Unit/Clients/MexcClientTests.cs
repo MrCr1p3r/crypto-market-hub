@@ -122,4 +122,158 @@ public class MexcClientTests
         // Assert
         result.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task GetAllListedCoins_ReturnsExpectedData()
+    {
+        // Arrange
+        var expectedBaseAssets = new List<string> { "BTC", "ETH", "XRP" };
+
+        var symbols = expectedBaseAssets.Select(baseAsset => new Dictionary<string, object>
+        {
+            { "symbol", baseAsset + "USDT" },
+            { "baseAsset", baseAsset },
+            { "quoteAsset", "USDT" },
+        }).ToList();
+
+        var responseContent = new
+        {
+            symbols
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.AbsolutePath.Contains("/api/v3/exchangeInfo")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(expectedBaseAssets);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_EmptySymbols_ReturnsEmptyCollection()
+    {
+        // Arrange
+        var responseContent = new
+        {
+            symbols = new List<object>()
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.AbsolutePath.Contains("/api/v3/exchangeInfo")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_MissingSymbolsProperty_ReturnsEmptyCollection()
+    {
+        // Arrange
+        var responseContent = new
+        {
+            // "symbols" property is missing
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.AbsolutePath.Contains("/api/v3/exchangeInfo")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_NullOrEmptyBaseAsset_Ignored()
+    {
+        // Arrange
+        var symbols = new List<Dictionary<string, object>>
+        {
+            new() {
+                { "symbol", "BTCUSDT" },
+                { "baseAsset", "BTC" },
+                { "quoteAsset", "USDT" }
+            },
+            new() {
+                { "symbol", "XRPUSDT" },
+                { "baseAsset", "" },
+                { "quoteAsset", "USDT" }
+            },
+            new() {
+                { "symbol", "BNBUSDT" },
+                // Missing "baseAsset" property
+                { "quoteAsset", "USDT" }
+            }
+        };
+
+        var responseContent = new
+        {
+            symbols
+        };
+
+        var jsonResponse = JsonSerializer.Serialize(responseContent);
+        var httpResponse = new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(jsonResponse)
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri != null && req.RequestUri.AbsolutePath.Contains("/api/v3/exchangeInfo")),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _client.GetAllListedCoins();
+
+        // Assert
+        result.Should().ContainSingle();
+        result.First().Should().Be("BTC");
+    }
 }

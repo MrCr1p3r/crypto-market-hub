@@ -29,6 +29,13 @@ public class ExchangesDataCollector(IEnumerable<IExchangeClient> exchangeClients
         return [];
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<string>> GetAllListedCoins()
+    {
+        var coinLists = await Task.WhenAll(_exchangeClients.Select(client => client.GetAllListedCoins()));
+        return coinLists.SelectMany(coins => coins).Distinct();
+    }
+
     private static class Mapping
     {
         public static KlineDataRequestFormatted ToFormattedRequest(KlineDataRequest request) => new()

@@ -14,4 +14,10 @@ public interface IExchangeClient
     /// <param name="request">The request parameters for fetching Kline data.</param>
     /// <returns>A collection of retrieved Kline data objects.</returns>
     Task<IEnumerable<KlineData>> GetKlineData(KlineDataRequestFormatted request);
+
+    /// <summary>
+    /// Fetches all listed coin names from the exchange.
+    /// </summary>
+    /// <returns>A collection of coin names listed on the exchange.</returns>
+    Task<IEnumerable<string>> GetAllListedCoins();
 }

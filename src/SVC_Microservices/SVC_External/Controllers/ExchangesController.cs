@@ -28,4 +28,17 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
         var klineData = await _dataCollector.GetKlineData(request);
         return Ok(klineData);
     }
+
+    /// <summary>
+    /// Retrieves all listed coins from all available exchanges.
+    /// </summary>
+    /// <returns>A collection of coin symbols.</returns>
+    [HttpGet("allListedCoins")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllListedCoins()
+    {
+        var coins = await _dataCollector.GetAllListedCoins();
+        return Ok(coins);
+    }
 }

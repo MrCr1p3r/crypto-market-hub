@@ -5,22 +5,37 @@ using AutoFixture;
 using Cysharp.Web;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Moq;
+using SVC_External.DataCollectors.Interfaces;
 using SVC_External.Models.Input;
 using SVC_External.Models.Output;
+using SVC_External.Tests.Integration.Factories;
 namespace SVC_External.Tests.Integration.Controllers;
 
-public class ExchangesControllerIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class ExchangesControllerIntegrationTests
 {
     private readonly HttpClient _client;
-    private readonly IFixture _fixture = new Fixture();
+    private readonly IFixture _fixture;
+    private readonly Mock<IExchangesDataCollector> _mockDataCollector;
 
-    public ExchangesControllerIntegrationTests(WebApplicationFactory<Program> factory)
+    public ExchangesControllerIntegrationTests()
     {
+        _fixture = new Fixture();
+        _mockDataCollector = new Mock<IExchangesDataCollector>();
+
+        // Set up default behavior for the mock
+        _mockDataCollector.Setup(dc => dc.GetAllListedCoins())
+            .ReturnsAsync(["BTC", "ETH", "XRP"]);
+
+        _mockDataCollector.Setup(dc => dc.GetKlineData(It.IsAny<KlineDataRequest>()))
+            .ReturnsAsync(_fixture.CreateMany<KlineData>(5));
+
+        var factory = new CustomWebApplicationFactory(_mockDataCollector.Object);
         _client = factory.CreateClient();
     }
 
     [Fact]
-    public async Task GetKlineData_ShouldReturnOkWithData()//TODO: do I need to use the actual values for the request?
+    public async Task GetKlineData_ShouldReturnOkWithData()
     {
         // Arrange
         var klineDataRequest = _fixture.Create<KlineDataRequest>();
@@ -39,5 +54,20 @@ public class ExchangesControllerIntegrationTests : IClassFixture<WebApplicationF
         var klineDataList = await response.Content.ReadFromJsonAsync<IEnumerable<KlineData>>();
         klineDataList.Should().NotBeNull();
         klineDataList.Should().AllBeAssignableTo<KlineData>();
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_ShouldReturnOkWithData()
+    {
+        // Act
+        var response = await _client.GetAsync("/api/Exchanges/allListedCoins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var coinsList = await response.Content.ReadFromJsonAsync<IEnumerable<string>>();
+        coinsList.Should().NotBeNull();
+        coinsList.Should().AllBeAssignableTo<string>();
+        coinsList.Should().BeEquivalentTo(new List<string> { "BTC", "ETH", "XRP" });
     }
 }
