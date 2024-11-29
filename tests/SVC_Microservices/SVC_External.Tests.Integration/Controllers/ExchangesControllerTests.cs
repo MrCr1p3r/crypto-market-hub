@@ -4,7 +4,6 @@ using System.Net.Http.Json;
 using AutoFixture;
 using Cysharp.Web;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Moq;
 using SVC_External.DataCollectors.Interfaces;
 using SVC_External.Models.Input;
