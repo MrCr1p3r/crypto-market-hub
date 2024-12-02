@@ -47,11 +47,12 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     }
 
     /// <inheritdoc />
-    public async Task InsertTradingPair(TradingPairNew tradingPair)
+    public async Task<int> InsertTradingPair(TradingPairNew tradingPair)
     {
         var tradingPairEntity = Mapping.ToTradingPairEntity(tradingPair);
         await _context.TradingPairs.AddAsync(tradingPairEntity);
         await _context.SaveChangesAsync();
+        return tradingPairEntity.Id;
     }
 
     private static class Mapping

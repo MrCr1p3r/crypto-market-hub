@@ -64,7 +64,7 @@ public class CoinsControllerTests : IClassFixture<CustomWebApplicationFactory>
         insertedCoin.Should().NotBeNull();
 
         // Act
-        var response = await _client.DeleteAsync($"/api/Coins/delete/{insertedCoin.Id}");
+        var response = await _client.DeleteAsync($"/api/Coins/delete/{insertedCoin!.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -87,7 +87,7 @@ public class CoinsControllerTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseBody = await response.Content.ReadAsStringAsync();
-        responseBody.Should().Contain("Trading pair inserted successfully.");
+        var insertedId = await response.Content.ReadFromJsonAsync<int>();
+        insertedId.Should().BeGreaterThan(0);
     }
 }

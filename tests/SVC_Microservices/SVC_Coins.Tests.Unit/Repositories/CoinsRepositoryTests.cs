@@ -163,4 +163,31 @@ public class CoinsRepositoryTests
             => entity.IdCoinMain == tradingPairNew.IdCoinMain && entity.IdCoinQuote == tradingPairNew.IdCoinQuote);
         exists.Should().BeTrue();
     }
+
+    [Fact]
+    public async Task InsertTradingPair_ShouldReturnInsertedId()
+    {
+        // Arrange
+        var coinMain = new CoinEntity { Name = "Bitcoin", Symbol = "BTC" };
+        var coinQuote = new CoinEntity { Name = "Ethereum", Symbol = "ETH" };
+
+        await _context.Coins.AddRangeAsync(coinMain, coinQuote);
+        await _context.SaveChangesAsync();
+
+        var tradingPairNew = new TradingPairNew
+        {
+            IdCoinMain = coinMain.Id,
+            IdCoinQuote = coinQuote.Id
+        };
+
+        // Act
+        var insertedId = await _repository.InsertTradingPair(tradingPairNew);
+
+        // Assert
+        var insertedEntity = await _context.TradingPairs.FindAsync(insertedId);
+        insertedEntity.Should().NotBeNull();
+        insertedEntity!.Id.Should().Be(insertedId);
+        insertedEntity.IdCoinMain.Should().Be(tradingPairNew.IdCoinMain);
+        insertedEntity.IdCoinQuote.Should().Be(tradingPairNew.IdCoinQuote);
+    }
 }

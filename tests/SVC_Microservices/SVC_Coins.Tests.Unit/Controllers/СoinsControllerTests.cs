@@ -121,16 +121,19 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task InsertTradingPair_ReturnsOkResult()
+    public async Task InsertTradingPair_ReturnsInsertedId()
     {
         // Arrange
         var tradingPair = _fixture.Create<TradingPairNew>();
+        var expectedId = _fixture.Create<int>();
+        _mockRepository.Setup(repo => repo.InsertTradingPair(tradingPair))
+                       .ReturnsAsync(expectedId);
 
         // Act
         var result = await _controller.InsertTradingPair(tradingPair);
 
-        // Assert
+        // Assert;
         result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be("Trading pair inserted successfully.");
+              .Which.Value.Should().Be(expectedId);
     }
 }
