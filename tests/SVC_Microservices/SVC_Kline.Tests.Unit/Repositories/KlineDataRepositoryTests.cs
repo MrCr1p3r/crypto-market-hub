@@ -1,11 +1,9 @@
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using AutoMapper;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Kline.Models.Entities;
 using SVC_Kline.Models.Input;
-using SVC_Kline.Models.Output;
 using SVC_Kline.Repositories;
 
 namespace SVC_Kline.Tests.Unit.Repositories;
@@ -14,7 +12,6 @@ public class KlineDataRepositoryTests
 {
     private readonly IFixture _fixture;
     private readonly KlineDataDbContext _context;
-    private readonly IMapper _mapper;
     private readonly KlineDataRepository _repository;
 
     public KlineDataRepositoryTests()
@@ -22,18 +19,14 @@ public class KlineDataRepositoryTests
         _fixture = new Fixture().Customize(new AutoMoqCustomization());
 
         var options = new DbContextOptionsBuilder<KlineDataDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseSqlite("DataSource=:memory:")
             .Options;
+
         _context = new KlineDataDbContext(options);
+        _context.Database.OpenConnection();
+        _context.Database.EnsureCreated();
 
-        var config = new MapperConfiguration(cfg =>
-        {
-            cfg.CreateMap<KlineDataNew, KlineDataEntity>();
-            cfg.CreateMap<KlineDataEntity, KlineData>();
-        });
-        _mapper = config.CreateMapper();
-
-        _repository = new KlineDataRepository(_context, _mapper);
+        _repository = new KlineDataRepository(_context);
     }
 
     [Fact]
@@ -41,7 +34,7 @@ public class KlineDataRepositoryTests
     {
         // Arrange
         var klineData = _fixture.Create<KlineDataNew>();
-        var klineDataEntity = _mapper.Map<KlineDataEntity>(klineData);
+        var klineDataEntity = Mapping.ToKlineDataEntity(klineData);
 
         // Act
         await _repository.InsertKlineData(klineData);
@@ -99,5 +92,58 @@ public class KlineDataRepositoryTests
         var remainingEntities = await _context.KlineData.ToListAsync();
         remainingEntities.Should().ContainSingle();
         remainingEntities[0].IdTradePair.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ReplaceAllKlineData_ShouldReplaceExistingData()
+    {
+        // Arrange
+        var existingData = _fixture.CreateMany<KlineDataEntity>(5).ToList();
+        await _context.KlineData.AddRangeAsync(existingData);
+        await _context.SaveChangesAsync();
+
+        var newKlineData = _fixture.CreateMany<KlineDataNew>(3).ToArray();
+        var expectedData = newKlineData.Select(Mapping.ToKlineDataEntity);
+
+        // Act
+        await _repository.ReplaceAllKlineData(newKlineData);
+
+        // Assert
+        var entities = await _context.KlineData.ToListAsync();
+        entities.Should().HaveCount(3);
+        entities.Should().BeEquivalentTo(expectedData);
+    }
+
+    [Fact]
+    public async Task ReplaceAllKlineData_ShouldHandleEmptyInput()
+    {
+        // Arrange
+        var existingData = _fixture.CreateMany<KlineDataEntity>(5).ToList();
+        await _context.KlineData.AddRangeAsync(existingData);
+        await _context.SaveChangesAsync();
+
+        var newKlineData = Array.Empty<KlineDataNew>();
+
+        // Act
+        await _repository.ReplaceAllKlineData(newKlineData);
+
+        // Assert
+        var entities = await _context.KlineData.ToListAsync();
+        entities.Should().BeEmpty();
+    }
+
+    private static class Mapping
+    {
+        public static KlineDataEntity ToKlineDataEntity(KlineDataNew klineDataNew) => new()
+        {
+            IdTradePair = klineDataNew.IdTradePair,
+            OpenTime = klineDataNew.OpenTime,
+            OpenPrice = klineDataNew.OpenPrice,
+            HighPrice = klineDataNew.HighPrice,
+            LowPrice = klineDataNew.LowPrice,
+            ClosePrice = klineDataNew.ClosePrice,
+            Volume = klineDataNew.Volume,
+            CloseTime = klineDataNew.CloseTime
+        };
     }
 }

@@ -1,11 +1,12 @@
 using System.Runtime.CompilerServices;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
-using SVC_Kline.Mappings;
 using SVC_Kline.Repositories;
 using SVC_Kline.Repositories.Interfaces;
 
 [assembly: InternalsVisibleTo("SVC_Kline.Tests.Integration")]
+
+namespace SVC_Kline;
 
 public class Program
 {
@@ -21,7 +22,6 @@ public class Program
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-        builder.Services.AddAutoMapper(typeof(KlineDataMappingProfile));
         builder.Services.AddDbContext<KlineDataDbContext>(options =>
             options.UseSqlServer(
                 $"Server={Environment.GetEnvironmentVariable("DB_SERVER")};" +

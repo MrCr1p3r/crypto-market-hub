@@ -71,4 +71,19 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
         await _repository.DeleteKlineDataForTradingPair(idTradePair);
         return Ok($"Kline data for trading pair ID {idTradePair} deleted successfully.");
     }
+
+    /// <summary>
+    /// Replaces all Kline data with new entries.
+    /// </summary>
+    /// <param name="klineDataList">An array of KlineData objects to replace existing data.</param>
+    /// <returns>A status indicating the result of the operation.</returns>
+    [HttpPut("replaceAll")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ReplaceAllKlineData([FromBody] KlineDataNew[] klineDataList)
+    {
+        await _repository.ReplaceAllKlineData(klineDataList);
+        return Ok("All Kline data replaced successfully.");
+    }
 }

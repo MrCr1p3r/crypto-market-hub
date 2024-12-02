@@ -1,30 +1,40 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SVC_Kline.Repositories;
 
-namespace SVC_Kline.Tests.Integration.Factories;
-
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+namespace SVC_Kline.Tests.Integration.Factories
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     {
-        builder.ConfigureServices(services =>
+        protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            // Remove the app's database context
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<KlineDataDbContext>));
-            if (descriptor != null)
+            builder.ConfigureServices(services =>
             {
-                services.Remove(descriptor);
-            }
+                // Remove the existing KlineDataDbContext registration
+                var descriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(DbContextOptions<KlineDataDbContext>));
+                if (descriptor != null)
+                {
+                    services.Remove(descriptor);
+                }
 
-            // Add an in-memory database for testing
-            services.AddDbContext<KlineDataDbContext>(options =>
-            {
-                options.UseInMemoryDatabase("TestDatabase");
+                var connection = new SqliteConnection("DataSource=:memory:");
+                connection.Open();
+
+                // Add the SQLite in-memory database context
+                services.AddDbContext<KlineDataDbContext>(options =>
+                {
+                    options.UseSqlite(connection);
+                });
+
+                var serviceProvider = services.BuildServiceProvider();
+                using var scope = serviceProvider.CreateScope();
+                var dbContext = scope.ServiceProvider.GetRequiredService<KlineDataDbContext>();
+                dbContext.Database.EnsureCreated();
             });
-        });
+        }
     }
 }

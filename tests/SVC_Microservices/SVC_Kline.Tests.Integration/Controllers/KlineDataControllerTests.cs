@@ -71,4 +71,27 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
         var responseBody = await response.Content.ReadAsStringAsync();
         responseBody.Should().Contain($"Kline data for trading pair ID {klineData.IdTradePair} deleted successfully.");
     }
+
+    [Fact]
+    public async Task ReplaceAllKlineData_ReturnsOk()
+    {
+        // Arrange
+        var existingData = _fixture.CreateMany<KlineDataNew>(5).ToArray();
+        await _client.PostAsJsonAsync("/api/KlineData/insertMany", existingData);
+
+        var newKlineData = _fixture.CreateMany<KlineDataNew>(3).ToArray();
+
+        // Act
+        var response = await _client.PutAsJsonAsync("/api/KlineData/replaceAll", newKlineData);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var responseBody = await response.Content.ReadAsStringAsync();
+        responseBody.Should().Contain("All Kline data replaced successfully.");
+
+        // Verify the data was replaced
+        var getAllResponse = await _client.GetAsync("/api/KlineData/getAll");
+        var klineDataList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<KlineData>>();
+        klineDataList.Should().HaveCount(3);
+    }
 }

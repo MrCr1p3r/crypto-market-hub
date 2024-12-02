@@ -132,4 +132,31 @@ public class KlineDataControllerTests
         result.Should().BeOfType<OkObjectResult>()
             .Which.Value.Should().Be($"Kline data for trading pair ID {idTradePair} deleted successfully.");
     }
+
+    [Fact]
+    public async Task ReplaceAllKlineData_CallsRepository()
+    {
+        // Arrange
+        var klineDataList = _fixture.CreateMany<KlineDataNew>(5).ToArray();
+
+        // Act
+        await _controller.ReplaceAllKlineData(klineDataList);
+
+        // Assert
+        _mockRepository.Verify(repo => repo.ReplaceAllKlineData(klineDataList), Times.Once);
+    }
+
+    [Fact]
+    public async Task ReplaceAllKlineData_ValidData_ReturnsOkResult()
+    {
+        // Arrange
+        var klineDataList = _fixture.CreateMany<KlineDataNew>(5).ToArray();
+
+        // Act
+        var result = await _controller.ReplaceAllKlineData(klineDataList);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>()
+            .Which.Value.Should().Be("All Kline data replaced successfully.");
+    }
 }

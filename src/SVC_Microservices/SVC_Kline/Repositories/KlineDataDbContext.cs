@@ -12,7 +12,7 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
     /// <summary>
     /// Gets or sets the DbSet for Kline data entities.
     /// </summary>
-    public DbSet<KlineDataEntity> KlineData { get; set; }
+    public DbSet<KlineDataEntity> KlineData { get; set; } = null!;
 
     /// <summary>
     /// Configures the model and relationships using Fluent API.
