@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using SharedLibrary.Infrastructure;
 using SVC_Kline.Repositories;
 using SVC_Kline.Repositories.Interfaces;
 
@@ -32,8 +33,13 @@ public class Program
 
         // Register the repository for dependency injection
         builder.Services.AddScoped<IKlineDataRepository, KlineDataRepository>();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
 
         var app = builder.Build();
+
+        app.UseExceptionHandler();
+        app.UseStatusCodePages();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

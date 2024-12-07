@@ -1,5 +1,6 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using SharedLibrary.Infrastructure;
 using SVC_Coins.Repositories;
 using SVC_Coins.Repositories.Interfaces;
 
@@ -27,7 +28,13 @@ public class Program
         // Register the repository for dependency injection
         builder.Services.AddScoped<ICoinsRepository, CoinsRepository>();
 
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
+
         var app = builder.Build();
+
+        app.UseExceptionHandler();
+        app.UseStatusCodePages();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

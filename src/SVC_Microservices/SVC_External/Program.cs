@@ -1,3 +1,4 @@
+using SharedLibrary.Infrastructure;
 using SVC_External.Clients;
 using SVC_External.Clients.Interfaces;
 using SVC_External.DataCollectors;
@@ -32,8 +33,13 @@ public class Program
         builder.Services.AddScoped<IExchangeClient, BybitClient>();
         builder.Services.AddScoped<IExchangeClient, MexcClient>();
         builder.Services.AddScoped<IExchangesDataCollector, ExchangesDataCollector>();
+        builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+        builder.Services.AddProblemDetails();
 
         var app = builder.Build();
+
+        app.UseExceptionHandler();
+        app.UseStatusCodePages();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
