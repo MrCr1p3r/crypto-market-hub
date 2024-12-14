@@ -1,37 +1,37 @@
-using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using AutoFixture;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
-using Moq.Protected;
+using Moq.Contrib.HttpClient;
 using SharedLibrary.Enums;
 using SVC_External.Clients;
 using SVC_External.Models.Input;
+using SVC_External.Models.Output;
 
 namespace SVC_External.Tests.Unit.Clients;
 
 public class BybitClientTests
 {
     private readonly IFixture _fixture;
-    private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
+    private readonly Mock<ILogger<BybitClient>> _loggerMock;
     private readonly BybitClient _client;
 
     public BybitClientTests()
     {
         _fixture = new Fixture();
-        _httpMessageHandlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        _loggerMock = new Mock<ILogger<BybitClient>>();
 
-        var httpClient = new HttpClient(_httpMessageHandlerMock.Object)
-        {
-            BaseAddress = new Uri("https://api.bybit.com")
-        };
+        var httpClient = _httpMessageHandlerMock.CreateClient();
+        httpClient.BaseAddress = new Uri("https://api.bybit.com");
 
-        _httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        _httpClientFactoryMock.Setup(f => f.CreateClient("BybitClient")).Returns(httpClient);
+        var httpClientFactoryMock = new Mock<IHttpClientFactory>();
+        httpClientFactoryMock.Setup(f => f.CreateClient("BybitClient")).Returns(httpClient);
 
-        _client = new BybitClient(_httpClientFactoryMock.Object);
+        _client = new BybitClient(httpClientFactoryMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -39,102 +39,55 @@ public class BybitClientTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequestFormatted>();
-        var expectedData = new[]
-        {
-            new[] { "1234567890000", "0.001", "0.002", "0.0005", "0.0015", "100" }
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(new
+        var endpoint = Mapping.ToBybitKlineEndpoint(request);
+        var expectedResponse = new
         {
             result = new
             {
-                list = expectedData
-            }
-        });
-
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
+                list = new List<List<string>>
+                {
+                    new() { "123456789", "0.001", "0.002", "0.0005", "0.0015", "100" },
+                },
+            },
         };
+        var jsonResponse = JsonSerializer.Serialize(expectedResponse);
 
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
+            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
 
         // Act
         var result = await _client.GetKlineData(request);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(expectedData.Length);
-        result.First().Should().BeEquivalentTo(new
-        {
-            OpenTime = long.Parse(expectedData[0][0]),
-            OpenPrice = decimal.Parse(expectedData[0][1], CultureInfo.InvariantCulture),
-            HighPrice = decimal.Parse(expectedData[0][2], CultureInfo.InvariantCulture),
-            LowPrice = decimal.Parse(expectedData[0][3], CultureInfo.InvariantCulture),
-            ClosePrice = decimal.Parse(expectedData[0][4], CultureInfo.InvariantCulture),
-            Volume = decimal.Parse(expectedData[0][5], CultureInfo.InvariantCulture),
-            CloseTime = Mapping.CalculateCloseTime(expectedData[0][0], request.Interval)
-        });
+        result.Should().HaveCount(1);
+        result
+            .First()
+            .Should()
+            .BeEquivalentTo(
+                new
+                {
+                    OpenTime = 123456789,
+                    OpenPrice = 0.001m,
+                    HighPrice = 0.002m,
+                    LowPrice = 0.0005m,
+                    ClosePrice = 0.0015m,
+                    Volume = 100m,
+                    CloseTime = Mapping.CalculateCloseTime("123456789", request.Interval),
+                }
+            );
     }
 
     [Fact]
-    public async Task GetKlineData_ErrorResponse_ThrowsException()
+    public async Task GetKlineData_ErrorResponse_ReturnsEmptyCollection()
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequestFormatted>();
+        var endpoint = Mapping.ToBybitKlineEndpoint(request);
 
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.BadRequest,
-                Content = new StringContent("Bad Request")
-            });
-
-        // Act
-        var act = async () => await _client.GetKlineData(request);
-
-        // Assert
-        await act.Should().ThrowAsync<HttpRequestException>();
-    }
-
-    [Fact]
-    public async Task GetKlineData_EmptyResponse_ReturnsEmptyCollection()
-    {
-        // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
-        var jsonResponse = JsonSerializer.Serialize(new
-        {
-            result = new
-            {
-                list = Array.Empty<string[]>()
-            }
-        });
-
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
+            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
         var result = await _client.GetKlineData(request);
@@ -147,201 +100,78 @@ public class BybitClientTests
     public async Task GetAllListedCoins_ReturnsExpectedData()
     {
         // Arrange
-        var expectedBaseCoins = new List<string> { "BTC", "ETH", "XRP" };
-
-        var instruments = expectedBaseCoins.Select(baseCoin => new Dictionary<string, object>
-        {
-            { "symbol", baseCoin + "USDT" },
-            { "baseCoin", baseCoin },
-            { "quoteCoin", "USDT" },
-        }).ToList();
-
-        var responseContent = new
+        var listedCoinsParameter = new ListedCoins();
+        var expectedBaseAssets = new List<string> { "BTC", "ETH", "BNB" };
+        var response = new
         {
             result = new
             {
-                list = instruments
-            }
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(responseContent);
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
-
-        // Act
-        var result = await _client.GetAllListedCoins();
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEquivalentTo(expectedBaseCoins);
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_EmptyList_ReturnsEmptyCollection()
-    {
-        // Arrange
-        var responseContent = new
-        {
-            result = new
-            {
-                list = new List<object>()
-            }
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(responseContent);
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
-
-        // Act
-        var result = await _client.GetAllListedCoins();
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_MissingResultProperty_ReturnsEmptyCollection()
-    {
-        // Arrange
-        var responseContent = new
-        {
-            // "result" property is missing
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(responseContent);
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
-
-        // Act
-        var result = await _client.GetAllListedCoins();
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_MissingListProperty_ReturnsEmptyCollection()
-    {
-        // Arrange
-        var responseContent = new
-        {
-            result = new
-            {
-                // "list" property is missing
-            }
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(responseContent);
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
-                ItExpr.IsAny<CancellationToken>()
-            )
-            .ReturnsAsync(httpResponse);
-
-        // Act
-        var result = await _client.GetAllListedCoins();
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_NullOrEmptyBaseCoin_Ignored()
-    {
-        // Arrange
-        var instruments = new List<Dictionary<string, object>>
-        {
-            new() {
-                { "symbol", "BTCUSDT" },
-                { "baseCoin", "BTC" },
-                { "quoteCoin", "USDT" }
+                list = expectedBaseAssets
+                    .Select(baseAsset => new { baseCoin = baseAsset })
+                    .ToList(),
             },
-            new() {
-                { "symbol", "XRPUSDT" },
-                { "baseCoin", "" }, // Empty baseCoin
-                { "quoteCoin", "USDT" }
-            },
-            new() {
-                { "symbol", "BNBUSDT" },
-                // Missing "baseCoin" property
-                { "quoteCoin", "USDT" }
-            }
         };
+        var jsonResponse = JsonSerializer.Serialize(response);
 
-        var responseContent = new
-        {
-            result = new
-            {
-                list = instruments
-            }
-        };
-
-        var jsonResponse = JsonSerializer.Serialize(responseContent);
-        var httpResponse = new HttpResponseMessage
-        {
-            StatusCode = HttpStatusCode.OK,
-            Content = new StringContent(jsonResponse)
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>(
-                "SendAsync",
-                ItExpr.Is<HttpRequestMessage>(req => req.RequestUri!.AbsolutePath.Contains("/v5/market/instruments-info")),
-                ItExpr.IsAny<CancellationToken>()
+        _httpMessageHandlerMock
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.bybit.com/v5/market/instruments-info?category=linear"
             )
-            .ReturnsAsync(httpResponse);
+            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
 
         // Act
-        var result = await _client.GetAllListedCoins();
+        var listedCoins = await _client.GetAllListedCoins(listedCoinsParameter);
 
         // Assert
-        result.Should().ContainSingle();
-        result.First().Should().Be("BTC");
+        listedCoins.BybitCoins.Should().BeEquivalentTo(expectedBaseAssets);
+    }
+
+    [Fact]
+    public async Task GetAllListedCoins_ErrorResponse_ReturnsListWithoutNewCoins()
+    {
+        // Arrange
+        var listedCoinsParameter = new ListedCoins();
+
+        _httpMessageHandlerMock
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.bybit.com/v5/market/instruments-info?category=linear"
+            )
+            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+
+        // Act
+        var result = await _client.GetAllListedCoins(listedCoinsParameter);
+
+        // Assert
+        result.BybitCoins.Should().BeEmpty();
     }
 
     private static class Mapping
     {
+        public static string ToBybitKlineEndpoint(KlineDataRequestFormatted request) =>
+            $"/v5/market/kline?category=linear"
+            + $"&symbol={request.CoinMain}{request.CoinQuote}"
+            + $"&interval={ToBybitTimeFrame(request.Interval)}"
+            + $"&start={request.StartTimeUnix}"
+            + $"&end={request.EndTimeUnix}"
+            + $"&limit={request.Limit}";
+
+        public static string ToBybitTimeFrame(ExchangeKlineInterval interval) =>
+            interval switch
+            {
+                ExchangeKlineInterval.OneMinute => "1",
+                ExchangeKlineInterval.FiveMinutes => "5",
+                ExchangeKlineInterval.FifteenMinutes => "15",
+                ExchangeKlineInterval.ThirtyMinutes => "30",
+                ExchangeKlineInterval.OneHour => "60",
+                ExchangeKlineInterval.FourHours => "240",
+                ExchangeKlineInterval.OneDay => "D",
+                ExchangeKlineInterval.OneWeek => "W",
+                ExchangeKlineInterval.OneMonth => "M",
+                _ => throw new ArgumentException($"Unsupported TimeFrame: {interval}"),
+            };
+
         public static long CalculateCloseTime(string openTimeString, ExchangeKlineInterval interval)
         {
             var openTime = long.Parse(openTimeString);

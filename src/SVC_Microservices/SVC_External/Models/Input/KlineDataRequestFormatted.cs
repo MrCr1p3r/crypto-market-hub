@@ -16,22 +16,22 @@ public record KlineDataRequestFormatted
     /// The quote coin in the trading pair for which Kline data is requested.
     /// </summary>
     public required string CoinQuote { get; set; }
-    
+
     /// <summary>
     /// The interval for each Kline. All supported intervals can be found in the TimeFrame enum.
     /// </summary>
     public ExchangeKlineInterval Interval { get; set; }
-    
+
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.
     /// </summary>
     public long StartTimeUnix { get; set; }
-    
+
     /// <summary>
     /// The closing time of the Kline in milliseconds since the Unix epoch.
     /// </summary>
     public long EndTimeUnix { get; set; }
-    
+
     /// <summary>
     /// The maximum number of Kline records to retrieve. Default is 100.
     /// </summary>

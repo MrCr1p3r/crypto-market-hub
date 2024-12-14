@@ -51,8 +51,11 @@ public class ExchangesControllerTests
         var result = await _controller.GetKlineData(request);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(expectedKlineData);
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(expectedKlineData);
     }
 
     [Fact]
@@ -60,21 +63,26 @@ public class ExchangesControllerTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
-        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(new List<KlineData>());
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineData(request))
+            .ReturnsAsync(new List<KlineData>());
 
         // Act
         var result = await _controller.GetKlineData(request);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(new List<KlineData>());
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(new List<KlineData>());
     }
 
     [Fact]
     public async Task GetAllListedCoins_CallsDataCollector()
     {
         // Arrange
-        var expectedCoins = _fixture.Create<IEnumerable<string>>();
+        var expectedCoins = _fixture.Create<ListedCoins>();
         _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
 
         // Act
@@ -88,29 +96,35 @@ public class ExchangesControllerTests
     public async Task GetAllListedCoins_ReturnsOkResultWithExpectedData()
     {
         // Arrange
-        var expectedCoins = _fixture.Create<IEnumerable<string>>();
+        var expectedCoins = _fixture.Create<ListedCoins>();
         _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
 
         // Act
         var result = await _controller.GetAllListedCoins();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(expectedCoins);
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(expectedCoins);
     }
 
     [Fact]
     public async Task GetAllListedCoins_ReturnsOkResultWithEmptyListWhenNoCoins()
     {
         // Arrange
-        var expectedCoins = new List<string>();
+        var expectedCoins = new ListedCoins();
         _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
 
         // Act
         var result = await _controller.GetAllListedCoins();
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(expectedCoins);
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(expectedCoins);
     }
 }

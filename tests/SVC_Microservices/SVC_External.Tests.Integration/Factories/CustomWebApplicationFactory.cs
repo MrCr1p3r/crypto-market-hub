@@ -5,7 +5,7 @@ using SVC_External.DataCollectors.Interfaces;
 
 namespace SVC_External.Tests.Integration.Factories;
 
-public class CustomWebApplicationFactory(IExchangesDataCollector dataCollector) 
+public class CustomWebApplicationFactory(IExchangesDataCollector dataCollector)
     : WebApplicationFactory<Program>
 {
     private readonly IExchangesDataCollector _dataCollector = dataCollector;
@@ -15,7 +15,9 @@ public class CustomWebApplicationFactory(IExchangesDataCollector dataCollector)
         builder.ConfigureServices(services =>
         {
             // Remove the existing IExchangesDataCollector registration
-            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IExchangesDataCollector));
+            var descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(IExchangesDataCollector)
+            );
             if (descriptor != null)
             {
                 services.Remove(descriptor);

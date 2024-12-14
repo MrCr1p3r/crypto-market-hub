@@ -17,18 +17,27 @@ public class Program
         builder.Services.AddSwaggerGen();
 
         // Register containers for dependency injection
-        builder.Services.AddHttpClient("BinanceClient", client =>
-        {
-            client.BaseAddress = new Uri("https://api.binance.com");
-        });
-        builder.Services.AddHttpClient("BybitClient", client =>
-        {
-            client.BaseAddress = new Uri("https://api.bybit.com");
-        });
-        builder.Services.AddHttpClient("MexcClient", client =>
-        {
-            client.BaseAddress = new Uri("https://api.mexc.com");
-        });
+        builder.Services.AddHttpClient(
+            "BinanceClient",
+            client =>
+            {
+                client.BaseAddress = new Uri("https://api.binance.com");
+            }
+        );
+        builder.Services.AddHttpClient(
+            "BybitClient",
+            client =>
+            {
+                client.BaseAddress = new Uri("https://api.bybit.com");
+            }
+        );
+        builder.Services.AddHttpClient(
+            "MexcClient",
+            client =>
+            {
+                client.BaseAddress = new Uri("https://api.mexc.com");
+            }
+        );
         builder.Services.AddScoped<IExchangeClient, BinanceClient>();
         builder.Services.AddScoped<IExchangeClient, BybitClient>();
         builder.Services.AddScoped<IExchangeClient, MexcClient>();

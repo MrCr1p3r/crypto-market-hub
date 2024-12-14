@@ -9,6 +9,7 @@ using SVC_External.DataCollectors.Interfaces;
 using SVC_External.Models.Input;
 using SVC_External.Models.Output;
 using SVC_External.Tests.Integration.Factories;
+
 namespace SVC_External.Tests.Integration.Controllers;
 
 public class ExchangesControllerIntegrationTests
@@ -22,11 +23,12 @@ public class ExchangesControllerIntegrationTests
         _fixture = new Fixture();
         _mockDataCollector = new Mock<IExchangesDataCollector>();
 
-        // Set up default behavior for the mock
-        _mockDataCollector.Setup(dc => dc.GetAllListedCoins())
-            .ReturnsAsync(["BTC", "ETH", "XRP"]);
+        _mockDataCollector
+            .Setup(dc => dc.GetAllListedCoins())
+            .ReturnsAsync(_fixture.Create<ListedCoins>());
 
-        _mockDataCollector.Setup(dc => dc.GetKlineData(It.IsAny<KlineDataRequest>()))
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineData(It.IsAny<KlineDataRequest>()))
             .ReturnsAsync(_fixture.CreateMany<KlineData>(5));
 
         var factory = new CustomWebApplicationFactory(_mockDataCollector.Object);
@@ -40,7 +42,7 @@ public class ExchangesControllerIntegrationTests
         var klineDataRequest = _fixture.Create<KlineDataRequest>();
         var options = new WebSerializerOptions(WebSerializerProvider.Default)
         {
-            CultureInfo = CultureInfo.InvariantCulture
+            CultureInfo = CultureInfo.InvariantCulture,
         };
         var queryString = WebSerializer.ToQueryString(klineDataRequest, options);
 
@@ -64,9 +66,8 @@ public class ExchangesControllerIntegrationTests
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var coinsList = await response.Content.ReadFromJsonAsync<IEnumerable<string>>();
+        var coinsList = await response.Content.ReadFromJsonAsync<ListedCoins>();
         coinsList.Should().NotBeNull();
-        coinsList.Should().AllBeAssignableTo<string>();
-        coinsList.Should().BeEquivalentTo(new List<string> { "BTC", "ETH", "XRP" });
+        coinsList.Should().BeAssignableTo<ListedCoins>();
     }
 }

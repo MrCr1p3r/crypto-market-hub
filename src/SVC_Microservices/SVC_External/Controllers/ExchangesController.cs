@@ -32,10 +32,10 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// <summary>
     /// Retrieves all listed coins from all available exchanges.
     /// </summary>
-    /// <returns>A collection of coin symbols.</returns>
+    /// <returns>Object that contains collections of listed coins for each exchange.</returns>
     [HttpGet("allListedCoins")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ListedCoins), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllListedCoins()
     {
         var coins = await _dataCollector.GetAllListedCoins();

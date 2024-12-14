@@ -33,14 +33,19 @@ public class ExchangesDataCollectorTests
         var formattedRequest = Mapping.ToFormattedRequest(request);
 
         var expectedData = _fixture.CreateMany<KlineData>(5);
-        _firstClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync(expectedData);
+        _firstClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync(expectedData);
 
         // Act
         await _dataCollector.GetKlineData(request);
 
         // Assert
         _firstClientMock.Verify(client => client.GetKlineData(formattedRequest), Times.Once);
-        _secondClientMock.Verify(client => client.GetKlineData(It.IsAny<KlineDataRequestFormatted>()), Times.Never);
+        _secondClientMock.Verify(
+            client => client.GetKlineData(It.IsAny<KlineDataRequestFormatted>()),
+            Times.Never
+        );
     }
 
     [Fact]
@@ -51,8 +56,12 @@ public class ExchangesDataCollectorTests
         var formattedRequest = Mapping.ToFormattedRequest(request);
 
         var expectedData = _fixture.CreateMany<KlineData>(5);
-        _firstClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync(expectedData);
-        _secondClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync([]);
+        _firstClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync(expectedData);
+        _secondClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync([]);
 
         // Act
         var result = await _dataCollector.GetKlineData(request);
@@ -68,8 +77,11 @@ public class ExchangesDataCollectorTests
         var request = _fixture.Create<KlineDataRequest>();
         var formattedRequest = Mapping.ToFormattedRequest(request);
 
-        _firstClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync([]);
-        _secondClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+        _firstClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync([]);
+        _secondClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
             .ReturnsAsync(_fixture.CreateMany<KlineData>(3));
 
         // Act
@@ -88,8 +100,12 @@ public class ExchangesDataCollectorTests
         var formattedRequest = Mapping.ToFormattedRequest(request);
 
         var expectedData = _fixture.CreateMany<KlineData>(3);
-        _firstClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync([]);
-        _secondClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync(expectedData);
+        _firstClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync([]);
+        _secondClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync(expectedData);
 
         // Act
         var result = await _dataCollector.GetKlineData(request);
@@ -105,8 +121,12 @@ public class ExchangesDataCollectorTests
         var request = _fixture.Create<KlineDataRequest>();
         var formattedRequest = Mapping.ToFormattedRequest(request);
 
-        _firstClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync([]);
-        _secondClientMock.Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>())).ReturnsAsync([]);
+        _firstClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync([]);
+        _secondClientMock
+            .Setup(c => c.GetKlineData(It.IsAny<KlineDataRequestFormatted>()))
+            .ReturnsAsync([]);
 
         // Act
         var result = await _dataCollector.GetKlineData(request);
@@ -116,58 +136,69 @@ public class ExchangesDataCollectorTests
     }
 
     [Fact]
-    public async Task GetAllListedCoins_CallsGetAllListedCoinsOnEachClient()
-    {
-        // Act
-        await _dataCollector.GetAllListedCoins();
-
-        // Assert
-        _firstClientMock.Verify(c => c.GetAllListedCoins(), Times.Once);
-        _secondClientMock.Verify(c => c.GetAllListedCoins(), Times.Once);
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_ReturnsCombinedDistinctCoins()
+    public async Task GetAllListedCoins_ReturnsCombinedCoins()
     {
         // Arrange
-        var firstClientCoins = new List<string> { "BTC", "ETH", "XRP", "BTC" };
-        var secondClientCoins = new List<string> { "ETH", "LTC", "ADA", "ETH" };
-        var expectedCoins = new[] { "BTC", "ETH", "XRP", "LTC", "ADA" };
+        var listedCoins = new ListedCoins();
 
-        _firstClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync(firstClientCoins);
-        _secondClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync(secondClientCoins);
+        var binanceCoins = new[] { "BTC", "ETH" };
+        var mexcCoins = new[] { "ETH", "XRP" };
+
+        _firstClientMock
+            .Setup(c => c.GetAllListedCoins(It.IsAny<ListedCoins>()))
+            .Callback<ListedCoins>(lc =>
+            {
+                lc.BinanceCoins = binanceCoins;
+            })
+            .ReturnsAsync(listedCoins);
+
+        _secondClientMock
+            .Setup(c => c.GetAllListedCoins(It.IsAny<ListedCoins>()))
+            .Callback<ListedCoins>(lc =>
+            {
+                lc.MexcCoins = mexcCoins;
+            })
+            .ReturnsAsync(listedCoins);
 
         // Act
         var result = await _dataCollector.GetAllListedCoins();
 
         // Assert
-        result.Should().BeEquivalentTo(expectedCoins);
+        result.BinanceCoins.Should().BeEquivalentTo(binanceCoins);
+        result.MexcCoins.Should().BeEquivalentTo(mexcCoins);
     }
 
     [Fact]
     public async Task GetAllListedCoins_ClientsReturnEmptyLists_ReturnsEmptyCollection()
     {
         // Arrange
-        _firstClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync([]);
-        _secondClientMock.Setup(c => c.GetAllListedCoins()).ReturnsAsync([]);
+        _firstClientMock
+            .Setup(c => c.GetAllListedCoins(It.IsAny<ListedCoins>()))
+            .ReturnsAsync(new ListedCoins());
+        _secondClientMock
+            .Setup(c => c.GetAllListedCoins(It.IsAny<ListedCoins>()))
+            .ReturnsAsync(new ListedCoins());
 
         // Act
         var result = await _dataCollector.GetAllListedCoins();
 
         // Assert
-        result.Should().BeEmpty();
+        result.BinanceCoins.Should().BeEmpty();
+        result.MexcCoins.Should().BeEmpty();
+        result.BybitCoins.Should().BeEmpty();
     }
 
     private static class Mapping
     {
-        public static KlineDataRequestFormatted ToFormattedRequest(KlineDataRequest request) => new()
-        {
-            CoinMain = request.CoinMain,
-            CoinQuote = request.CoinQuote,
-            Interval = request.Interval,
-            StartTimeUnix = new DateTimeOffset(request.StartTime).ToUnixTimeMilliseconds(),
-            EndTimeUnix = new DateTimeOffset(request.EndTime).ToUnixTimeMilliseconds(),
-            Limit = request.Limit
-        };
+        public static KlineDataRequestFormatted ToFormattedRequest(KlineDataRequest request) =>
+            new()
+            {
+                CoinMain = request.CoinMain,
+                CoinQuote = request.CoinQuote,
+                Interval = request.Interval,
+                StartTimeUnix = new DateTimeOffset(request.StartTime).ToUnixTimeMilliseconds(),
+                EndTimeUnix = new DateTimeOffset(request.EndTime).ToUnixTimeMilliseconds(),
+                Limit = request.Limit,
+            };
     }
 }

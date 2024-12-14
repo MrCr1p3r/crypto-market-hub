@@ -18,6 +18,6 @@ public interface IExchangeClient
     /// <summary>
     /// Fetches all listed coin names from the exchange.
     /// </summary>
-    /// <returns>A collection of coin names listed on the exchange.</returns>
-    Task<IEnumerable<string>> GetAllListedCoins();
+    /// <returns>Object, containing collection of coins listed on this exchange.</returns>
+    Task<ListedCoins> GetAllListedCoins(ListedCoins listedCoins);
 }
