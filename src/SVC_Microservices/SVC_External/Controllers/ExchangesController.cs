@@ -32,7 +32,7 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// <summary>
     /// Retrieves all listed coins from all available exchanges.
     /// </summary>
-    /// <returns>Object that contains collections of listed coins for each exchange.</returns>
+    /// <returns>Object that contains a collection of listed coins for each exchange.</returns>
     [HttpGet("allListedCoins")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(ListedCoins), StatusCodes.Status200OK)]

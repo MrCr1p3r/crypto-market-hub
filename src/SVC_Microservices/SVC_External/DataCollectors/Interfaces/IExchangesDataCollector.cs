@@ -18,6 +18,6 @@ public interface IExchangesDataCollector
     /// <summary>
     /// Fetches all listed coin names from the available exchanges.
     /// </summary>
-    /// <returns>A collection of coin names listed on all of the available exchanges.</returns>
+    /// <returns>Object that contains a collection of listed coins for each exchange.</returns>
     Task<ListedCoins> GetAllListedCoins();
 }

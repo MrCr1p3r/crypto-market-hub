@@ -29,10 +29,8 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
             return [];
         }
 
-        var responseBody = await httpResponse.Content.ReadAsStringAsync();
-        var klineResponse = JsonSerializer.Deserialize<ResponseDtos.BybitKlineResponse>(
-            responseBody
-        );
+        var klineResponse =
+            await httpResponse.Content.ReadFromJsonAsync<ResponseDtos.BybitKlineResponse>();
         return klineResponse!.Result.List!.Select(data => Mapping.ToKlineData(request, data));
     }
 
@@ -47,8 +45,8 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
             return listedCoins;
         }
 
-        var responseBody = await httpResponse.Content.ReadAsStringAsync();
-        var bybitResponse = JsonSerializer.Deserialize<ResponseDtos.BybitReponse>(responseBody);
+        var bybitResponse =
+            await httpResponse.Content.ReadFromJsonAsync<ResponseDtos.BybitReponse>();
         listedCoins.BybitCoins = bybitResponse!.Result.SymbolsList.Select(symbol =>
             symbol.BaseCoin
         );

@@ -29,8 +29,7 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
             return [];
         }
 
-        var responseBody = await httpResponse.Content.ReadAsStringAsync();
-        var rawData = JsonSerializer.Deserialize<List<List<JsonElement>>>(responseBody);
+        var rawData = await httpResponse.Content.ReadFromJsonAsync<List<List<JsonElement>>>();
         return rawData!.Select(Mapping.ToKlineData);
     }
 
@@ -45,8 +44,8 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
             return listedCoins;
         }
 
-        var responseBody = await httpResponse.Content.ReadAsStringAsync();
-        var mexcResponse = JsonSerializer.Deserialize<ResponseDtos.MexcResponse>(responseBody);
+        var mexcResponse =
+            await httpResponse.Content.ReadFromJsonAsync<ResponseDtos.MexcResponse>();
         listedCoins.MexcCoins = mexcResponse!.Symbols.Select(symbol => symbol.BaseAsset);
         return listedCoins;
     }

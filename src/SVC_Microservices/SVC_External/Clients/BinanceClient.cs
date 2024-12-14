@@ -29,8 +29,7 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
             return [];
         }
 
-        var responseBody = await httpResponse.Content.ReadAsStringAsync();
-        var rawData = JsonSerializer.Deserialize<List<List<JsonElement>>>(responseBody);
+        var rawData = await httpResponse.Content.ReadFromJsonAsync<List<List<JsonElement>>>();
         return rawData!.Select(Mapping.ToKlineData);
     }
 
@@ -45,10 +44,8 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
             return listedCoins;
         }
 
-        var responseBody = await httpResponse.Content.ReadAsStringAsync();
-        var binanceResponse = JsonSerializer.Deserialize<ResponseDtos.BinanceResponse>(
-            responseBody
-        );
+        var binanceResponse =
+            await httpResponse.Content.ReadFromJsonAsync<ResponseDtos.BinanceResponse>();
         listedCoins.BinanceCoins = binanceResponse!.Symbols.Select(symbol => symbol.BaseAsset);
         return listedCoins;
     }
