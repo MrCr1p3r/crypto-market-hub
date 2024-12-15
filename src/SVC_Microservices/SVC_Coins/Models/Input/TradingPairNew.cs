@@ -1,4 +1,4 @@
-namespace SVC_Coins.Models.Output;
+namespace SVC_Coins.Models.Input;
 
 /// <summary>
 /// Represents a data for creating a new trading pair.

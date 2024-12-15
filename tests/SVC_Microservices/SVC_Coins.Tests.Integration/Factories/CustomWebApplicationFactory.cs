@@ -13,8 +13,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             // Remove the app's database context
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<CoinsDbContext>));
+            var descriptor = services.SingleOrDefault(d =>
+                d.ServiceType == typeof(DbContextOptions<CoinsDbContext>)
+            );
             if (descriptor != null)
             {
                 services.Remove(descriptor);

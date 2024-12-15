@@ -18,8 +18,6 @@ public class CoinsControllerTests
     public CoinsControllerTests()
     {
         _fixture = new Fixture();
-        _fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
         _mockRepository = new Mock<ICoinsRepository>();
         _controller = new CoinsController(_mockRepository.Object);
     }
@@ -47,8 +45,11 @@ public class CoinsControllerTests
         var result = await _controller.InsertCoin(coin);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be("Coin inserted successfully.");
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .Be("Coin inserted successfully.");
     }
 
     [Fact]
@@ -76,8 +77,11 @@ public class CoinsControllerTests
         var result = await _controller.GetAllCoins();
 
         // Assert
-        result.Result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(coinsList);
+        result
+            .Result.Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(coinsList);
     }
 
     [Fact]
@@ -103,8 +107,11 @@ public class CoinsControllerTests
         var result = await _controller.DeleteCoin(idCoin);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be($"Coin with ID {idCoin} deleted successfully.");
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .Be($"Coin with ID {idCoin} deleted successfully.");
     }
 
     [Fact]
@@ -126,14 +133,66 @@ public class CoinsControllerTests
         // Arrange
         var tradingPair = _fixture.Create<TradingPairNew>();
         var expectedId = _fixture.Create<int>();
-        _mockRepository.Setup(repo => repo.InsertTradingPair(tradingPair))
-                       .ReturnsAsync(expectedId);
+        _mockRepository.Setup(repo => repo.InsertTradingPair(tradingPair)).ReturnsAsync(expectedId);
 
         // Act
         var result = await _controller.InsertTradingPair(tradingPair);
 
         // Assert;
-        result.Should().BeOfType<OkObjectResult>()
-              .Which.Value.Should().Be(expectedId);
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().Be(expectedId);
+    }
+
+    [Fact]
+    public async Task GetQuoteCoinsPrioritized_CallsRepository()
+    {
+        // Arrange
+        var prioritizedCoins = _fixture.CreateMany<Coin>(5);
+        _mockRepository
+            .Setup(repo => repo.GetQuoteCoinsPrioritized())
+            .ReturnsAsync(prioritizedCoins);
+
+        // Act
+        await _controller.GetQuoteCoinsPrioritized();
+
+        // Assert
+        _mockRepository.Verify(repo => repo.GetQuoteCoinsPrioritized(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetQuoteCoinsPrioritized_ReturnsOkResultWithExpectedData()
+    {
+        // Arrange
+        var prioritizedCoins = _fixture.CreateMany<Coin>(5);
+        _mockRepository
+            .Setup(repo => repo.GetQuoteCoinsPrioritized())
+            .ReturnsAsync(prioritizedCoins);
+
+        // Act
+        var result = await _controller.GetQuoteCoinsPrioritized();
+
+        // Assert
+        result
+            .Result.Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(prioritizedCoins);
+    }
+
+    [Fact]
+    public async Task GetQuoteCoinsPrioritized_ReturnsOkResultWhenNoData()
+    {
+        // Arrange
+        var emptyList = Enumerable.Empty<Coin>();
+        _mockRepository.Setup(repo => repo.GetQuoteCoinsPrioritized()).ReturnsAsync(emptyList);
+
+        // Act
+        var result = await _controller.GetQuoteCoinsPrioritized();
+
+        // Assert
+        result
+            .Result.Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(emptyList);
     }
 }

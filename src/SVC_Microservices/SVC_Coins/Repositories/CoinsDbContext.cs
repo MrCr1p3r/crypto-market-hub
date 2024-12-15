@@ -24,13 +24,15 @@ public class CoinsDbContext(DbContextOptions<CoinsDbContext> options) : DbContex
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<CoinEntity>()
+        modelBuilder
+            .Entity<CoinEntity>()
             .HasMany(c => c.TradingPairs)
             .WithOne(tp => tp.CoinMain)
             .HasForeignKey(tp => tp.IdCoinMain)
             .OnDelete(DeleteBehavior.Restrict);
 
-        modelBuilder.Entity<TradingPairEntity>()
+        modelBuilder
+            .Entity<TradingPairEntity>()
             .HasOne(tp => tp.CoinQuote)
             .WithMany()
             .HasForeignKey(tp => tp.IdCoinQuote)

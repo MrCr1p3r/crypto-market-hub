@@ -37,7 +37,7 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
     [HttpGet("getAll")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Coin>>> GetAllCoins()
+    public async Task<ActionResult<IEnumerable<Coin>>> GetAllCoins() //TODO: Change to IActionResult
     {
         var coinsList = await _repository.GetAllCoins();
         return Ok(coinsList);
@@ -56,7 +56,7 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
         await _repository.DeleteCoin(idCoin);
         return Ok($"Coin with ID {idCoin} deleted successfully.");
     }
-    
+
     /// <summary>
     /// Inserts new trading pair into the database.
     /// </summary>
@@ -70,5 +70,18 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
     {
         var insertedId = await _repository.InsertTradingPair(tradingPair);
         return Ok(insertedId);
+    }
+
+    /// <summary>
+    /// Retrieves quote coins sorted by priority.
+    /// </summary>
+    /// <returns>A list of quote coins sorted by priority.</returns>
+    [HttpGet("getQuoteCoinsPrioritized")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<Coin>>> GetQuoteCoinsPrioritized()
+    {
+        var prioritizedCoins = await _repository.GetQuoteCoinsPrioritized();
+        return Ok(prioritizedCoins);
     }
 }

@@ -34,4 +34,10 @@ public interface ICoinsRepository
     /// <param name="tradingPair">The trading pair object to insert.</param>
     /// <returns>The ID of the inserted trading pair.</returns>
     Task<int> InsertTradingPair(TradingPairNew tradingPair);
+
+    /// <summary>
+    /// Retrieves a collection of quote coins sorted by priority from database.
+    /// </summary>
+    /// <returns>A collection of quote coins sorted by priority.</returns>
+    Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized();
 }

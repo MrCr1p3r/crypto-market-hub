@@ -25,9 +25,7 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     /// <inheritdoc />
     public async Task<IEnumerable<Coin>> GetAllCoins()
     {
-        var coinsWithTradingPairs = await _context.Coins
-            .Include(c => c.TradingPairs)
-            .ToListAsync();
+        var coinsWithTradingPairs = await _context.Coins.Include(c => c.TradingPairs).ToListAsync();
 
         var coins = coinsWithTradingPairs.Select(Mapping.ToCoin);
         return coins;
@@ -36,8 +34,9 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     /// <inheritdoc />
     public async Task DeleteCoin(int idCoin)
     {
-        var tradingPairsToDelete = _context.TradingPairs
-            .Where(tp => tp.IdCoinMain == idCoin || tp.IdCoinQuote == idCoin);
+        var tradingPairsToDelete = _context.TradingPairs.Where(tp =>
+            tp.IdCoinMain == idCoin || tp.IdCoinQuote == idCoin
+        );
         _context.TradingPairs.RemoveRange(tradingPairsToDelete);
 
         var coinToDelete = _context.Coins.Where(coin => coin.Id == idCoin);
@@ -55,39 +54,47 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         return tradingPairEntity.Id;
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized()
+    {
+        var prioritizedCoins = await _context
+            .Coins.Where(c => c.QuoteCoinPriority != null)
+            .OrderBy(c => c.QuoteCoinPriority)
+            .ToListAsync();
+
+        return prioritizedCoins.Select(Mapping.ToCoin);
+    }
+
     private static class Mapping
     {
-        public static CoinEntity ToCoinEntity(CoinNew coinNew) => new()
-        {
-            Name = coinNew.Name,
-            Symbol = coinNew.Symbol
-        };
+        public static CoinEntity ToCoinEntity(CoinNew coinNew) =>
+            new() { Name = coinNew.Name, Symbol = coinNew.Symbol };
 
-        public static Coin ToCoin(CoinEntity coinEntity) => new()
-        {
-            Id = coinEntity.Id,
-            Name = coinEntity.Name,
-            Symbol = coinEntity.Symbol,
-            TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair).ToList()
-        };
+        public static Coin ToCoin(CoinEntity coinEntity) =>
+            new()
+            {
+                Id = coinEntity.Id,
+                Name = coinEntity.Name,
+                Symbol = coinEntity.Symbol,
+                TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair).ToList(),
+            };
 
-        public static TradingPair ToTradingPair(TradingPairEntity tradingPairEntity) => new()
-        {
-            Id = tradingPairEntity.Id,
-            CoinQuote = ToTradingPairCoin(tradingPairEntity.CoinQuote)
-        };
+        public static TradingPair ToTradingPair(TradingPairEntity tradingPairEntity) =>
+            new()
+            {
+                Id = tradingPairEntity.Id,
+                CoinQuote = ToTradingPairCoin(tradingPairEntity.CoinQuote),
+            };
 
-        public static TradingPairCoin ToTradingPairCoin(CoinEntity coinEntity) => new()
-        {
-            Id = coinEntity.Id,
-            Name = coinEntity.Name,
-            Symbol = coinEntity.Symbol
-        };
+        public static TradingPairCoin ToTradingPairCoin(CoinEntity coinEntity) =>
+            new()
+            {
+                Id = coinEntity.Id,
+                Name = coinEntity.Name,
+                Symbol = coinEntity.Symbol,
+            };
 
-        public static TradingPairEntity ToTradingPairEntity(TradingPairNew tradingPair) => new()
-        {
-            IdCoinMain = tradingPair.IdCoinMain,
-            IdCoinQuote = tradingPair.IdCoinQuote,
-        };
+        public static TradingPairEntity ToTradingPairEntity(TradingPairNew tradingPair) =>
+            new() { IdCoinMain = tradingPair.IdCoinMain, IdCoinQuote = tradingPair.IdCoinQuote };
     }
 }

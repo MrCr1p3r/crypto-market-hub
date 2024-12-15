@@ -6,7 +6,7 @@ namespace SVC_Coins.Models.Output;
 public class TradingPairCoin
 {
     /// <summary>
-    /// Unique identifier for the coin. 
+    /// Unique identifier for the coin.
     /// </summary>
     public int Id { get; set; }
 

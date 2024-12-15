@@ -10,7 +10,7 @@ namespace SVC_Coins.Models.Entities;
 public class CoinEntity
 {
     /// <summary>
-    /// Unique identifier for the coin. 
+    /// Unique identifier for the coin.
     /// This is the primary key of the table.
     /// </summary>
     [Required]
@@ -29,6 +29,12 @@ public class CoinEntity
     [Required]
     [StringLength(50)]
     public required string Name { get; set; }
+
+    /// <summary>
+    /// Nullable priority value for quote coins.
+    /// Determines sorting order for quote coins.
+    /// </summary>
+    public int? QuoteCoinPriority { get; set; }
 
     /// <summary>
     /// Navigation property for trading pairs where this coin is the main coin.
