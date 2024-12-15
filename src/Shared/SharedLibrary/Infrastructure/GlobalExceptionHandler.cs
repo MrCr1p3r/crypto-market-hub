@@ -12,21 +12,22 @@ namespace SharedLibrary.Infrastructure;
 /// </summary>
 public class GlobalExceptionHandler(
     ILogger<GlobalExceptionHandler> logger,
-    IHostEnvironment environment) 
-    : IExceptionHandler
+    IHostEnvironment environment
+) : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger = logger;
     private readonly IHostEnvironment _environment = environment;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
+        WriteIndented = true,
     };
 
     public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext, 
-        Exception exception, 
-        CancellationToken cancellationToken)
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogError(exception, "An unhandled exception occurred.");
 
@@ -35,25 +36,29 @@ public class GlobalExceptionHandler(
             ArgumentNullException or ArgumentException => StatusCodes.Status400BadRequest,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             KeyNotFoundException => StatusCodes.Status404NotFound,
-            _ => StatusCodes.Status500InternalServerError
+            _ => StatusCodes.Status500InternalServerError,
         };
 
         var problemDetails = new
         {
             type = statusCode switch
             {
-                StatusCodes.Status400BadRequest => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.1",
-                StatusCodes.Status401Unauthorized => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.2",
-                StatusCodes.Status404NotFound => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.5",
-                StatusCodes.Status500InternalServerError => "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1",
-                _ => "https://datatracker.ietf.org/doc/html/rfc9110"
+                StatusCodes.Status400BadRequest =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.1",
+                StatusCodes.Status401Unauthorized =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.2",
+                StatusCodes.Status404NotFound =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.5",
+                StatusCodes.Status500InternalServerError =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1",
+                _ => "https://datatracker.ietf.org/doc/html/rfc9110",
             },
             title = exception.GetType().FullName,
             status = statusCode,
             detail = exception.Message,
             instance = httpContext.Request.Path.Value,
             stackTrace = _environment.IsDevelopment() ? exception.StackTrace : null,
-            timestamp = DateTime.UtcNow
+            timestamp = DateTime.UtcNow,
         };
 
         httpContext.Response.ContentType = MediaTypeNames.Application.Json;
@@ -63,7 +68,8 @@ public class GlobalExceptionHandler(
             httpContext.Response.Body,
             problemDetails,
             JsonOptions,
-            cancellationToken);
+            cancellationToken
+        );
 
         return true;
     }
