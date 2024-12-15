@@ -3,7 +3,6 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Models.Entities;
 using SVC_Coins.Models.Input;
-using SVC_Coins.Models.Output;
 using SVC_Coins.Repositories;
 
 namespace SVC_Coins.Tests.Unit.Repositories;
