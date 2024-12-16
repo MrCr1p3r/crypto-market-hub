@@ -14,8 +14,9 @@ namespace SVC_Kline.Tests.Integration.Factories
             builder.ConfigureServices(services =>
             {
                 // Remove the existing KlineDataDbContext registration
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<KlineDataDbContext>));
+                var descriptor = services.SingleOrDefault(d =>
+                    d.ServiceType == typeof(DbContextOptions<KlineDataDbContext>)
+                );
                 if (descriptor != null)
                 {
                     services.Remove(descriptor);

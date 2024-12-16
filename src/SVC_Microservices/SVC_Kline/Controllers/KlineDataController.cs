@@ -39,7 +39,9 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> InsertManyKlineData([FromBody] IEnumerable<KlineDataNew> klineDataList)
+    public async Task<IActionResult> InsertManyKlineData(
+        [FromBody] IEnumerable<KlineDataNew> klineDataList
+    )
     {
         await _repository.InsertManyKlineData(klineDataList);
         return Ok("Multiple Kline data entries inserted successfully.");

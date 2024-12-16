@@ -69,7 +69,11 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var responseBody = await response.Content.ReadAsStringAsync();
-        responseBody.Should().Contain($"Kline data for trading pair ID {klineData.IdTradePair} deleted successfully.");
+        responseBody
+            .Should()
+            .Contain(
+                $"Kline data for trading pair ID {klineData.IdTradePair} deleted successfully."
+            );
     }
 
     [Fact]
@@ -91,7 +95,9 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
 
         // Verify the data was replaced
         var getAllResponse = await _client.GetAsync("/api/KlineData/getAll");
-        var klineDataList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<KlineData>>();
+        var klineDataList = await getAllResponse.Content.ReadFromJsonAsync<
+            IEnumerable<KlineData>
+        >();
         klineDataList.Should().HaveCount(3);
     }
 }

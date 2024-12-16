@@ -25,11 +25,13 @@ public class Program
         builder.Services.AddSwaggerGen();
         builder.Services.AddDbContext<KlineDataDbContext>(options =>
             options.UseSqlServer(
-                $"Server={Environment.GetEnvironmentVariable("DB_SERVER")};" +
-                $"Database={Environment.GetEnvironmentVariable("DB_NAME")};" +
-                $"User Id={Environment.GetEnvironmentVariable("DB_USER")};" +
-                $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};" +
-                "MultipleActiveResultSets=true;TrustServerCertificate=true;"));
+                $"Server={Environment.GetEnvironmentVariable("DB_SERVER")};"
+                    + $"Database={Environment.GetEnvironmentVariable("DB_NAME")};"
+                    + $"User Id={Environment.GetEnvironmentVariable("DB_USER")};"
+                    + $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
+                    + "MultipleActiveResultSets=true;TrustServerCertificate=true;"
+            )
+        );
 
         // Register the repository for dependency injection
         builder.Services.AddScoped<IKlineDataRepository, KlineDataRepository>();

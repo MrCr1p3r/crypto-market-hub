@@ -40,7 +40,9 @@ public class KlineDataRepositoryTests
         await _repository.InsertKlineData(klineData);
 
         // Assert
-        var entity = await _context.KlineData.FirstOrDefaultAsync(e => e.IdTradePair == klineData.IdTradePair);
+        var entity = await _context.KlineData.FirstOrDefaultAsync(e =>
+            e.IdTradePair == klineData.IdTradePair
+        );
         entity.Should().NotBeNull();
         entity!.OpenPrice.Should().Be(klineDataEntity.OpenPrice);
     }
@@ -134,16 +136,17 @@ public class KlineDataRepositoryTests
 
     private static class Mapping
     {
-        public static KlineDataEntity ToKlineDataEntity(KlineDataNew klineDataNew) => new()
-        {
-            IdTradePair = klineDataNew.IdTradePair,
-            OpenTime = klineDataNew.OpenTime,
-            OpenPrice = klineDataNew.OpenPrice,
-            HighPrice = klineDataNew.HighPrice,
-            LowPrice = klineDataNew.LowPrice,
-            ClosePrice = klineDataNew.ClosePrice,
-            Volume = klineDataNew.Volume,
-            CloseTime = klineDataNew.CloseTime
-        };
+        public static KlineDataEntity ToKlineDataEntity(KlineDataNew klineDataNew) =>
+            new()
+            {
+                IdTradePair = klineDataNew.IdTradePair,
+                OpenTime = klineDataNew.OpenTime,
+                OpenPrice = klineDataNew.OpenPrice,
+                HighPrice = klineDataNew.HighPrice,
+                LowPrice = klineDataNew.LowPrice,
+                ClosePrice = klineDataNew.ClosePrice,
+                Volume = klineDataNew.Volume,
+                CloseTime = klineDataNew.CloseTime,
+            };
     }
 }

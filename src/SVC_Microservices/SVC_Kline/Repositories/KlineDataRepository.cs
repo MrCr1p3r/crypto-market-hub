@@ -60,28 +60,30 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
 
     private static class Mapping
     {
-        public static KlineDataEntity ToKlineDataEntity(KlineDataNew klineDataNew) => new()
-        {
-            IdTradePair = klineDataNew.IdTradePair,
-            OpenTime = klineDataNew.OpenTime,
-            OpenPrice = klineDataNew.OpenPrice,
-            HighPrice = klineDataNew.HighPrice,
-            LowPrice = klineDataNew.LowPrice,
-            ClosePrice = klineDataNew.ClosePrice,
-            Volume = klineDataNew.Volume,
-            CloseTime = klineDataNew.CloseTime
-        };
+        public static KlineDataEntity ToKlineDataEntity(KlineDataNew klineDataNew) =>
+            new()
+            {
+                IdTradePair = klineDataNew.IdTradePair,
+                OpenTime = klineDataNew.OpenTime,
+                OpenPrice = klineDataNew.OpenPrice,
+                HighPrice = klineDataNew.HighPrice,
+                LowPrice = klineDataNew.LowPrice,
+                ClosePrice = klineDataNew.ClosePrice,
+                Volume = klineDataNew.Volume,
+                CloseTime = klineDataNew.CloseTime,
+            };
 
-        public static KlineData ToKlineData(KlineDataEntity klineDataEntity) => new()
-        {
-            IdTradePair = klineDataEntity.IdTradePair,
-            OpenTime = klineDataEntity.OpenTime,
-            OpenPrice = klineDataEntity.OpenPrice,
-            HighPrice = klineDataEntity.HighPrice,
-            LowPrice = klineDataEntity.LowPrice,
-            ClosePrice = klineDataEntity.ClosePrice,
-            Volume = klineDataEntity.Volume,
-            CloseTime = klineDataEntity.CloseTime
-        };
+        public static KlineData ToKlineData(KlineDataEntity klineDataEntity) =>
+            new()
+            {
+                IdTradePair = klineDataEntity.IdTradePair,
+                OpenTime = klineDataEntity.OpenTime,
+                OpenPrice = klineDataEntity.OpenPrice,
+                HighPrice = klineDataEntity.HighPrice,
+                LowPrice = klineDataEntity.LowPrice,
+                ClosePrice = klineDataEntity.ClosePrice,
+                Volume = klineDataEntity.Volume,
+                CloseTime = klineDataEntity.CloseTime,
+            };
     }
 }

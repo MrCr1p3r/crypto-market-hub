@@ -46,8 +46,11 @@ public class KlineDataControllerTests
         var result = await _controller.InsertKlineData(klineData);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be("Kline data inserted successfully.");
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .Be("Kline data inserted successfully.");
     }
 
     [Fact]
@@ -73,8 +76,11 @@ public class KlineDataControllerTests
         var result = await _controller.InsertManyKlineData(klineDataList);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be("Multiple Kline data entries inserted successfully.");
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .Be("Multiple Kline data entries inserted successfully.");
     }
 
     [Fact]
@@ -102,8 +108,11 @@ public class KlineDataControllerTests
         var result = await _controller.GetAllKlineData();
 
         // Assert
-        result.Result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().BeEquivalentTo(klineDataList);
+        result
+            .Result.Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(klineDataList);
     }
 
     [Fact]
@@ -129,8 +138,11 @@ public class KlineDataControllerTests
         var result = await _controller.DeleteKlineDataForTradingPair(idTradePair);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be($"Kline data for trading pair ID {idTradePair} deleted successfully.");
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .Be($"Kline data for trading pair ID {idTradePair} deleted successfully.");
     }
 
     [Fact]
@@ -156,7 +168,10 @@ public class KlineDataControllerTests
         var result = await _controller.ReplaceAllKlineData(klineDataList);
 
         // Assert
-        result.Should().BeOfType<OkObjectResult>()
-            .Which.Value.Should().Be("All Kline data replaced successfully.");
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .Be("All Kline data replaced successfully.");
     }
 }
