@@ -57,6 +57,7 @@ public class GlobalExceptionHandler(
             status = statusCode,
             detail = exception.Message,
             instance = httpContext.Request.Path.Value,
+            innerExceptionMessage = exception.InnerException?.Message,
             stackTrace = _environment.IsDevelopment() ? exception.StackTrace : null,
             timestamp = DateTime.UtcNow,
         };
