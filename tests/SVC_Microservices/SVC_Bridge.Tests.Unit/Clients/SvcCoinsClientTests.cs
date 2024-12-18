@@ -45,10 +45,7 @@ public class SvcCoinsClientTests
         await _client.GetAllCoins();
 
         // Assert
-        _httpMessageHandlerMock.VerifyRequest(
-            HttpMethod.Get,
-            "https://example.com/api/coins/getAll"
-        );
+        _httpMessageHandlerMock.VerifyRequest(HttpMethod.Get, "https://example.com/coins/all");
     }
 
     [Fact]
@@ -99,7 +96,7 @@ public class SvcCoinsClientTests
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
             HttpMethod.Post,
-            "https://example.com/api/coins/tradingPair/insert"
+            "https://example.com/coins/tradingPairs/insert"
         );
     }
 
@@ -135,7 +132,7 @@ public class SvcCoinsClientTests
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
             HttpMethod.Get,
-            "https://example.com/api/coins/getQuoteCoinsPrioritized"
+            "https://example.com/coins/quoteCoinsPrioritized"
         );
     }
 
