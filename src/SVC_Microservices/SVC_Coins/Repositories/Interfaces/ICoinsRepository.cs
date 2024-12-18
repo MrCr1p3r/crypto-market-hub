@@ -1,3 +1,4 @@
+using FluentResults;
 using SVC_Coins.Models.Input;
 using SVC_Coins.Models.Output;
 
@@ -12,8 +13,8 @@ public interface ICoinsRepository
     /// Inserts a new Coin entry into the database.
     /// </summary>
     /// <param name="coin">The Coin object to insert.</param>
-    /// <returns>A task that inserts the coin into the database.</returns>
-    Task InsertCoin(CoinNew coin);
+    /// <returns>A result representing the outcome of the operation.</returns>
+    Task<Result> InsertCoin(CoinNew coin);
 
     /// <summary>
     /// Retrieves all coins from the database.
@@ -25,15 +26,16 @@ public interface ICoinsRepository
     /// Deletes a coin from the database.
     /// </summary>
     /// <param name="idCoin">The ID of the coin to delete.</param>
-    /// <returns>A task that deletes the coin from the database.</returns>
-    Task DeleteCoin(int idCoin);
+    /// <returns>A result representing the outcome of the operation.</returns>
+    Task<Result> DeleteCoin(int idCoin);
 
     /// <summary>
     /// Inserts a new trading pair entry into the database.
     /// </summary>
     /// <param name="tradingPair">The trading pair object to insert.</param>
-    /// <returns>The ID of the inserted trading pair.</returns>
-    Task<int> InsertTradingPair(TradingPairNew tradingPair);
+    /// <returns>A result representing the outcome of the operation.
+    /// If operation was successful, returns the ID of the inserted trading pair.</returns>
+    Task<Result<int>> InsertTradingPair(TradingPairNew tradingPair);
 
     /// <summary>
     /// Retrieves a collection of quote coins sorted by priority from database.

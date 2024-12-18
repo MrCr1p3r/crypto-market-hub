@@ -18,18 +18,36 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     private readonly IFixture _fixture = new Fixture();
 
     [Fact]
-    public async Task InsertCoin_ReturnsOk()
+    public async Task InsertCoin_ReturnsNoContent_WhenSuccessful()
     {
         // Arrange
         var coinNew = _fixture.Create<CoinNew>();
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/Coins/insert", coinNew);
+        var response = await _client.PostAsJsonAsync("/coins/insert", coinNew);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseBody = await response.Content.ReadAsStringAsync();
-        responseBody.Should().Contain("Coin inserted successfully.");
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var getAllResponse = await _client.GetAsync("/coins/all");
+        var coinsList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        coinsList.Should().ContainSingle(c => c.Name == coinNew.Name && c.Symbol == coinNew.Symbol);
+    }
+
+    [Fact]
+    public async Task InsertCoin_ReturnsConflict_WhenCoinAlreadyExists()
+    {
+        // Arrange
+        var coinNew = _fixture.Create<CoinNew>();
+        // Insert once
+        await _client.PostAsJsonAsync("/coins/insert", coinNew);
+
+        // Act - Insert again
+        var response = await _client.PostAsJsonAsync("/coins/insert", coinNew);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var message = await response.Content.ReadAsStringAsync();
+        message.Should().Contain("already exists");
     }
 
     [Fact]
@@ -37,10 +55,10 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         var coinNew = _fixture.Create<CoinNew>();
-        await _client.PostAsJsonAsync("/api/Coins/insert", coinNew);
+        await _client.PostAsJsonAsync("/coins/insert", coinNew);
 
         // Act
-        var response = await _client.GetAsync("/api/Coins/getAll");
+        var response = await _client.GetAsync("/coins/all");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -50,43 +68,72 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task DeleteCoin_ReturnsOk()
+    public async Task DeleteCoin_ReturnsNoContent_WhenSuccessful()
     {
-        // Arrange
+        // Arrange: Insert a coin first
         var coinNew = _fixture.Create<CoinNew>();
-        await _client.PostAsJsonAsync("/api/Coins/insert", coinNew);
-
-        var getAllResponse = await _client.GetAsync("/api/Coins/getAll");
-        var coinsList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
-        var insertedCoin = coinsList!.FirstOrDefault(c =>
+        await _client.PostAsJsonAsync("/coins/insert", coinNew);
+        var allCoinsResponse = await _client.GetAsync("/coins/all");
+        var coinsList = await allCoinsResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        var insertedCoin = coinsList!.First(c =>
             c.Name == coinNew.Name && c.Symbol == coinNew.Symbol
         );
-        insertedCoin.Should().NotBeNull();
 
-        // Act
-        var response = await _client.DeleteAsync($"/api/Coins/delete/{insertedCoin!.Id}");
+        // Act: Delete the inserted coin
+        var response = await _client.DeleteAsync($"/coins/{insertedCoin.Id}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseBody = await response.Content.ReadAsStringAsync();
-        responseBody.Should().Contain($"Coin with ID {insertedCoin.Id} deleted successfully.");
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        getAllResponse = await _client.GetAsync("/api/Coins/getAll");
-        coinsList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        allCoinsResponse = await _client.GetAsync("/coins/all");
+        coinsList = await allCoinsResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
         coinsList.Should().NotContain(c => c.Id == insertedCoin.Id);
     }
 
     [Fact]
-    public async Task InsertTradingPair_ReturnsOk()
+    public async Task DeleteCoin_ReturnsNotFound_WhenCoinDoesNotExist()
     {
         // Arrange
-        var tradingPairNew = _fixture.Create<TradingPairNew>();
+        var nonExistentId = int.MaxValue;
 
         // Act
-        var response = await _client.PostAsJsonAsync(
-            "/api/Coins/tradingPair/insert",
-            tradingPairNew
+        var response = await _client.DeleteAsync($"/coins/{nonExistentId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var message = await response.Content.ReadAsStringAsync();
+        message.Should().Contain("not found");
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_ReturnsOkWithId_WhenSuccessful()
+    {
+        // For trading pairs to be successfully inserted, both coins must exist.
+        // Arrange: Insert two coins.
+        var mainCoin = _fixture.Create<CoinNew>();
+        var quoteCoin = _fixture.Create<CoinNew>();
+
+        await _client.PostAsJsonAsync("/coins/insert", mainCoin);
+        await _client.PostAsJsonAsync("/coins/insert", quoteCoin);
+
+        // Get inserted coins
+        var getAllResponse = await _client.GetAsync("/coins/all");
+        var coinsList = await getAllResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        var mainCoinEntity = coinsList!.First(c =>
+            c.Name == mainCoin.Name && c.Symbol == mainCoin.Symbol
         );
+        var quoteCoinEntity = coinsList!.First(c =>
+            c.Name == quoteCoin.Name && c.Symbol == quoteCoin.Symbol
+        );
+
+        var tradingPairNew = new TradingPairNew
+        {
+            IdCoinMain = mainCoinEntity.Id,
+            IdCoinQuote = quoteCoinEntity.Id,
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/coins/tradingPairs/insert", tradingPairNew);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -95,10 +142,28 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
+    public async Task InsertTradingPair_ReturnsBadRequest_WhenInsertionFails()
+    {
+        // Attempt to insert a trading pair for non-existent coins
+        var tradingPairNew = _fixture.Create<TradingPairNew>();
+
+        var response = await _client.PostAsJsonAsync("/coins/tradingPairs/insert", tradingPairNew);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var message = await response.Content.ReadAsStringAsync();
+        message.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
     public async Task GetQuoteCoinsPrioritized_ShouldReturnOkWithPrioritizedList()
     {
-        // Arrange
-        using (var scope = factory.Services.CreateScope())
+        // Arrange: Insert coins directly into the DB with priorities
+        using (
+            var scope = (
+                (CustomWebApplicationFactory)
+                    Activator.CreateInstance(typeof(CustomWebApplicationFactory))!
+            ).Services.CreateScope()
+        )
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
 
@@ -126,7 +191,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         }
 
         // Act
-        var response = await _client.GetAsync("/api/Coins/getQuoteCoinsPrioritized");
+        var response = await _client.GetAsync("/coins/quoteCoinsPrioritized");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -13,16 +13,15 @@ public class SvcCoinsClient(IHttpClientFactory httpClientFactory) : ISvcCoinsCli
 
     /// <inheritdoc />
     public async Task<IEnumerable<Coin>> GetAllCoins() =>
-        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>("/api/coins/getAll") ?? [];
+        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>("/coins/all") ?? [];
 
     /// <inheritdoc />
     public async Task<int> InsertTradingPair(TradingPairNew tradingPair) =>
         await _httpClient
-            .PostAsJsonAsync("/api/coins/tradingPair/insert", tradingPair)
+            .PostAsJsonAsync("/coins/tradingPairs/insert", tradingPair)
             .Result.Content.ReadFromJsonAsync<int>();
 
     /// <inheritdoc />
     public async Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized() =>
-        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>("/api/coins/getQuoteCoinsPrioritized")
-        ?? [];
+        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>("/coins/quoteCoinsPrioritized") ?? [];
 }

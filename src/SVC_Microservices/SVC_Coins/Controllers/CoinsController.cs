@@ -8,9 +8,8 @@ namespace SVC_Coins.Controllers;
 /// <summary>
 /// Controller for handling coins operations.
 /// </summary>
-/// <param name="repository">The coins repository.</param>
 [ApiController]
-[Route("api/[controller]")]
+[Route("coins")]
 public class CoinsController(ICoinsRepository repository) : ControllerBase
 {
     private readonly ICoinsRepository _repository = repository;
@@ -20,24 +19,28 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
     /// </summary>
     /// <param name="coin">The coin object to insert.</param>
     /// <returns>A status indicating the result of the operation.</returns>
+    /// <response code="204">The coin was successfully inserted.</response>
+    /// <response code="409">The coin already exists in the database.</response>
     [HttpPost("insert")]
     [Consumes("application/json")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
     public async Task<IActionResult> InsertCoin([FromBody] CoinNew coin)
     {
-        await _repository.InsertCoin(coin);
-        return Ok("Coin inserted successfully.");
+        var result = await _repository.InsertCoin(coin);
+        return result.IsSuccess ? NoContent() : Conflict(result.Errors.First().Message);
     }
 
     /// <summary>
     /// Retrieves all coins from the database.
     /// </summary>
     /// <returns>A list of all coins entries.</returns>
-    [HttpGet("getAll")]
+    /// <response code="200">The list of all coins was successfuly retrieved.</response>
+    [HttpGet("all")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Coin>>> GetAllCoins() //TODO: Change to IActionResult
+    public async Task<IActionResult> GetAllCoins()
     {
         var coinsList = await _repository.GetAllCoins();
         return Ok(coinsList);
@@ -48,13 +51,16 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
     /// </summary>
     /// <param name="idCoin">The ID of the coin.</param>
     /// <returns>A status indicating the result of the operation.</returns>
-    [HttpDelete("delete/{idCoin}")]
+    /// <response code="204">The coin was successfully deleted.</response>
+    /// <response code="404">The coin was not found in the database.</response>
+    [HttpDelete("{idCoin}")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteCoin([FromRoute] int idCoin)
     {
-        await _repository.DeleteCoin(idCoin);
-        return Ok($"Coin with ID {idCoin} deleted successfully.");
+        var result = await _repository.DeleteCoin(idCoin);
+        return result.IsSuccess ? NoContent() : NotFound(result.Errors.First().Message);
     }
 
     /// <summary>
@@ -62,26 +68,30 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
     /// </summary>
     /// <param name="tradingPair">The trading pair object to insert.</param>
     /// <returns>The ID of the inserted trading pair.</returns>
-    [HttpPost("tradingPair/insert")]
+    /// <response code="200">The trading pair was successfully inserted.</response>
+    /// <response code="400">The trading pair already exists or one or both coins do not exist.</response>
+    [HttpPost("tradingPairs/insert")]
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> InsertTradingPair([FromBody] TradingPairNew tradingPair)
     {
-        var insertedId = await _repository.InsertTradingPair(tradingPair);
-        return Ok(insertedId);
+        var result = await _repository.InsertTradingPair(tradingPair);
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Errors.First().Message);
     }
 
     /// <summary>
     /// Retrieves quote coins sorted by priority.
     /// </summary>
     /// <returns>A list of quote coins sorted by priority.</returns>
-    [HttpGet("getQuoteCoinsPrioritized")]
+    /// <response code="200">The list of quote coins sorted by priority was successfuly retrieved.</response>
+    [HttpGet("quoteCoinsPrioritized")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<Coin>>> GetQuoteCoinsPrioritized()
+    public async Task<IActionResult> GetQuoteCoinsPrioritized()
     {
-        var prioritizedCoins = await _repository.GetQuoteCoinsPrioritized();
-        return Ok(prioritizedCoins);
+        var prioritizedQuoteCoins = await _repository.GetQuoteCoinsPrioritized();
+        return Ok(prioritizedQuoteCoins);
     }
 }

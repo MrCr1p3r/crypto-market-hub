@@ -16,31 +16,44 @@ public class CoinsRepositoryTests
     public CoinsRepositoryTests()
     {
         _fixture = new Fixture();
-        _fixture.Behaviors.Remove(new ThrowingRecursionBehavior());
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior());
 
         var options = new DbContextOptionsBuilder<CoinsDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         _context = new CoinsDbContext(options);
-
         _repository = new CoinsRepository(_context);
     }
 
     [Fact]
-    public async Task InsertCoin_ShouldAddEntityToDatabase()
+    public async Task InsertCoin_AddsEntityToTheDatabase()
     {
         // Arrange
         var coinNew = _fixture.Create<CoinNew>();
 
         // Act
-        await _repository.InsertCoin(coinNew);
+        var result = await _repository.InsertCoin(coinNew);
 
         // Assert
+        result.IsSuccess.Should().BeTrue();
         var exists = await _context.Coins.AnyAsync(e =>
             e.Symbol == coinNew.Symbol && e.Name == coinNew.Name
         );
         exists.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task InsertCoin_ShouldReturnFail_IfCoinAlreadyExists()
+    {
+        // Arrange
+        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
+        await _repository.InsertCoin(coinNew);
+
+        // Act
+        var result = await _repository.InsertCoin(coinNew);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.First().Message.Should().Be("Coin already exists in the database.");
     }
 
     [Fact]
@@ -132,27 +145,26 @@ public class CoinsRepositoryTests
             Symbol = "USDT",
         };
 
-        await _context.Coins.AddRangeAsync([coin1, coin2, coin3]);
+        await _context.Coins.AddRangeAsync(coin1, coin2, coin3);
         await _context.SaveChangesAsync();
 
-        var coinToDelete = coin2;
-        var coinToDeleteId = coinToDelete.Id;
+        var coinToDeleteId = coin2.Id;
 
         var tradingPair1 = new TradingPairEntity
         {
             Id = 1,
-            IdCoinMain = coinToDelete.Id,
+            IdCoinMain = coin2.Id,
             IdCoinQuote = coin1.Id,
-            CoinMain = coinToDelete,
+            CoinMain = coin2,
             CoinQuote = coin1,
         };
         var tradingPair2 = new TradingPairEntity
         {
             Id = 2,
             IdCoinMain = coin3.Id,
-            IdCoinQuote = coinToDelete.Id,
+            IdCoinQuote = coin2.Id,
             CoinMain = coin3,
-            CoinQuote = coinToDelete,
+            CoinQuote = coin2,
         };
         var tradingPair3 = new TradingPairEntity
         {
@@ -163,13 +175,15 @@ public class CoinsRepositoryTests
             CoinQuote = coin3,
         };
 
-        await _context.TradingPairs.AddRangeAsync([tradingPair1, tradingPair2, tradingPair3]);
+        await _context.TradingPairs.AddRangeAsync(tradingPair1, tradingPair2, tradingPair3);
         await _context.SaveChangesAsync();
 
         // Act
-        await _repository.DeleteCoin(coinToDeleteId);
+        var result = await _repository.DeleteCoin(coinToDeleteId);
 
         // Assert
+        result.IsSuccess.Should().BeTrue();
+
         var deletedCoin = await _context.Coins.FirstOrDefaultAsync(c => c.Id == coinToDeleteId);
         deletedCoin.Should().BeNull();
 
@@ -185,29 +199,24 @@ public class CoinsRepositoryTests
     }
 
     [Fact]
-    public async Task InsertTradingPair_ShouldAddTradingPairToDatabase()
+    public async Task DeleteCoin_ShouldReturnFail_IfCoinNotFound()
     {
         // Arrange
-        var tradingPairNew = _fixture.Create<TradingPairNew>();
+        var nonExistentId = 999;
 
-        //Act
-        await _repository.InsertTradingPair(tradingPairNew);
+        // Act
+        var result = await _repository.DeleteCoin(nonExistentId);
 
-        //Assert
-        var exists = await _context.TradingPairs.AnyAsync(entity =>
-            entity.IdCoinMain == tradingPairNew.IdCoinMain
-            && entity.IdCoinQuote == tradingPairNew.IdCoinQuote
-        );
-        exists.Should().BeTrue();
+        // Assert
+        result.IsFailed.Should().BeTrue();
     }
 
     [Fact]
-    public async Task InsertTradingPair_ShouldReturnInsertedId()
+    public async Task InsertTradingPair_ShouldAddTradingPairToDatabase_IfValid()
     {
         // Arrange
         var coinMain = new CoinEntity { Name = "Bitcoin", Symbol = "BTC" };
         var coinQuote = new CoinEntity { Name = "Ethereum", Symbol = "ETH" };
-
         await _context.Coins.AddRangeAsync(coinMain, coinQuote);
         await _context.SaveChangesAsync();
 
@@ -218,14 +227,76 @@ public class CoinsRepositoryTests
         };
 
         // Act
-        var insertedId = await _repository.InsertTradingPair(tradingPairNew);
+        var result = await _repository.InsertTradingPair(tradingPairNew);
 
         // Assert
+        result.IsSuccess.Should().BeTrue();
+        var insertedId = result.Value;
+
+        var exists = await _context.TradingPairs.AnyAsync(entity =>
+            entity.IdCoinMain == tradingPairNew.IdCoinMain
+            && entity.IdCoinQuote == tradingPairNew.IdCoinQuote
+        );
+        exists.Should().BeTrue();
+
         var insertedEntity = await _context.TradingPairs.FindAsync(insertedId);
         insertedEntity.Should().NotBeNull();
         insertedEntity!.Id.Should().Be(insertedId);
         insertedEntity.IdCoinMain.Should().Be(tradingPairNew.IdCoinMain);
         insertedEntity.IdCoinQuote.Should().Be(tradingPairNew.IdCoinQuote);
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_ShouldFail_IfCoinsDoNotExist()
+    {
+        // Arrange
+        var tradingPairNew = new TradingPairNew
+        {
+            IdCoinMain = 999, // Non-existent
+            IdCoinQuote = 1000, // Non-existent
+        };
+
+        // Act
+        var result = await _repository.InsertTradingPair(tradingPairNew);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.First()
+            .Message.Should()
+            .Be("One or both coins do not exist in the Coins table.");
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_ShouldFail_IfTradingPairAlreadyExists()
+    {
+        // Arrange
+        var coinMain = new CoinEntity { Name = "Bitcoin", Symbol = "BTC" };
+        var coinQuote = new CoinEntity { Name = "Ethereum", Symbol = "ETH" };
+        await _context.Coins.AddRangeAsync(coinMain, coinQuote);
+        await _context.SaveChangesAsync();
+
+        var tradingPair = new TradingPairEntity
+        {
+            IdCoinMain = coinMain.Id,
+            IdCoinQuote = coinQuote.Id,
+        };
+
+        await _context.TradingPairs.AddAsync(tradingPair);
+        await _context.SaveChangesAsync();
+
+        var tradingPairNew = new TradingPairNew
+        {
+            IdCoinMain = coinMain.Id,
+            IdCoinQuote = coinQuote.Id,
+        };
+
+        // Act
+        var result = await _repository.InsertTradingPair(tradingPairNew);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.First().Message.Should().Be("This trading pair already exists.");
     }
 
     [Fact]

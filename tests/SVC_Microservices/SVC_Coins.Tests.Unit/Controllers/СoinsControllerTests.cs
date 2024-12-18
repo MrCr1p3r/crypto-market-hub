@@ -1,5 +1,6 @@
 using AutoFixture;
 using FluentAssertions;
+using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SVC_Coins.Controllers;
@@ -27,6 +28,7 @@ public class CoinsControllerTests
     {
         // Arrange
         var coin = _fixture.Create<CoinNew>();
+        _mockRepository.Setup(repo => repo.InsertCoin(coin)).ReturnsAsync(Result.Ok());
 
         // Act
         await _controller.InsertCoin(coin);
@@ -36,10 +38,28 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task InsertCoin_ReturnsOkResult()
+    public async Task InsertCoin_ReturnsNoContent_WhenSuccessful()
     {
         // Arrange
         var coin = _fixture.Create<CoinNew>();
+        _mockRepository.Setup(repo => repo.InsertCoin(coin)).ReturnsAsync(Result.Ok());
+
+        // Act
+        var result = await _controller.InsertCoin(coin);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+        _mockRepository.Verify(repo => repo.InsertCoin(coin), Times.Once);
+    }
+
+    [Fact]
+    public async Task InsertCoin_ReturnsConflict_WhenCoinAlreadyExists()
+    {
+        // Arrange
+        var coin = _fixture.Create<CoinNew>();
+        _mockRepository
+            .Setup(repo => repo.InsertCoin(coin))
+            .ReturnsAsync(Result.Fail("Coin already exists in the database."));
 
         // Act
         var result = await _controller.InsertCoin(coin);
@@ -47,9 +67,10 @@ public class CoinsControllerTests
         // Assert
         result
             .Should()
-            .BeOfType<OkObjectResult>()
+            .BeOfType<ConflictObjectResult>()
             .Which.Value.Should()
-            .Be("Coin inserted successfully.");
+            .Be("Coin already exists in the database.");
+        _mockRepository.Verify(repo => repo.InsertCoin(coin), Times.Once);
     }
 
     [Fact]
@@ -77,11 +98,22 @@ public class CoinsControllerTests
         var result = await _controller.GetAllCoins();
 
         // Assert
-        result
-            .Result.Should()
-            .BeOfType<OkObjectResult>()
-            .Which.Value.Should()
-            .BeEquivalentTo(coinsList);
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(coinsList);
+    }
+
+    [Fact]
+    public async Task GetAllCoins_ReturnsOkWithEmptyList_WhenNoCoinsExist()
+    {
+        // Arrange
+        var emptyList = new List<Coin>();
+        _mockRepository.Setup(repo => repo.GetAllCoins()).ReturnsAsync(emptyList);
+
+        // Act
+        var result = await _controller.GetAllCoins();
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(emptyList);
+        _mockRepository.Verify(repo => repo.GetAllCoins(), Times.Once);
     }
 
     [Fact]
@@ -89,6 +121,7 @@ public class CoinsControllerTests
     {
         // Arrange
         var idCoin = _fixture.Create<int>();
+        _mockRepository.Setup(repo => repo.DeleteCoin(idCoin)).ReturnsAsync(Result.Ok());
 
         // Act
         await _controller.DeleteCoin(idCoin);
@@ -98,10 +131,28 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task DeleteCoin_ReturnsOkResult()
+    public async Task DeleteCoin_ReturnsNoContent_WhenSuccessful()
     {
         // Arrange
         var idCoin = _fixture.Create<int>();
+        _mockRepository.Setup(repo => repo.DeleteCoin(idCoin)).ReturnsAsync(Result.Ok());
+
+        // Act
+        var result = await _controller.DeleteCoin(idCoin);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+        _mockRepository.Verify(repo => repo.DeleteCoin(idCoin), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteCoin_ReturnsNotFound_WhenCoinDoesNotExist()
+    {
+        // Arrange
+        var idCoin = _fixture.Create<int>();
+        _mockRepository
+            .Setup(repo => repo.DeleteCoin(idCoin))
+            .ReturnsAsync(Result.Fail($"Coin with ID {idCoin} not found."));
 
         // Act
         var result = await _controller.DeleteCoin(idCoin);
@@ -109,9 +160,10 @@ public class CoinsControllerTests
         // Assert
         result
             .Should()
-            .BeOfType<OkObjectResult>()
+            .BeOfType<NotFoundObjectResult>()
             .Which.Value.Should()
-            .Be($"Coin with ID {idCoin} deleted successfully.");
+            .Be($"Coin with ID {idCoin} not found.");
+        _mockRepository.Verify(repo => repo.DeleteCoin(idCoin), Times.Once);
     }
 
     [Fact]
@@ -119,6 +171,9 @@ public class CoinsControllerTests
     {
         // Arrange
         var tradingPair = _fixture.Create<TradingPairNew>();
+        _mockRepository
+            .Setup(repo => repo.InsertTradingPair(tradingPair))
+            .ReturnsAsync(Result.Ok(1));
 
         // Act
         await _controller.InsertTradingPair(tradingPair);
@@ -128,18 +183,43 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task InsertTradingPair_ReturnsInsertedId()
+    public async Task InsertTradingPair_ReturnsOkWithId_WhenSuccessful()
     {
         // Arrange
         var tradingPair = _fixture.Create<TradingPairNew>();
         var expectedId = _fixture.Create<int>();
-        _mockRepository.Setup(repo => repo.InsertTradingPair(tradingPair)).ReturnsAsync(expectedId);
+
+        _mockRepository
+            .Setup(repo => repo.InsertTradingPair(tradingPair))
+            .ReturnsAsync(Result.Ok(expectedId));
 
         // Act
         var result = await _controller.InsertTradingPair(tradingPair);
 
-        // Assert;
+        // Assert
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().Be(expectedId);
+        _mockRepository.Verify(repo => repo.InsertTradingPair(tradingPair), Times.Once);
+    }
+
+    [Fact]
+    public async Task InsertTradingPair_ReturnsBadRequest_WhenInsertionFails()
+    {
+        // Arrange
+        var tradingPair = _fixture.Create<TradingPairNew>();
+        _mockRepository
+            .Setup(repo => repo.InsertTradingPair(tradingPair))
+            .ReturnsAsync(Result.Fail("This trading pair already exists."));
+
+        // Act
+        var result = await _controller.InsertTradingPair(tradingPair);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<BadRequestObjectResult>()
+            .Which.Value.Should()
+            .Be("This trading pair already exists.");
+        _mockRepository.Verify(repo => repo.InsertTradingPair(tradingPair), Times.Once);
     }
 
     [Fact]
@@ -172,7 +252,7 @@ public class CoinsControllerTests
 
         // Assert
         result
-            .Result.Should()
+            .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
             .BeEquivalentTo(prioritizedCoins);
@@ -189,10 +269,6 @@ public class CoinsControllerTests
         var result = await _controller.GetQuoteCoinsPrioritized();
 
         // Assert
-        result
-            .Result.Should()
-            .BeOfType<OkObjectResult>()
-            .Which.Value.Should()
-            .BeEquivalentTo(emptyList);
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(emptyList);
     }
 }
