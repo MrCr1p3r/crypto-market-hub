@@ -7,7 +7,7 @@ namespace SVC_Coins.Models.Entities;
 /// Represents a cryptocurrency entity in the database.
 /// </summary>
 [PrimaryKey(nameof(Id))]
-public class CoinEntity
+public class CoinsEntity
 {
     /// <summary>
     /// Unique identifier for the coin.
@@ -18,10 +18,16 @@ public class CoinEntity
 
     /// <summary>
     /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin).
+    /// Lowercase letters will be automatically converted to uppercase.
     /// </summary>
     [Required]
     [StringLength(50)]
-    public required string Symbol { get; set; }
+    public required string Symbol
+    {
+        get => _symbol;
+        set => _symbol = value.ToUpper();
+    }
+    private string _symbol = string.Empty;
 
     /// <summary>
     /// Full name of the cryptocurrency (e.g., "Bitcoin").
@@ -39,5 +45,5 @@ public class CoinEntity
     /// <summary>
     /// Navigation property for trading pairs where this coin is the main coin.
     /// </summary>
-    public ICollection<TradingPairEntity> TradingPairs { get; set; } = [];
+    public ICollection<TradingPairsEntity> TradingPairs { get; set; } = [];
 }

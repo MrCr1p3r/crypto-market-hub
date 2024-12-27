@@ -11,7 +11,7 @@ public class TradingPairCoin
     public int Id { get; set; }
 
     /// <summary>
-    /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin).
+    /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin). Is always uppercase.
     /// </summary>
     public required string Symbol { get; set; }
 

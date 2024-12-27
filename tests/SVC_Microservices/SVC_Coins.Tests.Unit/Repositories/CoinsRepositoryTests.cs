@@ -1,4 +1,3 @@
-using AutoFixture;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Models.Entities;
@@ -9,14 +8,11 @@ namespace SVC_Coins.Tests.Unit.Repositories;
 
 public class CoinsRepositoryTests
 {
-    private readonly IFixture _fixture;
     private readonly CoinsDbContext _context;
     private readonly CoinsRepository _repository;
 
     public CoinsRepositoryTests()
     {
-        _fixture = new Fixture();
-
         var options = new DbContextOptionsBuilder<CoinsDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
@@ -28,7 +24,7 @@ public class CoinsRepositoryTests
     public async Task InsertCoin_AddsEntityToTheDatabase()
     {
         // Arrange
-        var coinNew = _fixture.Create<CoinNew>();
+        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
 
         // Act
         var result = await _repository.InsertCoin(coinNew);
@@ -60,21 +56,21 @@ public class CoinsRepositoryTests
     public async Task GetCoins_ShouldReturnAllCoinsWithTradingPairs()
     {
         // Arrange
-        var coin1 = new CoinEntity
+        var coin1 = new CoinsEntity
         {
             Id = 1,
             Name = "Bitcoin",
             Symbol = "BTC",
             TradingPairs = [],
         };
-        var coin2 = new CoinEntity
+        var coin2 = new CoinsEntity
         {
             Id = 2,
             Name = "Ethereum",
             Symbol = "ETH",
             TradingPairs = [],
         };
-        var coin3 = new CoinEntity
+        var coin3 = new CoinsEntity
         {
             Id = 3,
             Name = "Tether",
@@ -85,7 +81,7 @@ public class CoinsRepositoryTests
         await _context.Coins.AddRangeAsync([coin1, coin2, coin3]);
         await _context.SaveChangesAsync();
 
-        var tradingPair1 = new TradingPairEntity
+        var tradingPair1 = new TradingPairsEntity
         {
             Id = 1,
             IdCoinMain = coin1.Id,
@@ -93,7 +89,7 @@ public class CoinsRepositoryTests
             CoinMain = coin1,
             CoinQuote = coin3,
         };
-        var tradingPair2 = new TradingPairEntity
+        var tradingPair2 = new TradingPairsEntity
         {
             Id = 2,
             IdCoinMain = coin2.Id,
@@ -126,19 +122,19 @@ public class CoinsRepositoryTests
     public async Task DeleteCoin_ShouldRemoveCoinAndAssociatedTradingPairsFromDatabase()
     {
         // Arrange
-        var coin1 = new CoinEntity
+        var coin1 = new CoinsEntity
         {
             Id = 1,
             Name = "Bitcoin",
             Symbol = "BTC",
         };
-        var coin2 = new CoinEntity
+        var coin2 = new CoinsEntity
         {
             Id = 2,
             Name = "Ethereum",
             Symbol = "ETH",
         };
-        var coin3 = new CoinEntity
+        var coin3 = new CoinsEntity
         {
             Id = 3,
             Name = "Tether",
@@ -150,7 +146,7 @@ public class CoinsRepositoryTests
 
         var coinToDeleteId = coin2.Id;
 
-        var tradingPair1 = new TradingPairEntity
+        var tradingPair1 = new TradingPairsEntity
         {
             Id = 1,
             IdCoinMain = coin2.Id,
@@ -158,7 +154,7 @@ public class CoinsRepositoryTests
             CoinMain = coin2,
             CoinQuote = coin1,
         };
-        var tradingPair2 = new TradingPairEntity
+        var tradingPair2 = new TradingPairsEntity
         {
             Id = 2,
             IdCoinMain = coin3.Id,
@@ -166,7 +162,7 @@ public class CoinsRepositoryTests
             CoinMain = coin3,
             CoinQuote = coin2,
         };
-        var tradingPair3 = new TradingPairEntity
+        var tradingPair3 = new TradingPairsEntity
         {
             Id = 3,
             IdCoinMain = coin1.Id,
@@ -215,8 +211,8 @@ public class CoinsRepositoryTests
     public async Task InsertTradingPair_ShouldAddTradingPairToDatabase_IfValid()
     {
         // Arrange
-        var coinMain = new CoinEntity { Name = "Bitcoin", Symbol = "BTC" };
-        var coinQuote = new CoinEntity { Name = "Ethereum", Symbol = "ETH" };
+        var coinMain = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
+        var coinQuote = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
         await _context.Coins.AddRangeAsync(coinMain, coinQuote);
         await _context.SaveChangesAsync();
 
@@ -271,12 +267,12 @@ public class CoinsRepositoryTests
     public async Task InsertTradingPair_ShouldFail_IfTradingPairAlreadyExists()
     {
         // Arrange
-        var coinMain = new CoinEntity { Name = "Bitcoin", Symbol = "BTC" };
-        var coinQuote = new CoinEntity { Name = "Ethereum", Symbol = "ETH" };
+        var coinMain = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
+        var coinQuote = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
         await _context.Coins.AddRangeAsync(coinMain, coinQuote);
         await _context.SaveChangesAsync();
 
-        var tradingPair = new TradingPairEntity
+        var tradingPair = new TradingPairsEntity
         {
             IdCoinMain = coinMain.Id,
             IdCoinQuote = coinQuote.Id,
@@ -303,21 +299,21 @@ public class CoinsRepositoryTests
     public async Task GetQuoteCoinsPrioritized_ShouldReturnCoinsSortedByPriority()
     {
         // Arrange
-        var coin1 = new CoinEntity
+        var coin1 = new CoinsEntity
         {
             Id = 1,
             Name = "Bitcoin",
             Symbol = "BTC",
             QuoteCoinPriority = 2,
         };
-        var coin2 = new CoinEntity
+        var coin2 = new CoinsEntity
         {
             Id = 2,
             Name = "Ethereum",
             Symbol = "ETH",
             QuoteCoinPriority = 1,
         };
-        var coin3 = new CoinEntity
+        var coin3 = new CoinsEntity
         {
             Id = 3,
             Name = "Tether",

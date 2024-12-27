@@ -12,16 +12,30 @@ using SVC_Coins.Tests.Integration.Factories;
 namespace SVC_Coins.Tests.Integration.Controllers;
 
 public class CoinsControllerTests(CustomWebApplicationFactory factory)
-    : IClassFixture<CustomWebApplicationFactory>
+    : IClassFixture<CustomWebApplicationFactory>,
+        IAsyncLifetime
 {
+    private readonly CustomWebApplicationFactory _factory = factory;
     private readonly HttpClient _client = factory.CreateClient();
     private readonly IFixture _fixture = new Fixture();
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync()
+    {
+        // Clean up the database after each test
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
+        dbContext.Coins.RemoveRange(dbContext.Coins);
+        dbContext.TradingPairs.RemoveRange(dbContext.TradingPairs);
+        await dbContext.SaveChangesAsync();
+    }
 
     [Fact]
     public async Task InsertCoin_ReturnsNoContent_WhenSuccessful()
     {
         // Arrange
-        var coinNew = _fixture.Create<CoinNew>();
+        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
 
         // Act
         var response = await _client.PostAsJsonAsync("/coins/insert", coinNew);
@@ -54,7 +68,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     public async Task GetAllCoins_ShouldReturnOkWithList()
     {
         // Arrange
-        var coinNew = _fixture.Create<CoinNew>();
+        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
         await _client.PostAsJsonAsync("/coins/insert", coinNew);
 
         // Act
@@ -71,7 +85,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     public async Task DeleteCoin_ReturnsNoContent_WhenSuccessful()
     {
         // Arrange: Insert a coin first
-        var coinNew = _fixture.Create<CoinNew>();
+        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
         await _client.PostAsJsonAsync("/coins/insert", coinNew);
         var allCoinsResponse = await _client.GetAsync("/coins/all");
         var coinsList = await allCoinsResponse.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
@@ -110,8 +124,8 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     {
         // For trading pairs to be successfully inserted, both coins must exist.
         // Arrange: Insert two coins.
-        var mainCoin = _fixture.Create<CoinNew>();
-        var quoteCoin = _fixture.Create<CoinNew>();
+        var mainCoin = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
+        var quoteCoin = new CoinNew { Name = "Ethereum", Symbol = "ETH" };
 
         await _client.PostAsJsonAsync("/coins/insert", mainCoin);
         await _client.PostAsJsonAsync("/coins/insert", quoteCoin);
@@ -158,37 +172,30 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     public async Task GetQuoteCoinsPrioritized_ShouldReturnOkWithPrioritizedList()
     {
         // Arrange: Insert coins directly into the DB with priorities
-        using (
-            var scope = (
-                (CustomWebApplicationFactory)
-                    Activator.CreateInstance(typeof(CustomWebApplicationFactory))!
-            ).Services.CreateScope()
-        )
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
+
+        var coin1 = new CoinsEntity
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
+            Name = "Bitcoin",
+            Symbol = "BTC",
+            QuoteCoinPriority = 2,
+        };
+        var coin2 = new CoinsEntity
+        {
+            Name = "Ethereum",
+            Symbol = "ETH",
+            QuoteCoinPriority = 1,
+        };
+        var coin3 = new CoinsEntity
+        {
+            Name = "Tether",
+            Symbol = "USDT",
+            QuoteCoinPriority = 3,
+        };
 
-            var coin1 = new CoinEntity
-            {
-                Name = "Bitcoin",
-                Symbol = "BTC",
-                QuoteCoinPriority = 2,
-            };
-            var coin2 = new CoinEntity
-            {
-                Name = "Ethereum",
-                Symbol = "ETH",
-                QuoteCoinPriority = 1,
-            };
-            var coin3 = new CoinEntity
-            {
-                Name = "Tether",
-                Symbol = "USDT",
-                QuoteCoinPriority = 3,
-            };
-
-            dbContext.Coins.AddRange(coin1, coin2, coin3);
-            await dbContext.SaveChangesAsync();
-        }
+        dbContext.Coins.AddRange(coin1, coin2, coin3);
+        await dbContext.SaveChangesAsync();
 
         // Act
         var response = await _client.GetAsync("/coins/quoteCoinsPrioritized");

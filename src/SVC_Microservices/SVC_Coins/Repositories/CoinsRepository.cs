@@ -18,16 +18,16 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     /// <inheritdoc />
     public async Task<Result> InsertCoin(CoinNew coin)
     {
-        if (await CheckCoinExists(coin))
+        var coinEntity = Mapping.ToCoinEntity(coin);
+        if (await CheckCoinExists(coinEntity))
             return Result.Fail("Coin already exists in the database.");
 
-        var coinEntity = Mapping.ToCoinEntity(coin);
         await _context.Coins.AddAsync(coinEntity);
         await _context.SaveChangesAsync();
         return Result.Ok();
     }
 
-    private async Task<bool> CheckCoinExists(CoinNew coin) =>
+    private async Task<bool> CheckCoinExists(CoinsEntity coin) =>
         await _context.Coins.AnyAsync(c => c.Name == coin.Name && c.Symbol == coin.Symbol);
 
     /// <inheritdoc />
@@ -73,11 +73,11 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         return Result.Ok(tradingPairEntity.Id);
     }
 
-    private async Task<bool> CheckCoinsExist(TradingPairEntity tradingPairEntity) =>
+    private async Task<bool> CheckCoinsExist(TradingPairsEntity tradingPairEntity) =>
         await _context.Coins.AnyAsync(coin => coin.Id == tradingPairEntity.IdCoinMain)
         && await _context.Coins.AnyAsync(coin => coin.Id == tradingPairEntity.IdCoinQuote);
 
-    private async Task<bool> CheckTradingPairExists(TradingPairEntity tradingPairEntity) =>
+    private async Task<bool> CheckTradingPairExists(TradingPairsEntity tradingPairEntity) =>
         await _context.TradingPairs.AnyAsync(tp =>
             tp.IdCoinMain == tradingPairEntity.IdCoinMain
             && tp.IdCoinQuote == tradingPairEntity.IdCoinQuote
@@ -96,10 +96,10 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
 
     private static class Mapping
     {
-        public static CoinEntity ToCoinEntity(CoinNew coinNew) =>
+        public static CoinsEntity ToCoinEntity(CoinNew coinNew) =>
             new() { Name = coinNew.Name, Symbol = coinNew.Symbol };
 
-        public static Coin ToCoin(CoinEntity coinEntity) =>
+        public static Coin ToCoin(CoinsEntity coinEntity) =>
             new()
             {
                 Id = coinEntity.Id,
@@ -108,14 +108,14 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
                 TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair).ToList(),
             };
 
-        public static TradingPair ToTradingPair(TradingPairEntity tradingPairEntity) =>
+        public static TradingPair ToTradingPair(TradingPairsEntity tradingPairEntity) =>
             new()
             {
                 Id = tradingPairEntity.Id,
                 CoinQuote = ToTradingPairCoin(tradingPairEntity.CoinQuote),
             };
 
-        public static TradingPairCoin ToTradingPairCoin(CoinEntity coinEntity) =>
+        public static TradingPairCoin ToTradingPairCoin(CoinsEntity coinEntity) =>
             new()
             {
                 Id = coinEntity.Id,
@@ -123,7 +123,7 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
                 Symbol = coinEntity.Symbol,
             };
 
-        public static TradingPairEntity ToTradingPairEntity(TradingPairNew tradingPair) =>
+        public static TradingPairsEntity ToTradingPairEntity(TradingPairNew tradingPair) =>
             new() { IdCoinMain = tradingPair.IdCoinMain, IdCoinQuote = tradingPair.IdCoinQuote };
     }
 }

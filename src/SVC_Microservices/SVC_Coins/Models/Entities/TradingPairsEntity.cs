@@ -9,7 +9,7 @@ namespace SVC_Coins.Models.Entities;
 /// </summary>
 [Table("TradingPairs")]
 [PrimaryKey(nameof(Id))]
-public class TradingPairEntity
+public class TradingPairsEntity
 {
     /// <summary>
     /// Unique identifier for the trading pair.
@@ -33,11 +33,11 @@ public class TradingPairEntity
     /// Navigation property for the main coin.
     /// </summary>
     [ForeignKey(nameof(IdCoinMain))]
-    public CoinEntity CoinMain { get; set; } = null!;
+    public CoinsEntity CoinMain { get; set; } = null!;
 
     /// <summary>
     /// Navigation property for the quote coin.
     /// </summary>
     [ForeignKey(nameof(IdCoinQuote))]
-    public CoinEntity CoinQuote { get; set; } = null!;
+    public CoinsEntity CoinQuote { get; set; } = null!;
 }

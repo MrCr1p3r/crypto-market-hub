@@ -3,11 +3,17 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SVC_Coins.Repositories;
+using Testcontainers.MsSql;
 
 namespace SVC_Coins.Tests.Integration.Factories;
 
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private readonly MsSqlContainer _databaseContainer = new MsSqlBuilder()
+        .WithPassword("Password12!")
+        .WithEnvironment("ACCEPT_EULA", "Y")
+        .Build();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
@@ -21,11 +27,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(descriptor);
             }
 
-            // Add an in-memory database for testing
             services.AddDbContext<CoinsDbContext>(options =>
             {
-                options.UseInMemoryDatabase("TestDatabase");
+                options.UseSqlServer(_databaseContainer.GetConnectionString());
             });
         });
+    }
+
+    public async Task InitializeAsync()
+    {
+        // 1) Start the container
+        await _databaseContainer.StartAsync();
+
+        // 2) Apply EF Core migrations to create the schema
+        using var scope = Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
+        await dbContext.Database.EnsureCreatedAsync();
+    }
+
+    public new async Task DisposeAsync()
+    {
+        await _databaseContainer.StopAsync();
     }
 }

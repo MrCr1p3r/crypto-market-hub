@@ -6,7 +6,7 @@ namespace SVC_Coins.Models.Input;
 public class CoinNew
 {
     /// <summary>
-    /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin).
+    /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin). Must be uppercase.
     /// </summary>
     public required string Symbol { get; set; }
 
