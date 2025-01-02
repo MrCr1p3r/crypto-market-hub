@@ -39,7 +39,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         // 1) Start the container
         await _databaseContainer.StartAsync();
 
-        // 2) Apply EF Core migrations to create the schema
+        // 2) Create the database schema
         using var scope = Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
         await dbContext.Database.EnsureCreatedAsync();
