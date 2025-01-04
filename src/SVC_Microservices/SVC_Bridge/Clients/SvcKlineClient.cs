@@ -12,5 +12,5 @@ public class SvcKlineClient(IHttpClientFactory httpClientFactory) : ISvcKlineCli
 
     /// <inheritdoc />
     public async Task ReplaceAllKlineData(IEnumerable<KlineDataNew> newKlineData) =>
-        await _httpClient.PutAsJsonAsync("/api/klineData/replaceAll", newKlineData);
+        await _httpClient.PutAsJsonAsync("/kline/replaceAll", newKlineData);
 }

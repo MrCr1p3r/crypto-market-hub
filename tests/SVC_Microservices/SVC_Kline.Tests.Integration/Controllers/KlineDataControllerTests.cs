@@ -21,7 +21,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
         var klineData = _fixture.Create<KlineDataNew>();
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/KlineData/insert", klineData);
+        var response = await _client.PostAsJsonAsync("/kline/insert", klineData);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -36,7 +36,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
         var klineDataList = _fixture.CreateMany<KlineDataNew>(5);
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/KlineData/insertMany", klineDataList);
+        var response = await _client.PostAsJsonAsync("/kline/insertMany", klineDataList);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -48,7 +48,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task GetAllKlineData_ShouldReturnOkWithList()
     {
         // Act
-        var response = await _client.GetAsync("/api/KlineData/getAll");
+        var response = await _client.GetAsync("/kline/all");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -61,10 +61,10 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var klineData = _fixture.Create<KlineDataNew>();
-        await _client.PostAsJsonAsync("/api/KlineData/insert", klineData);
+        await _client.PostAsJsonAsync("/kline/insert", klineData);
 
         // Act
-        var response = await _client.DeleteAsync($"/api/KlineData/delete/{klineData.IdTradePair}");
+        var response = await _client.DeleteAsync($"/kline/{klineData.IdTradePair}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -81,12 +81,12 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var existingData = _fixture.CreateMany<KlineDataNew>(5).ToArray();
-        await _client.PostAsJsonAsync("/api/KlineData/insertMany", existingData);
+        await _client.PostAsJsonAsync("/kline/insertMany", existingData);
 
         var newKlineData = _fixture.CreateMany<KlineDataNew>(3).ToArray();
 
         // Act
-        var response = await _client.PutAsJsonAsync("/api/KlineData/replaceAll", newKlineData);
+        var response = await _client.PutAsJsonAsync("/kline/replaceAll", newKlineData);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -94,7 +94,7 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
         responseBody.Should().Contain("All Kline data replaced successfully.");
 
         // Verify the data was replaced
-        var getAllResponse = await _client.GetAsync("/api/KlineData/getAll");
+        var getAllResponse = await _client.GetAsync("/kline/all");
         var klineDataList = await getAllResponse.Content.ReadFromJsonAsync<
             IEnumerable<KlineData>
         >();

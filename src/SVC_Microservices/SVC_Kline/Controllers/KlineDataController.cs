@@ -10,7 +10,7 @@ namespace SVC_Kline.Controllers;
 /// </summary>
 /// <param name="repository">The Kline data repository.</param>
 [ApiController]
-[Route("api/[controller]")]
+[Route("kline")]
 public class KlineDataController(IKlineDataRepository repository) : ControllerBase
 {
     private readonly IKlineDataRepository _repository = repository;
@@ -51,7 +51,7 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
     /// Retrieves all Kline data from the database.
     /// </summary>
     /// <returns>A list of all Kline data entries.</returns>
-    [HttpGet("getAll")]
+    [HttpGet("all")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<KlineData>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<KlineData>>> GetAllKlineData()
@@ -65,7 +65,7 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
     /// </summary>
     /// <param name="idTradePair">The ID of the trading pair.</param>
     /// <returns>A status indicating the result of the operation.</returns>
-    [HttpDelete("delete/{idTradePair}")]
+    [HttpDelete("{idTradePair}")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> DeleteKlineDataForTradingPair([FromRoute] int idTradePair)

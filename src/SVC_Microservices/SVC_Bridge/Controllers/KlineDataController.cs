@@ -8,7 +8,7 @@ namespace SVC_Bridge.Controllers;
 /// Controller for handling Kline data operations.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[Route("bridge/kline")]
 public class KlineDataController(
     IKlineDataCollector klineDataCollector,
     ISvcKlineClient klineClient

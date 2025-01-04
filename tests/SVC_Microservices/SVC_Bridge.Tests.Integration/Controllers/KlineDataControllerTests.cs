@@ -37,7 +37,7 @@ public class KlineDataControllerTests
     public async Task UpdateEntireKlineData_ShouldReturnOkWhenDataIsCollectedAndUpdated()
     {
         // Act
-        var response = await _client.PostAsync("/api/KlineData/updateEntireKlineData", null);
+        var response = await _client.PostAsync("/bridge/kline/updateEntireKlineData", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -53,7 +53,7 @@ public class KlineDataControllerTests
         _mockKlineDataCollector.Setup(dc => dc.CollectEntireKlineData()).ReturnsAsync([]);
 
         // Act
-        var response = await _client.PostAsync("/api/KlineData/updateEntireKlineData", null);
+        var response = await _client.PostAsync("/bridge/kline/updateEntireKlineData", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

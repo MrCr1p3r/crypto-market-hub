@@ -56,7 +56,7 @@ public class SvcExternalClientTests
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
             HttpMethod.Get,
-            $"https://example.com/api/exchanges/klineData?{queryString}"
+            $"https://example.com/exchanges/klineData?{queryString}"
         );
     }
 

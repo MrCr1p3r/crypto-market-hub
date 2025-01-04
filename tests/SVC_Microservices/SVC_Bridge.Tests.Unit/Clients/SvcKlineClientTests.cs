@@ -46,7 +46,7 @@ public class SvcKlineClientTests
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
             HttpMethod.Put,
-            "https://example.com/api/klineData/replaceAll"
+            "https://example.com/kline/replaceAll"
         );
     }
 }

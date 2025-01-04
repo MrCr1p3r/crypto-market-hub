@@ -10,7 +10,7 @@ namespace SVC_External.Controllers;
 /// </summary>
 /// <param name="dataCollector">The exchanges data collector.</param>
 [ApiController]
-[Route("api/[controller]")]
+[Route("exchanges")]
 public class ExchangesController(IExchangesDataCollector dataCollector) : ControllerBase
 {
     private readonly IExchangesDataCollector _dataCollector = dataCollector;

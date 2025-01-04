@@ -47,7 +47,7 @@ public class ExchangesControllerIntegrationTests
         var queryString = WebSerializer.ToQueryString(klineDataRequest, options);
 
         // Act
-        var response = await _client.GetAsync($"/api/Exchanges/klineData?{queryString}");
+        var response = await _client.GetAsync($"/exchanges/klineData?{queryString}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -61,7 +61,7 @@ public class ExchangesControllerIntegrationTests
     public async Task GetAllListedCoins_ShouldReturnOkWithData()
     {
         // Act
-        var response = await _client.GetAsync("/api/Exchanges/allListedCoins");
+        var response = await _client.GetAsync("/exchanges/allListedCoins");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

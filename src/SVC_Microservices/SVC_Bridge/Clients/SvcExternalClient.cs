@@ -22,7 +22,7 @@ public class SvcExternalClient(IHttpClientFactory httpClientFactory) : ISvcExter
         };
         var queryString = WebSerializer.ToQueryString(request, options);
         return await _httpClient.GetFromJsonAsync<IEnumerable<KlineData>>(
-                $"/api/exchanges/klineData?{queryString}"
+                $"/exchanges/klineData?{queryString}"
             ) ?? [];
     }
 }
