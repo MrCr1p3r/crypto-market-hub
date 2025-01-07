@@ -94,6 +94,17 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         return prioritizedCoins.Select(Mapping.ToCoin);
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids)
+    {
+        var coins = await _context
+            .Coins.Where(coin => ids.Contains(coin.Id))
+            .Include(c => c.TradingPairs)
+            .ToListAsync();
+
+        return coins.Select(Mapping.ToCoin);
+    }
+
     private static class Mapping
     {
         public static CoinsEntity ToCoinEntity(CoinNew coinNew) =>

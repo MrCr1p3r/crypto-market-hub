@@ -94,4 +94,19 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
         var prioritizedQuoteCoins = await _repository.GetQuoteCoinsPrioritized();
         return Ok(prioritizedQuoteCoins);
     }
+
+    /// <summary>
+    /// Retrieves coins by their IDs.
+    /// </summary>
+    /// <param name="ids">The IDs of the coins to retrieve.</param>
+    /// <returns>A list of coins.</returns>
+    /// <response code="200">The list of coins was successfully retrieved.</response>
+    [HttpGet("byIds")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCoinsByIds([FromQuery] IEnumerable<int> ids)
+    {
+        var coins = await _repository.GetCoinsByIds(ids);
+        return Ok(coins);
+    }
 }

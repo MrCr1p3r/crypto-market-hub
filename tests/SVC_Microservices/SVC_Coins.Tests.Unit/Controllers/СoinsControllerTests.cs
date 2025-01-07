@@ -271,4 +271,49 @@ public class CoinsControllerTests
         // Assert
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(emptyList);
     }
+
+    [Fact]
+    public async Task GetCoinsByIds_CallsRepository()
+    {
+        // Arrange
+        var ids = new List<int> { 1, 2 };
+        var coins = _fixture.CreateMany<Coin>(2);
+        _mockRepository.Setup(repo => repo.GetCoinsByIds(ids)).ReturnsAsync(coins);
+
+        // Act
+        await _controller.GetCoinsByIds(ids);
+
+        // Assert
+        _mockRepository.Verify(repo => repo.GetCoinsByIds(ids), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ReturnsOkResultWithExpectedData()
+    {
+        // Arrange
+        var ids = new List<int> { 1, 2 };
+        var coins = _fixture.CreateMany<Coin>(2);
+        _mockRepository.Setup(repo => repo.GetCoinsByIds(ids)).ReturnsAsync(coins);
+
+        // Act
+        var result = await _controller.GetCoinsByIds(ids);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(coins);
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ReturnsOkWithEmptyList_WhenNoCoinsExist()
+    {
+        // Arrange
+        var ids = new List<int> { 1, 2 };
+        var emptyList = new List<Coin>();
+        _mockRepository.Setup(repo => repo.GetCoinsByIds(ids)).ReturnsAsync(emptyList);
+
+        // Act
+        var result = await _controller.GetCoinsByIds(ids);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(emptyList);
+    }
 }

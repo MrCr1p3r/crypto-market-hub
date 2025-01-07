@@ -345,4 +345,54 @@ public class CoinsRepositoryTests
         // Assert
         result.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task GetCoinsByIds_ShouldReturnCorrectCoins()
+    {
+        // Arrange
+        var coin1 = new CoinsEntity
+        {
+            Id = 1,
+            Name = "Bitcoin",
+            Symbol = "BTC",
+            TradingPairs =
+            [
+                new TradingPairsEntity
+                {
+                    Id = 1,
+                    IdCoinMain = 1,
+                    IdCoinQuote = 2,
+                },
+            ],
+        };
+        var coin2 = new CoinsEntity
+        {
+            Id = 2,
+            Name = "Ethereum",
+            Symbol = "ETH",
+            TradingPairs = [],
+        };
+        await _context.Coins.AddRangeAsync(coin1, coin2);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.GetCoinsByIds([1, 2]);
+
+        // Assert
+        result.Should().HaveCount(2);
+        result.Should().Contain(c => c.Id == 1 && c.Name == "Bitcoin");
+        result.Should().Contain(c => c.Id == 2 && c.Name == "Ethereum");
+        result.First().TradingPairs.Should().HaveCount(1);
+        result.First().TradingPairs.First().CoinQuote.Id.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ShouldReturnEmpty_IfNoCoinsExist()
+    {
+        // Act
+        var result = await _repository.GetCoinsByIds([1, 2]);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
 }

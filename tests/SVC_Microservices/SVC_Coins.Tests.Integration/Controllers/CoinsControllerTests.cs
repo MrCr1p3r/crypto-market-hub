@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using AutoFixture;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using SVC_Coins.Models.Entities;
 using SVC_Coins.Models.Input;
 using SVC_Coins.Models.Output;
@@ -181,5 +182,43 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         orderedCoins[0].Name.Should().Be("Ethereum");
         orderedCoins[1].Name.Should().Be("Bitcoin");
         orderedCoins[2].Name.Should().Be("Tether");
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ShouldReturnOkWithCorrectCoins()
+    {
+        // Arrange
+        var insertedCoins = await InsertCoinsAsync(
+            [
+                new() { Name = "Bitcoin", Symbol = "BTC" },
+                new() { Name = "Ethereum", Symbol = "ETH" },
+            ]
+        );
+        var btc = insertedCoins.First();
+        var eth = insertedCoins.Last();
+
+        // Act
+        var response = await Client.GetAsync($"/coins/byIds?ids={btc.Id}&ids={eth.Id}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var coinsList = await response.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        coinsList.Should().NotBeNull();
+        coinsList.Should().HaveCount(2);
+        coinsList.Should().Contain(c => c.Name == "Bitcoin" && c.Symbol == "BTC");
+        coinsList.Should().Contain(c => c.Name == "Ethereum" && c.Symbol == "ETH");
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ShouldReturnOkWithEmptyList_WhenNoCoinsMatch()
+    {
+        // Act
+        var response = await Client.GetAsync("/coins/byIds?ids=99&ids=100");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var coinsList = await response.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        coinsList.Should().NotBeNull();
+        coinsList.Should().BeEmpty();
     }
 }

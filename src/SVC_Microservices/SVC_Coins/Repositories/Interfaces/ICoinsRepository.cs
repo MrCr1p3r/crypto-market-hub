@@ -42,4 +42,11 @@ public interface ICoinsRepository
     /// </summary>
     /// <returns>A collection of quote coins sorted by priority.</returns>
     Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized();
+
+    /// <summary>
+    /// Retrieves a collection of coins by their IDs.
+    /// </summary>
+    /// <param name="ids">The IDs of the coins to retrieve.</param>
+    /// <returns>A collection of coins.</returns>
+    Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids);
 }
