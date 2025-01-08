@@ -100,6 +100,7 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         var coins = await _context
             .Coins.Where(coin => ids.Contains(coin.Id))
             .Include(c => c.TradingPairs)
+            .ThenInclude(tp => tp.CoinQuote)
             .ToListAsync();
 
         return coins.Select(Mapping.ToCoin);
@@ -116,7 +117,7 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
                 Id = coinEntity.Id,
                 Name = coinEntity.Name,
                 Symbol = coinEntity.Symbol,
-                TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair).ToList(),
+                TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair),
             };
 
         public static TradingPair ToTradingPair(TradingPairsEntity tradingPairEntity) =>

@@ -23,16 +23,17 @@ public class CoinsDbContext(DbContextOptions<CoinsDbContext> options) : DbContex
         ConfigureTradingPairEntity(modelBuilder);
     }
 
-    private static void ConfigureCoinEntity(ModelBuilder modelBuilder)
+    private void ConfigureCoinEntity(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CoinsEntity>(entity =>
         {
             entity.HasKey(c => c.Id).HasName("PK_Coins");
-            entity
-                .Property(c => c.Symbol)
-                .HasMaxLength(50)
-                .IsUnicode(true)
-                .UseCollation("Latin1_General_CS_AS");
+            entity.Property(c => c.Symbol).HasMaxLength(50).IsUnicode(true);
+
+            if (Database.IsSqlServer())
+            {
+                entity.Property(c => c.Symbol).UseCollation("Latin1_General_CS_AS");
+            }
             entity.Property(c => c.Name).HasMaxLength(50).IsUnicode(true);
             entity.ToTable(t =>
             {
