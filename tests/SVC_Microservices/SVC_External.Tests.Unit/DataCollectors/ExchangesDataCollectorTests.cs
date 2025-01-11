@@ -193,8 +193,8 @@ public class ExchangesDataCollectorTests
         public static KlineDataRequestFormatted ToFormattedRequest(KlineDataRequest request) =>
             new()
             {
-                CoinMain = request.CoinMain,
-                CoinQuote = request.CoinQuote,
+                CoinMain = request.CoinMainSymbol,
+                CoinQuote = request.CoinQuoteSymbol,
                 Interval = request.Interval,
                 StartTimeUnix = new DateTimeOffset(request.StartTime).ToUnixTimeMilliseconds(),
                 EndTimeUnix = new DateTimeOffset(request.EndTime).ToUnixTimeMilliseconds(),
