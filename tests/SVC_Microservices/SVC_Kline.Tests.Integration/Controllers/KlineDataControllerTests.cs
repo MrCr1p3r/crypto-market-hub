@@ -2,91 +2,154 @@ using System.Net;
 using System.Net.Http.Json;
 using AutoFixture;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using SVC_Kline.Models.Entities;
 using SVC_Kline.Models.Input;
 using SVC_Kline.Models.Output;
 using SVC_Kline.Tests.Integration.Factories;
 
 namespace SVC_Kline.Tests.Integration.Controllers;
 
-public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory factory)
-    : IClassFixture<CustomWebApplicationFactory>
+public class KlineDataControllerTests(CustomWebApplicationFactory factory)
+    : BaseIntegrationTest(factory),
+        IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient _client = factory.CreateClient();
-    private readonly IFixture _fixture = new Fixture();
+    private readonly Fixture _fixture = new();
 
     [Fact]
-    public async Task InsertKlineData_ReturnsOk()
+    public async Task InsertKlineData_ReturnsOk_WhenSuccessful()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineDataNew>();
+        var tradingPair = await CreateTradingPairAsync();
+        var klineData = _fixture
+            .Build<KlineDataNew>()
+            .With(x => x.IdTradePair, tradingPair.Id)
+            .Create();
 
         // Act
-        var response = await _client.PostAsJsonAsync("/kline/insert", klineData);
+        var response = await Client.PostAsJsonAsync("/kline/insert", klineData);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var responseBody = await response.Content.ReadAsStringAsync();
         responseBody.Should().Contain("Kline data inserted successfully.");
+
+        // Verify in database
+        using var dbContext = GetDbContext();
+        var entity = await dbContext.KlineData.FirstOrDefaultAsync(k =>
+            k.IdTradePair == klineData.IdTradePair
+        );
+        entity.Should().NotBeNull();
+        entity!.OpenPrice.Should().Be(klineData.OpenPrice);
     }
 
     [Fact]
-    public async Task InsertManyKlineData_ReturnsOk()
+    public async Task InsertManyKlineData_ReturnsOk_WhenSuccessful()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineDataNew>(5);
+        var tradingPair = await CreateTradingPairAsync();
+        var klineDataList = _fixture
+            .Build<KlineDataNew>()
+            .With(x => x.IdTradePair, tradingPair.Id)
+            .CreateMany(5);
 
         // Act
-        var response = await _client.PostAsJsonAsync("/kline/insertMany", klineDataList);
+        var response = await Client.PostAsJsonAsync("/kline/insertMany", klineDataList);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var responseBody = await response.Content.ReadAsStringAsync();
         responseBody.Should().Contain("Multiple Kline data entries inserted successfully.");
+
+        // Verify in database
+        using var dbContext = GetDbContext();
+        var entities = await dbContext.KlineData.ToListAsync();
+        entities.Should().HaveCount(5);
     }
 
     [Fact]
-    public async Task GetAllKlineData_ShouldReturnOkWithList()
+    public async Task GetAllKlineData_ReturnsOk_WithGroupedData()
     {
+        // Arrange
+        var tradingPair1 = await CreateTradingPairAsync();
+        var tradingPair2 = await CreateTradingPairAsync();
+
+        var klineDataEntities = new List<KlineDataEntity>
+        {
+            CreateKlineDataEntity(tradingPair1.Id),
+            CreateKlineDataEntity(tradingPair1.Id),
+            CreateKlineDataEntity(tradingPair2.Id),
+        };
+        await InsertKlineDataAsync(klineDataEntities);
+
         // Act
-        var response = await _client.GetAsync("/kline/all");
+        var response = await Client.GetAsync("/kline/all");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var klineDataList = await response.Content.ReadFromJsonAsync<IEnumerable<KlineData>>();
-        klineDataList.Should().NotBeNull();
+        var klineDataDict = await response.Content.ReadFromJsonAsync<
+            IReadOnlyDictionary<int, IEnumerable<KlineData>>
+        >();
+        klineDataDict.Should().NotBeNull();
+        klineDataDict!.Should().HaveCount(2);
+        klineDataDict![tradingPair1.Id].Should().HaveCount(2);
+        klineDataDict[tradingPair2.Id].Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task DeleteKlineDataForTradingPair_ReturnsOk()
+    public async Task DeleteKlineDataForTradingPair_ReturnsOk_WhenSuccessful()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineDataNew>();
-        await _client.PostAsJsonAsync("/kline/insert", klineData);
+        var tradingPair = await CreateTradingPairAsync();
+        var klineDataEntities = new List<KlineDataEntity>
+        {
+            CreateKlineDataEntity(tradingPair.Id),
+            CreateKlineDataEntity(tradingPair.Id),
+        };
+        await InsertKlineDataAsync(klineDataEntities);
 
         // Act
-        var response = await _client.DeleteAsync($"/kline/{klineData.IdTradePair}");
+        var response = await Client.DeleteAsync($"/kline/{tradingPair.Id}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var responseBody = await response.Content.ReadAsStringAsync();
         responseBody
             .Should()
-            .Contain(
-                $"Kline data for trading pair ID {klineData.IdTradePair} deleted successfully."
-            );
+            .Contain($"Kline data for trading pair ID {tradingPair.Id} deleted successfully.");
+
+        // Verify in database
+        using var dbContext = GetDbContext();
+        var remainingEntities = await dbContext
+            .KlineData.Where(k => k.IdTradePair == tradingPair.Id)
+            .ToListAsync();
+        remainingEntities.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task ReplaceAllKlineData_ReturnsOk()
+    public async Task ReplaceAllKlineData_ReturnsOk_WhenSuccessful()
     {
         // Arrange
-        var existingData = _fixture.CreateMany<KlineDataNew>(5).ToArray();
-        await _client.PostAsJsonAsync("/kline/insertMany", existingData);
+        var tradingPair1 = await CreateTradingPairAsync();
+        var tradingPair2 = await CreateTradingPairAsync();
 
-        var newKlineData = _fixture.CreateMany<KlineDataNew>(3).ToArray();
+        var existingData = new List<KlineDataEntity>
+        {
+            CreateKlineDataEntity(tradingPair1.Id),
+            CreateKlineDataEntity(tradingPair1.Id),
+            CreateKlineDataEntity(tradingPair2.Id),
+        };
+        await InsertKlineDataAsync(existingData);
+
+        var newTradingPair = await CreateTradingPairAsync();
+        var newKlineData = _fixture
+            .Build<KlineDataNew>()
+            .With(x => x.IdTradePair, newTradingPair.Id)
+            .CreateMany(2)
+            .ToArray();
 
         // Act
-        var response = await _client.PutAsJsonAsync("/kline/replaceAll", newKlineData);
+        var response = await Client.PutAsJsonAsync("/kline/replaceAll", newKlineData);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -94,10 +157,17 @@ public class KlineDataControllerIntegrationTests(CustomWebApplicationFactory fac
         responseBody.Should().Contain("All Kline data replaced successfully.");
 
         // Verify the data was replaced
-        var getAllResponse = await _client.GetAsync("/kline/all");
-        var klineDataList = await getAllResponse.Content.ReadFromJsonAsync<
-            IEnumerable<KlineData>
-        >();
-        klineDataList.Should().HaveCount(3);
+        using var dbContext = GetDbContext();
+        var entities = await dbContext.KlineData.ToListAsync();
+        entities.Should().HaveCount(2);
+    }
+
+    private KlineDataEntity CreateKlineDataEntity(int tradingPairId)
+    {
+        return _fixture
+            .Build<KlineDataEntity>()
+            .With(x => x.IdTradePair, tradingPairId)
+            .Without(x => x.IdTradePairNavigation)
+            .Create();
     }
 }

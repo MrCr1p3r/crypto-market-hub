@@ -48,16 +48,20 @@ public class KlineDataController(IKlineDataRepository repository) : ControllerBa
     }
 
     /// <summary>
-    /// Retrieves all Kline data from the database.
+    /// Retrieves all Kline data from the database grouped by trading pair ID.
     /// </summary>
-    /// <returns>A list of all Kline data entries.</returns>
+    /// <returns>A dictionary where key is the trading pair ID and value is a collection of
+    /// Kline data entries for that trading pair.</returns>
     [HttpGet("all")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(IEnumerable<KlineData>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<KlineData>>> GetAllKlineData()
+    [ProducesResponseType(
+        typeof(IReadOnlyDictionary<int, IEnumerable<KlineData>>),
+        StatusCodes.Status200OK
+    )]
+    public async Task<IActionResult> GetAllKlineData()
     {
-        var klineDataList = await _repository.GetAllKlineData();
-        return Ok(klineDataList);
+        var klineDataDict = await _repository.GetAllKlineData();
+        return Ok(klineDataDict);
     }
 
     /// <summary>

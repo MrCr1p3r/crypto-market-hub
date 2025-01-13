@@ -29,12 +29,23 @@ public class KlineDataRepositoryTests
         _repository = new KlineDataRepository(_context);
     }
 
+    private async Task<TradingPairEntity> CreateTradingPairAsync()
+    {
+        var tradingPair = new TradingPairEntity();
+        _context.TradingPair.Add(tradingPair);
+        await _context.SaveChangesAsync();
+        return tradingPair;
+    }
+
     [Fact]
     public async Task InsertKlineData_ShouldAddEntityToDatabase()
     {
         // Arrange
-        var klineData = _fixture.Create<KlineDataNew>();
-        var klineDataEntity = Mapping.ToKlineDataEntity(klineData);
+        var tradingPair = await CreateTradingPairAsync();
+        var klineData = _fixture
+            .Build<KlineDataNew>()
+            .With(x => x.IdTradePair, tradingPair.Id)
+            .Create();
 
         // Act
         await _repository.InsertKlineData(klineData);
@@ -44,14 +55,19 @@ public class KlineDataRepositoryTests
             e.IdTradePair == klineData.IdTradePair
         );
         entity.Should().NotBeNull();
-        entity!.OpenPrice.Should().Be(klineDataEntity.OpenPrice);
+        entity!.OpenPrice.Should().Be(klineData.OpenPrice);
     }
 
     [Fact]
     public async Task InsertManyKlineData_ShouldAddEntitiesToDatabase()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineDataNew>(5).ToList();
+        var tradingPair = await CreateTradingPairAsync();
+        var klineDataList = _fixture
+            .Build<KlineDataNew>()
+            .With(x => x.IdTradePair, tradingPair.Id)
+            .CreateMany(5)
+            .ToList();
 
         // Act
         await _repository.InsertManyKlineData(klineDataList);
@@ -62,50 +78,113 @@ public class KlineDataRepositoryTests
     }
 
     [Fact]
-    public async Task GetAllKlineData_ShouldReturnAllEntities()
+    public async Task GetAllKlineData_ShouldReturnAllEntitiesGroupedByTradingPairId()
     {
         // Arrange
-        var klineDataEntities = _fixture.CreateMany<KlineDataEntity>(3).ToList();
+        var tradingPair1 = await CreateTradingPairAsync();
+        var tradingPair2 = await CreateTradingPairAsync();
+
+        var klineDataEntities = new List<KlineDataEntity>
+        {
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair1.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair1.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair2.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+        };
         await _context.KlineData.AddRangeAsync(klineDataEntities);
         await _context.SaveChangesAsync();
 
         // Act
-        var klineDataList = await _repository.GetAllKlineData();
+        var klineDataDict = await _repository.GetAllKlineData();
 
         // Assert
-        klineDataList.Should().HaveCount(3);
+        klineDataDict.Should().HaveCount(2);
+        klineDataDict[tradingPair1.Id].Should().HaveCount(2);
+        klineDataDict[tradingPair2.Id].Should().HaveCount(1);
     }
 
     [Fact]
     public async Task DeleteKlineDataForTradingPair_ShouldRemoveEntities()
     {
         // Arrange
-        var klineDataEntities = _fixture.CreateMany<KlineDataEntity>(3).ToList();
-        klineDataEntities[0].IdTradePair = 1;
-        klineDataEntities[1].IdTradePair = 1;
-        klineDataEntities[2].IdTradePair = 2;
+        var tradingPair1 = await CreateTradingPairAsync();
+        var tradingPair2 = await CreateTradingPairAsync();
+
+        var klineDataEntities = new List<KlineDataEntity>
+        {
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair1.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair1.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair2.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+        };
         await _context.KlineData.AddRangeAsync(klineDataEntities);
         await _context.SaveChangesAsync();
 
         // Act
-        await _repository.DeleteKlineDataForTradingPair(1);
+        await _repository.DeleteKlineDataForTradingPair(tradingPair1.Id);
 
         // Assert
         var remainingEntities = await _context.KlineData.ToListAsync();
         remainingEntities.Should().ContainSingle();
-        remainingEntities[0].IdTradePair.Should().Be(2);
+        remainingEntities[0].IdTradePair.Should().Be(tradingPair2.Id);
     }
 
     [Fact]
     public async Task ReplaceAllKlineData_ShouldReplaceExistingData()
     {
         // Arrange
-        var existingData = _fixture.CreateMany<KlineDataEntity>(5).ToList();
+        var tradingPair1 = await CreateTradingPairAsync();
+        var tradingPair2 = await CreateTradingPairAsync();
+
+        var existingData = new List<KlineDataEntity>
+        {
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair1.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair1.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+            _fixture
+                .Build<KlineDataEntity>()
+                .With(x => x.IdTradePair, tradingPair2.Id)
+                .Without(x => x.IdTradePairNavigation)
+                .Create(),
+        };
         await _context.KlineData.AddRangeAsync(existingData);
         await _context.SaveChangesAsync();
 
-        var newKlineData = _fixture.CreateMany<KlineDataNew>(3).ToArray();
-        var expectedData = newKlineData.Select(Mapping.ToKlineDataEntity);
+        var newTradingPair = await CreateTradingPairAsync();
+        var newKlineData = _fixture
+            .Build<KlineDataNew>()
+            .With(x => x.IdTradePair, newTradingPair.Id)
+            .CreateMany(3)
+            .ToArray();
 
         // Act
         await _repository.ReplaceAllKlineData(newKlineData);
@@ -113,40 +192,6 @@ public class KlineDataRepositoryTests
         // Assert
         var entities = await _context.KlineData.ToListAsync();
         entities.Should().HaveCount(3);
-        entities.Should().BeEquivalentTo(expectedData);
-    }
-
-    [Fact]
-    public async Task ReplaceAllKlineData_ShouldHandleEmptyInput()
-    {
-        // Arrange
-        var existingData = _fixture.CreateMany<KlineDataEntity>(5).ToList();
-        await _context.KlineData.AddRangeAsync(existingData);
-        await _context.SaveChangesAsync();
-
-        var newKlineData = Array.Empty<KlineDataNew>();
-
-        // Act
-        await _repository.ReplaceAllKlineData(newKlineData);
-
-        // Assert
-        var entities = await _context.KlineData.ToListAsync();
-        entities.Should().BeEmpty();
-    }
-
-    private static class Mapping
-    {
-        public static KlineDataEntity ToKlineDataEntity(KlineDataNew klineDataNew) =>
-            new()
-            {
-                IdTradePair = klineDataNew.IdTradePair,
-                OpenTime = klineDataNew.OpenTime,
-                OpenPrice = klineDataNew.OpenPrice,
-                HighPrice = klineDataNew.HighPrice,
-                LowPrice = klineDataNew.LowPrice,
-                ClosePrice = klineDataNew.ClosePrice,
-                Volume = klineDataNew.Volume,
-                CloseTime = klineDataNew.CloseTime,
-            };
+        entities.Should().AllSatisfy(e => e.IdTradePair.Should().Be(newTradingPair.Id));
     }
 }

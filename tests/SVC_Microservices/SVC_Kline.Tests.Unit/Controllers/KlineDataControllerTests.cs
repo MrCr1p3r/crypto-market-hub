@@ -87,8 +87,12 @@ public class KlineDataControllerTests
     public async Task GetAllKlineData_CallsRepository()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineData>(5).ToList();
-        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataList);
+        var klineDataDict = new Dictionary<int, IEnumerable<KlineData>>
+        {
+            { 1, _fixture.CreateMany<KlineData>(2) },
+            { 2, _fixture.CreateMany<KlineData>(1) },
+        };
+        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataDict);
 
         // Act
         await _controller.GetAllKlineData();
@@ -101,18 +105,22 @@ public class KlineDataControllerTests
     public async Task GetAllKlineData_ReturnsOkResultWithExpectedData()
     {
         // Arrange
-        var klineDataList = _fixture.CreateMany<KlineData>(5).ToList();
-        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataList);
+        var klineDataDict = new Dictionary<int, IEnumerable<KlineData>>
+        {
+            { 1, _fixture.CreateMany<KlineData>(2) },
+            { 2, _fixture.CreateMany<KlineData>(1) },
+        };
+        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataDict);
 
         // Act
         var result = await _controller.GetAllKlineData();
 
         // Assert
         result
-            .Result.Should()
+            .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(klineDataList);
+            .BeEquivalentTo(klineDataDict);
     }
 
     [Fact]

@@ -30,10 +30,13 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineData>> GetAllKlineData()
+    public async Task<IReadOnlyDictionary<int, IEnumerable<KlineData>>> GetAllKlineData()
     {
         var klineDataEntities = await _context.KlineData.ToListAsync();
-        return klineDataEntities.Select(Mapping.ToKlineData);
+        return klineDataEntities
+            .Select(Mapping.ToKlineData)
+            .GroupBy(k => k.IdTradePair)
+            .ToDictionary(g => g.Key, g => g.AsEnumerable());
     }
 
     /// <inheritdoc />

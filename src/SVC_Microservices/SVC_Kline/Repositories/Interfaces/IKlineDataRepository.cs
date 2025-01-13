@@ -24,10 +24,11 @@ public interface IKlineDataRepository
     Task InsertManyKlineData(IEnumerable<KlineDataNew> klineDataList);
 
     /// <summary>
-    /// Retrieves all Kline data entries from the database.
+    /// Retrieves all Kline data entries from the database grouped by trading pair ID.
     /// </summary>
-    /// <returns>A collection of KlineData objects.</returns>
-    Task<IEnumerable<KlineData>> GetAllKlineData();
+    /// <returns>A dictionary where key is the trading pair ID and
+    /// value is a collection of KlineData objects for that trading pair.</returns>
+    Task<IReadOnlyDictionary<int, IEnumerable<KlineData>>> GetAllKlineData();
 
     /// <summary>
     /// Deletes all Kline data entries for a specific trading pair.

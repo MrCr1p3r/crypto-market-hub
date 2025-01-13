@@ -62,4 +62,9 @@ public class KlineDataEntity
     /// </summary>
     [Required]
     public long CloseTime { get; set; }
+
+    /// <summary>
+    /// The trading pair for which the Kline data is recorded.
+    /// </summary>
+    public TradingPairEntity IdTradePairNavigation { get; set; } = null!;
 }
