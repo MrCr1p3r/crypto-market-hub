@@ -13,7 +13,7 @@ public interface ISvcExternalClient
     /// </summary>
     /// <param name="request">The request parameters for fetching Kline data.</param>
     /// <returns>A collection of Kline data objects.</returns>
-    Task<IEnumerable<KlineData>> GetKlineData(KlineDataRequest request);
+    Task<IEnumerable<KlineDataExchange>> GetKlineData(KlineDataRequest request);
 
     /// <summary>
     /// Retrieves all listed coins from the external service.

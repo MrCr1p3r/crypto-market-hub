@@ -76,7 +76,10 @@ public class SvcKlineClientTests
         // Arrange
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<KlineData>()));
+            .ReturnsResponse(
+                HttpStatusCode.OK,
+                JsonContent.Create(new Dictionary<int, IEnumerable<KlineData>>())
+            );
 
         // Act
         await _client.GetAllKlineData();
@@ -89,7 +92,11 @@ public class SvcKlineClientTests
     public async Task GetAllKlineData_ShouldReturnExpectedKlineData()
     {
         // Arrange
-        var expectedKlineData = _fixture.CreateMany<KlineData>();
+        var expectedKlineData = new Dictionary<int, IEnumerable<KlineData>>
+        {
+            { _fixture.Create<int>(), _fixture.CreateMany<KlineData>() },
+            { _fixture.Create<int>(), _fixture.CreateMany<KlineData>() },
+        };
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
@@ -103,18 +110,20 @@ public class SvcKlineClientTests
     }
 
     [Fact]
-    public async Task GetAllKlineData_ShouldReturnEmptyArray()
+    public async Task GetAllKlineData_ShouldReturnEmptyDictionary()
     {
         // Arrange
+        var expectedKlineData = new Dictionary<int, IEnumerable<KlineData>>();
+
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<KlineData>()));
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(expectedKlineData));
 
         // Act
         var result = await _client.GetAllKlineData();
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeEquivalentTo(expectedKlineData);
     }
 
     [Fact]

@@ -25,8 +25,8 @@ public interface ISvcKlineClient
     /// <summary>
     /// Retrieves all Kline data.
     /// </summary>
-    /// <returns>A list of all Kline data.</returns>
-    Task<IEnumerable<KlineData>> GetAllKlineData();
+    /// <returns>Kline data grouped by trading pair ID.</returns>
+    Task<IReadOnlyDictionary<int, IEnumerable<KlineData>>> GetAllKlineData();
 
     /// <summary>
     /// Deletes all Kline data for a specific trading pair.

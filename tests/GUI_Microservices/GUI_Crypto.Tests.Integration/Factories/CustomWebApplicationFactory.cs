@@ -9,11 +9,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 {
     private WireMockServer _coinsServiceMock = null!;
     private WireMockServer _klineServiceMock = null!;
+    private WireMockServer _externalServiceMock = null!;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         _coinsServiceMock = WireMockServer.Start();
         _klineServiceMock = WireMockServer.Start();
+        _externalServiceMock = WireMockServer.Start();
 
         builder.ConfigureAppConfiguration(
             (context, config) =>
@@ -23,6 +25,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                     {
                         ["Services:SvcCoinsClient:BaseUrl"] = _coinsServiceMock.Urls[0],
                         ["Services:SvcKlineClient:BaseUrl"] = _klineServiceMock.Urls[0],
+                        ["Services:SvcExternalClient:BaseUrl"] = _externalServiceMock.Urls[0],
                     }
                 );
             }
@@ -35,9 +38,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         _coinsServiceMock?.Dispose();
         _klineServiceMock?.Dispose();
+        _externalServiceMock?.Dispose();
         await base.DisposeAsync();
     }
 
     public WireMockServer CoinsServiceMock => _coinsServiceMock;
     public WireMockServer KlineServiceMock => _klineServiceMock;
+    public WireMockServer ExternalServiceMock => _externalServiceMock;
 }

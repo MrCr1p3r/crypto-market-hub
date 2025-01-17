@@ -154,4 +154,109 @@ public class SvcCoinsClientTests
         // Assert
         result.Should().Be(expectedId);
     }
+
+    [Fact]
+    public async Task GetCoinsByIds_CorrectUrlIsCalled()
+    {
+        // Arrange
+        var coinIds = _fixture.CreateMany<int>(3).ToList();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<Coin>()));
+
+        // Act
+        await _client.GetCoinsByIds(coinIds);
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Get,
+            $"https://example.com/coins/byIds?ids={string.Join(",", coinIds)}"
+        );
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ShouldReturnListOfCoins()
+    {
+        // Arrange
+        var coinIds = _fixture.CreateMany<int>(3).ToList();
+        var expectedCoins = _fixture.CreateMany<Coin>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(expectedCoins));
+
+        // Act
+        var result = await _client.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedCoins);
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var coinIds = _fixture.CreateMany<int>(3).ToList();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<Coin>()));
+
+        // Act
+        var result = await _client.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetQuoteCoinsPrioritized_CorrectUrlIsCalled()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<Coin>()));
+
+        // Act
+        await _client.GetQuoteCoinsPrioritized();
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Get,
+            "https://example.com/coins/quoteCoinsPrioritized"
+        );
+    }
+
+    [Fact]
+    public async Task GetQuoteCoinsPrioritized_ShouldReturnListOfCoins()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(expectedCoins));
+
+        // Act
+        var result = await _client.GetQuoteCoinsPrioritized();
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedCoins);
+    }
+
+    [Fact]
+    public async Task GetQuoteCoinsPrioritized_ShouldReturnEmptyList()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<Coin>()));
+
+        // Act
+        var result = await _client.GetQuoteCoinsPrioritized();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
 }

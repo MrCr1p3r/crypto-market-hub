@@ -1,0 +1,37 @@
+body {
+    background-color: #1a1a2e;
+    color: #ffffff;
+}
+
+.chart-container {
+    background-color: #222034;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px;
+}
+
+.dropdown-menu {
+    border: 1px solid #444;
+}
+
+.dropdown-item {
+    color: #fff;
+    background-color: transparent;
+    font-size: 1.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: #2a2a3a;
+    color: #fff;
+}
+
+.dropdown-item.active {
+    background-color: #3a3a4a;
+}
+
+#tradingPairDropdown,
+#selectedMainCoin,
+#selectedQuoteCoin {
+    font-size: 2rem;
+    font-weight: 500;
+}

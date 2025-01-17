@@ -1,0 +1,57 @@
+@using System.Web
+@model GUI_Crypto.ViewModels.ChartViewModel
+
+<div class="container">
+    <h2 class="text-center py-3 d-flex justify-content-center align-items-center">
+        <div class="dropdown">
+            <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" id="tradingPairDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <span id="selectedMainCoin">@Model.Coin.Symbol</span>/<span id="selectedQuoteCoin">@Model.Coin.SymbolCoinQuoteCurrent</span>
+            </button>
+            <ul class="dropdown-menu bg-dark" aria-labelledby="tradingPairDropdown">
+                @foreach (var quoteCoin in new[] { "USDT", "USDC", "DAI", "BUSD", "BTC", "ETH", "BNB" })
+                {
+                    if (Model.Coin.Symbol == quoteCoin) continue;
+                    <li><a class="dropdown-item text-white @(quoteCoin == Model.Coin.SymbolCoinQuoteCurrent ? "active" : "")" data-quote="@quoteCoin">@Model.Coin.Symbol/@quoteCoin</a></li>
+                }
+            </ul>
+        </div>
+        <span class="ms-2">Chart</span>
+    </h2>
+    <div id="chartData" data-kline-data='@Html.Raw(Json.Serialize(Model.Coin.KlineData))' style="display: none;"></div>
+    <div class="chart-container row">
+        <div class="col-2">
+            <label for="timeframeSelect">Select Timeframe:</label>
+            <select id="timeframeSelect" class="form-select" aria-label="Select Timeframe">
+                <option value="1">1 Minute</option>
+                <option value="5">5 Minutes</option>
+                <option value="15" selected>15 Minutes</option>
+                <option value="30">30 Minutes</option>
+                <option value="60">1 Hour</option>
+                <option value="240">4 Hours</option>
+                <option value="1440">1 Day</option>
+                <option value="10080">1 Week</option>
+                <option value="43200">1 Month</option>
+            </select>
+        </div>
+        <div class="col-2">
+            <label for="start">Start date and time:</label>
+            <input type="datetime-local" id="start" name="start-datetime" class="form-control">
+        </div>
+        <div class="col-2">
+            <label for="end">End date and time:</label>
+            <input type="datetime-local" id="end" name="end-datetime" class="form-control">
+        </div>
+    </div>
+    <div class="chart-container">
+        <div id="priceChart"></div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+    <link rel="stylesheet" href="~/css/chart.css" />
+}
+
+@section Scripts {
+    <script src="~/js/bundle.js"></script>
+} 

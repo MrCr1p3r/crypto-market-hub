@@ -1,0 +1,18 @@
+body {
+    background-color: #1a1a2e;
+    color: #ffffff;
+}
+.table-dark-purple {
+    background-color: #222034;
+}
+.table-dark-purple th,
+.table-dark-purple td {
+    color: #ffffff;
+}
+.sidebar {
+    background-color: #2e294e;
+    height: 100vh;
+}
+.sidebar h5 {
+    color: #a29bfe;
+}

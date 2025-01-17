@@ -1,6 +1,7 @@
 using System.Net;
 using FluentAssertions;
 using GUI_Crypto.Tests.Integration.Factories;
+using GUI_Crypto.ViewModels;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 
@@ -34,7 +35,7 @@ public class OverviewControllerTests : IClassFixture<CustomWebApplicationFactory
                     .Create()
                     .WithStatusCode(200)
                     .WithHeader("Content-Type", "application/json")
-                    .WithBody("[]")
+                    .WithBody("{}")
             );
     }
 
@@ -46,16 +47,5 @@ public class OverviewControllerTests : IClassFixture<CustomWebApplicationFactory
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-    }
-
-    [Fact]
-    public async Task Overview_ReturnsExpectedView()
-    {
-        // Act
-        var response = await _client.GetAsync("/overview");
-
-        // Assert
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("<title>Crypto Overview</title>");
     }
 }

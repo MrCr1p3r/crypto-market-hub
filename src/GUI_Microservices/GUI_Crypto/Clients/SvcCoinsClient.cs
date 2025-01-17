@@ -29,4 +29,15 @@ public class SvcCoinsClient(IHttpClientFactory httpClientFactory) : ISvcCoinsCli
         await _httpClient
             .PostAsJsonAsync($"{BaseUrl}/tradingPairs/insert", tradingPair)
             .Result.Content.ReadFromJsonAsync<int>();
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids) =>
+        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>(
+            $"{BaseUrl}/byIds?ids={string.Join(",", ids)}"
+        ) ?? [];
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized() =>
+        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>($"{BaseUrl}/quoteCoinsPrioritized")
+        ?? [];
 }

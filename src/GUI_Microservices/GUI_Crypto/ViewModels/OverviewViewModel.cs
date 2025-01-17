@@ -10,5 +10,5 @@ public class OverviewViewModel
     /// <summary>
     /// The list of coins to display.
     /// </summary>
-    public IEnumerable<Coin> Coins { get; set; } = [];
+    public IEnumerable<OverviewCoin> Coins { get; set; } = [];
 }

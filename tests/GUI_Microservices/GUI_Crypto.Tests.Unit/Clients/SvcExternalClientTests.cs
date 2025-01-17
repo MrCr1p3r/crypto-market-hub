@@ -48,7 +48,7 @@ public class SvcExternalClientTests
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<KlineData>()));
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<KlineDataExchange>()));
 
         // Act
         await _client.GetKlineData(request);
@@ -65,7 +65,7 @@ public class SvcExternalClientTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
-        var expectedKlineData = _fixture.CreateMany<KlineData>();
+        var expectedKlineData = _fixture.CreateMany<KlineDataExchange>();
         var options = new WebSerializerOptions(WebSerializerProvider.Default)
         {
             CultureInfo = CultureInfo.InvariantCulture,
@@ -88,16 +88,17 @@ public class SvcExternalClientTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
+        var expectedKlineData = new List<KlineDataExchange>();
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<KlineData>()));
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(expectedKlineData));
 
         // Act
         var result = await _client.GetKlineData(request);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeEquivalentTo(expectedKlineData);
     }
 
     [Fact]

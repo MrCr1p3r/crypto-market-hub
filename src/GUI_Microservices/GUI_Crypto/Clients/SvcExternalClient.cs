@@ -15,7 +15,7 @@ public class SvcExternalClient(IHttpClientFactory httpClientFactory) : ISvcExter
     private const string BaseUrl = "exchanges";
 
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineData>> GetKlineData(KlineDataRequest request)
+    public async Task<IEnumerable<KlineDataExchange>> GetKlineData(KlineDataRequest request)
     {
         var options = new WebSerializerOptions(WebSerializerProvider.Default)
         {
@@ -23,7 +23,7 @@ public class SvcExternalClient(IHttpClientFactory httpClientFactory) : ISvcExter
         };
         var queryString = WebSerializer.ToQueryString(request, options);
 
-        return await _httpClient.GetFromJsonAsync<IEnumerable<KlineData>>(
+        return await _httpClient.GetFromJsonAsync<IEnumerable<KlineDataExchange>>(
                 $"{BaseUrl}/klineData?{queryString}"
             ) ?? [];
     }

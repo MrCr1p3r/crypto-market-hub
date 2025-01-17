@@ -8,14 +8,14 @@ namespace GUI_Crypto.Models.Input;
 public class KlineDataRequest
 {
     /// <summary>
-    /// The base coin in the trading pair for which Kline data is requested.
+    /// The base coin symbol in the trading pair for which Kline data is requested.
     /// </summary>
-    public required string CoinMain { get; set; }
+    public required string CoinMainSymbol { get; set; }
 
     /// <summary>
-    /// The quote coin in the trading pair for which Kline data is requested.
+    /// The quote coin symbol in the trading pair for which Kline data is requested.
     /// </summary>
-    public required string CoinQuote { get; set; }
+    public required string CoinQuoteSymbol { get; set; }
 
     /// <summary>
     /// The interval for each Kline. All supported intervals can be found in the TimeFrame enum.
@@ -33,7 +33,7 @@ public class KlineDataRequest
     public DateTime EndTime { get; set; }
 
     /// <summary>
-    /// The maximum number of Kline records to retrieve. Default is 100.
+    /// The maximum number of Kline records to retrieve. Maximum value is 1000 (default).
     /// </summary>
-    public int Limit { get; set; } = 100;
+    public int Limit { get; set; } = 1000;
 }

@@ -34,4 +34,17 @@ public interface ISvcCoinsClient
     /// <param name="tradingPair">The trading pair to create.</param>
     /// <returns>Id of the created trading pair.</returns>
     Task<int> CreateTradingPair(TradingPairNew tradingPair);
+
+    /// <summary>
+    /// Retrieves coins by their IDs.
+    /// </summary>
+    /// <param name="ids">The IDs of the coins to retrieve.</param>
+    /// <returns>A list of coins.</returns>
+    Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids);
+
+    /// <summary>
+    /// Retrieves quote coins sorted by priority.
+    /// </summary>
+    /// <returns>A list of quote coins sorted by priority.</returns>
+    Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized();
 }

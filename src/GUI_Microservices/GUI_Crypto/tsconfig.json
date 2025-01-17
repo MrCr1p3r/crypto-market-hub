@@ -1,0 +1,24 @@
+{   
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es2020",
+        "module": "commonjs",
+        "lib": [
+            "es2020",
+            "dom"
+        ],
+        "esModuleInterop": true,
+        "outDir": "./wwwroot/js",
+        "rootDir": "./wwwroot/ts",
+        "strict": true,
+        "sourceMap": true,
+        "moduleResolution": "node",
+        "baseUrl": "./wwwroot/ts",
+        "paths": {
+            "*": ["*"]
+        }
+    },
+    "include": [
+        "wwwroot/ts/**/*"
+    ]
+}

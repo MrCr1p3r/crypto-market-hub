@@ -21,8 +21,10 @@ public class SvcKlineClient(IHttpClientFactory httpClientFactory) : ISvcKlineCli
         await _httpClient.PostAsJsonAsync($"{BaseUrl}/insertMany", klineDataList);
 
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineData>> GetAllKlineData() =>
-        await _httpClient.GetFromJsonAsync<IEnumerable<KlineData>>($"{BaseUrl}/all") ?? [];
+    public async Task<IReadOnlyDictionary<int, IEnumerable<KlineData>>> GetAllKlineData() =>
+        await _httpClient.GetFromJsonAsync<IReadOnlyDictionary<int, IEnumerable<KlineData>>>(
+            $"{BaseUrl}/all"
+        ) ?? new Dictionary<int, IEnumerable<KlineData>>();
 
     /// <inheritdoc />
     public async Task DeleteKlineDataForTradingPair(int idTradePair) =>

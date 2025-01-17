@@ -1,11 +1,11 @@
 using GUI_Crypto.Models.Output;
 
-namespace GUI_Crypto.Models.Overview;
+namespace GUI_Crypto.Models.Chart;
 
 /// <summary>
-/// Represents a cryptocurrency model.
+/// Represents a cryptocurrency model for chart rendering.
 /// </summary>
-public class Coin
+public class CoinChart
 {
     /// <summary>
     /// Unique identifier for the coin.
@@ -23,7 +23,17 @@ public class Coin
     public required string Name { get; set; }
 
     /// <summary>
+    /// Trading pair for which kline data is available.
+    /// </summary>
+    public IEnumerable<TradingPair> TradingPairs { get; set; } = [];
+
+    /// <summary>
+    /// The symbol of the quote coin that was used to call the kline data.
+    /// </summary>
+    public string SymbolCoinQuoteCurrent { get; set; } = "";
+
+    /// <summary>
     /// List of KlineData objects associated with the coin.
     /// </summary>
-    public IEnumerable<KlineData> KlineData { get; set; } = [];
+    public IEnumerable<KlineDataExchange> KlineData { get; set; } = [];
 }
