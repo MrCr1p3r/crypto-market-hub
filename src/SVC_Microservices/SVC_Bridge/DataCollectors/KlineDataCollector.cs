@@ -100,12 +100,11 @@ public class KlineDataCollector(
         public static KlineDataRequest ToKlineDataRequest(string coinMain, string coinQuote) =>
             new()
             {
-                CoinMain = coinMain,
-                CoinQuote = coinQuote,
-                Interval = ExchangeKlineInterval.OneMinute,
-                StartTime = DateTime.UtcNow.AddMinutes(-60),
+                CoinMainSymbol = coinMain,
+                CoinQuoteSymbol = coinQuote,
+                Interval = ExchangeKlineInterval.FourHours,
+                StartTime = DateTime.UtcNow.AddDays(-7),
                 EndTime = DateTime.UtcNow,
-                Limit = 60,
             };
     }
 }
