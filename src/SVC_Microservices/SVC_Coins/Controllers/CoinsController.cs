@@ -33,6 +33,24 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
     }
 
     /// <summary>
+    /// Inserts multiple new coins into the database.
+    /// </summary>
+    /// <param name="coins">The collection of coin objects to insert.</param>
+    /// <returns>A status indicating the result of the operation.</returns>
+    /// <response code="204">The coins were successfully inserted.</response>
+    /// <response code="409">One or more coins already exist in the database.</response>
+    [HttpPost("insert/batch")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> InsertCoins([FromBody] IEnumerable<CoinNew> coins)
+    {
+        var result = await _repository.InsertCoins(coins);
+        return result.IsSuccess ? NoContent() : Conflict(result.Errors.First().Message);
+    }
+
+    /// <summary>
     /// Retrieves all coins from the database.
     /// </summary>
     /// <returns>A list of all coins entries.</returns>

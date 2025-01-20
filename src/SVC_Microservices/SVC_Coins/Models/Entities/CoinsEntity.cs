@@ -37,10 +37,16 @@ public class CoinsEntity
     public required string Name { get; set; }
 
     /// <summary>
-    /// Nullable priority value for quote coins.
     /// Determines sorting order for quote coins.
+    /// Null means that the coin is not a quote coin.
     /// </summary>
     public int? QuoteCoinPriority { get; set; }
+
+    /// <summary>
+    /// Indicates if the coin is a stablecoin.
+    /// </summary>
+    [Required]
+    public bool IsStablecoin { get; set; }
 
     /// <summary>
     /// Navigation property for trading pairs where this coin is the main coin.

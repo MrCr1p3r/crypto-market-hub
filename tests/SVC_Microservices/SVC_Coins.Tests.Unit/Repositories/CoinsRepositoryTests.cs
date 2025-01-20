@@ -1,3 +1,4 @@
+using AutoFixture;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Models.Entities;
@@ -10,9 +11,12 @@ public class CoinsRepositoryTests
 {
     private readonly CoinsDbContext _context;
     private readonly CoinsRepository _repository;
+    private readonly Fixture _fixture;
 
     public CoinsRepositoryTests()
     {
+        _fixture = new Fixture();
+
         var options = new DbContextOptionsBuilder<CoinsDbContext>()
             .UseSqlite("DataSource=:memory:")
             .Options;
@@ -28,24 +32,31 @@ public class CoinsRepositoryTests
     public async Task InsertCoin_AddsEntityToTheDatabase()
     {
         // Arrange
-        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
+        var coinNew = _fixture.Build<CoinNew>().With(c => c.Symbol, "BTC").Create();
+        var coinEntity = new CoinsEntity
+        {
+            Name = coinNew.Name,
+            Symbol = coinNew.Symbol,
+            IsStablecoin = coinNew.IsStablecoin,
+            QuoteCoinPriority = coinNew.QuoteCoinPriority,
+        };
 
         // Act
         var result = await _repository.InsertCoin(coinNew);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        var exists = await _context.Coins.AnyAsync(e =>
+        var insertedCoin = await _context.Coins.FirstOrDefaultAsync(e =>
             e.Symbol == coinNew.Symbol && e.Name == coinNew.Name
         );
-        exists.Should().BeTrue();
+        insertedCoin.Should().BeEquivalentTo(coinEntity, options => options.Excluding(c => c.Id));
     }
 
     [Fact]
     public async Task InsertCoin_ShouldReturnFail_IfCoinAlreadyExists()
     {
         // Arrange
-        var coinNew = new CoinNew { Name = "Bitcoin", Symbol = "BTC" };
+        var coinNew = _fixture.Build<CoinNew>().With(c => c.Symbol, "BTC").Create();
         await _repository.InsertCoin(coinNew);
 
         // Act
@@ -54,6 +65,120 @@ public class CoinsRepositoryTests
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.First().Message.Should().Be("Coin already exists in the database.");
+    }
+
+    [Fact]
+    public async Task InsertCoins_ShouldAddMultipleCoinsToDatabase_WhenAllAreNew()
+    {
+        // Arrange
+        var coinsNew = new List<CoinNew>
+        {
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Bitcoin")
+                .With(c => c.Symbol, "BTC")
+                .Create(),
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Ethereum")
+                .With(c => c.Symbol, "ETH")
+                .Create(),
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Tether")
+                .With(c => c.Symbol, "USDT")
+                .Create(),
+        };
+
+        // Act
+        var result = await _repository.InsertCoins(coinsNew);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var insertedCoins = await _context.Coins.ToListAsync();
+        insertedCoins.Should().HaveCount(3);
+        insertedCoins.Should().Contain(c => c.Symbol == "BTC" && c.Name == "Bitcoin");
+        insertedCoins.Should().Contain(c => c.Symbol == "ETH" && c.Name == "Ethereum");
+        insertedCoins.Should().Contain(c => c.Symbol == "USDT" && c.Name == "Tether");
+    }
+
+    [Fact]
+    public async Task InsertCoins_ShouldReturnFail_WhenAnyCoinsExist()
+    {
+        // Arrange
+        var existingCoin = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
+        await _context.Coins.AddAsync(existingCoin);
+        await _context.SaveChangesAsync();
+
+        var coinsNew = new List<CoinNew>
+        {
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Bitcoin")
+                .With(c => c.Symbol, "BTC")
+                .Create(),
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Ethereum")
+                .With(c => c.Symbol, "ETH")
+                .Create(),
+        };
+
+        // Act
+        var result = await _repository.InsertCoins(coinsNew);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.First()
+            .Message.Should()
+            .Be("The following coins already exist in the database: Bitcoin (BTC)");
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task InsertCoins_ShouldReturnFail_WhenMultipleCoinsExist()
+    {
+        // Arrange
+        var existingCoins = new List<CoinsEntity>
+        {
+            new() { Name = "Bitcoin", Symbol = "BTC" },
+            new() { Name = "Ethereum", Symbol = "ETH" },
+        };
+        await _context.Coins.AddRangeAsync(existingCoins);
+        await _context.SaveChangesAsync();
+
+        var coinsNew = new List<CoinNew>
+        {
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Bitcoin")
+                .With(c => c.Symbol, "BTC")
+                .Create(),
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Ethereum")
+                .With(c => c.Symbol, "ETH")
+                .Create(),
+            _fixture
+                .Build<CoinNew>()
+                .With(c => c.Name, "Tether")
+                .With(c => c.Symbol, "USDT")
+                .Create(),
+        };
+
+        // Act
+        var result = await _repository.InsertCoins(coinsNew);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.First()
+            .Message.Should()
+            .Be("The following coins already exist in the database: Bitcoin (BTC), Ethereum (ETH)");
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(2); // Only the original coins should exist
     }
 
     [Fact]

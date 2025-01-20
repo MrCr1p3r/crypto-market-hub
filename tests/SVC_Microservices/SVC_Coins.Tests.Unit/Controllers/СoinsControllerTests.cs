@@ -74,6 +74,54 @@ public class CoinsControllerTests
     }
 
     [Fact]
+    public async Task InsertCoins_CallsRepository()
+    {
+        // Arrange
+        var coins = _fixture.CreateMany<CoinNew>(3).ToList();
+        _mockRepository.Setup(repo => repo.InsertCoins(coins)).ReturnsAsync(Result.Ok());
+
+        // Act
+        await _controller.InsertCoins(coins);
+
+        // Assert
+        _mockRepository.Verify(repo => repo.InsertCoins(coins), Times.Once);
+    }
+
+    [Fact]
+    public async Task InsertCoins_ReturnsNoContent_WhenSuccessful()
+    {
+        // Arrange
+        var coins = _fixture.CreateMany<CoinNew>(3).ToList();
+        _mockRepository.Setup(repo => repo.InsertCoins(coins)).ReturnsAsync(Result.Ok());
+
+        // Act
+        var result = await _controller.InsertCoins(coins);
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+        _mockRepository.Verify(repo => repo.InsertCoins(coins), Times.Once);
+    }
+
+    [Fact]
+    public async Task InsertCoins_ReturnsConflict_WhenAnyCoinsExist()
+    {
+        // Arrange
+        var coins = _fixture.CreateMany<CoinNew>(3).ToList();
+        var errorMessage =
+            "The following coins already exist in the database: Bitcoin (BTC), Ethereum (ETH)";
+        _mockRepository
+            .Setup(repo => repo.InsertCoins(coins))
+            .ReturnsAsync(Result.Fail(errorMessage));
+
+        // Act
+        var result = await _controller.InsertCoins(coins);
+
+        // Assert
+        result.Should().BeOfType<ConflictObjectResult>().Which.Value.Should().Be(errorMessage);
+        _mockRepository.Verify(repo => repo.InsertCoins(coins), Times.Once);
+    }
+
+    [Fact]
     public async Task GetAllCoins_CallsRepository()
     {
         // Arrange

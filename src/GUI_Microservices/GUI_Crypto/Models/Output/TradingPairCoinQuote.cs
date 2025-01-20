@@ -1,9 +1,9 @@
 namespace GUI_Crypto.Models.Output;
 
 /// <summary>
-/// Represents a simplified version of a coin used within trading pairs to avoid recursion.
+/// Represents a simplified version of a quote coin used within trading pairs to avoid recursion.
 /// </summary>
-public class TradingPairCoin
+public class TradingPairCoinQuote
 {
     /// <summary>
     /// Unique identifier for the coin.

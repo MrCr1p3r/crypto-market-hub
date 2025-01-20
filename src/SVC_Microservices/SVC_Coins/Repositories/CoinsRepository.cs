@@ -27,6 +27,37 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         return Result.Ok();
     }
 
+    /// <inheritdoc />
+    public async Task<Result> InsertCoins(IEnumerable<CoinNew> coins)
+    {
+        var coinEntities = coins.Select(Mapping.ToCoinEntity).ToList();
+        var existingCoins = await CheckCoinsExist(coinEntities);
+
+        if (existingCoins.Any())
+        {
+            var duplicateCoins = string.Join(
+                ", ",
+                existingCoins.Select(c => $"{c.Name} ({c.Symbol})")
+            );
+            return Result.Fail(
+                $"The following coins already exist in the database: {duplicateCoins}"
+            );
+        }
+
+        await _context.Coins.AddRangeAsync(coinEntities);
+        await _context.SaveChangesAsync();
+        return Result.Ok();
+    }
+
+    private async Task<IEnumerable<CoinsEntity>> CheckCoinsExist(IEnumerable<CoinsEntity> newCoins)
+    {
+        var allCoins = await _context.Coins.ToListAsync();
+        var existingCoins = allCoins.Where(coin =>
+            newCoins.Any(newCoin => newCoin.Name == coin.Name && newCoin.Symbol == coin.Symbol)
+        );
+        return existingCoins;
+    }
+
     private async Task<bool> CheckCoinExists(CoinsEntity coin) =>
         await _context.Coins.AnyAsync(c => c.Name == coin.Name && c.Symbol == coin.Symbol);
 
@@ -109,7 +140,13 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     private static class Mapping
     {
         public static CoinsEntity ToCoinEntity(CoinNew coinNew) =>
-            new() { Name = coinNew.Name, Symbol = coinNew.Symbol };
+            new()
+            {
+                Name = coinNew.Name,
+                Symbol = coinNew.Symbol,
+                QuoteCoinPriority = coinNew.QuoteCoinPriority,
+                IsStablecoin = coinNew.IsStablecoin,
+            };
 
         public static Coin ToCoin(CoinsEntity coinEntity) =>
             new()
@@ -117,6 +154,8 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
                 Id = coinEntity.Id,
                 Name = coinEntity.Name,
                 Symbol = coinEntity.Symbol,
+                QuoteCoinPriority = coinEntity.QuoteCoinPriority,
+                IsStablecoin = coinEntity.IsStablecoin,
                 TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair),
             };
 
@@ -124,10 +163,10 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
             new()
             {
                 Id = tradingPairEntity.Id,
-                CoinQuote = ToTradingPairCoin(tradingPairEntity.CoinQuote),
+                CoinQuote = ToTradingPairCoinQuote(tradingPairEntity.CoinQuote),
             };
 
-        public static TradingPairCoin ToTradingPairCoin(CoinsEntity coinEntity) =>
+        public static TradingPairCoinQuote ToTradingPairCoinQuote(CoinsEntity coinEntity) =>
             new()
             {
                 Id = coinEntity.Id,

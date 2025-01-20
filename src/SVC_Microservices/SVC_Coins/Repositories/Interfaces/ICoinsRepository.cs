@@ -17,6 +17,13 @@ public interface ICoinsRepository
     Task<Result> InsertCoin(CoinNew coin);
 
     /// <summary>
+    /// Inserts multiple new Coin entries into the database.
+    /// </summary>
+    /// <param name="coins">The collection of Coin objects to insert.</param>
+    /// <returns>A result representing the outcome of the operation.</returns>
+    Task<Result> InsertCoins(IEnumerable<CoinNew> coins);
+
+    /// <summary>
     /// Retrieves all coins from the database.
     /// </summary>
     /// <returns>A collection of coin objects.</returns>

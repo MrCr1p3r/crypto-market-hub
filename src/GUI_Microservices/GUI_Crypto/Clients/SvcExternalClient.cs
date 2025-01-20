@@ -3,6 +3,7 @@ using Cysharp.Web;
 using GUI_Crypto.Clients.Interfaces;
 using GUI_Crypto.Models.Input;
 using GUI_Crypto.Models.Output;
+using SVC_External.Models.Output;
 
 namespace GUI_Crypto.Clients;
 
@@ -29,6 +30,7 @@ public class SvcExternalClient(IHttpClientFactory httpClientFactory) : ISvcExter
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<string>> GetAllListedCoins() =>
-        await _httpClient.GetFromJsonAsync<IEnumerable<string>>($"{BaseUrl}/allListedCoins") ?? [];
+    public async Task<ListedCoins> GetAllListedCoins() =>
+        await _httpClient.GetFromJsonAsync<ListedCoins>($"{BaseUrl}/allListedCoins")
+        ?? new ListedCoins();
 }

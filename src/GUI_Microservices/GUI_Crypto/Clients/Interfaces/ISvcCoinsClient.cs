@@ -1,3 +1,4 @@
+using FluentResults;
 using GUI_Crypto.Models.Input;
 using GUI_Crypto.Models.Output;
 
@@ -12,8 +13,17 @@ public interface ISvcCoinsClient
     /// Creates a new coin.
     /// </summary>
     /// <param name="coin">The coin to create.</param>
-    /// <returns>A task that creates new coin.</returns>
-    Task CreateCoin(CoinNew coin);
+    /// <returns>True if the coin was created successfully,
+    /// false if it already exists in the database.</returns>
+    Task<bool> CreateCoin(CoinNew coin);
+
+    /// <summary>
+    /// Creates multiple new coins in a batch.
+    /// </summary>
+    /// <param name="coins">The collection of coins to create.</param>
+    /// <returns>Success result if all coins were created successfully,
+    /// failure result with error message if any coin already exists in the database.</returns>
+    Task<Result> CreateCoins(IEnumerable<CoinNew> coins);
 
     /// <summary>
     /// Retrieves all coins.

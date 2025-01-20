@@ -98,6 +98,96 @@ public class SvcCoinsClientTests
     }
 
     [Fact]
+    public async Task CreateCoin_WhenSuccessful_ReturnsTrue()
+    {
+        // Arrange
+        var newCoin = _fixture.Create<CoinNew>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsResponse(HttpStatusCode.OK);
+
+        // Act
+        var result = await _client.CreateCoin(newCoin);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateCoin_WhenFailed_ReturnsFalse()
+    {
+        // Arrange
+        var newCoin = _fixture.Create<CoinNew>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsResponse(HttpStatusCode.BadRequest);
+
+        // Act
+        var result = await _client.CreateCoin(newCoin);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateCoins_CorrectUrlIsCalled()
+    {
+        // Arrange
+        var newCoins = _fixture.CreateMany<CoinNew>(3).ToList();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsResponse(HttpStatusCode.NoContent);
+
+        // Act
+        await _client.CreateCoins(newCoins);
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Post,
+            "https://example.com/coins/insert/batch"
+        );
+    }
+
+    [Fact]
+    public async Task CreateCoins_WhenSuccessful_ReturnsSuccessResult()
+    {
+        // Arrange
+        var newCoins = _fixture.CreateMany<CoinNew>(3).ToList();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsResponse(HttpStatusCode.NoContent);
+
+        // Act
+        var result = await _client.CreateCoins(newCoins);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateCoins_WhenFailed_ReturnsFailureResultWithErrorMessage()
+    {
+        // Arrange
+        var newCoins = _fixture.CreateMany<CoinNew>(3).ToList();
+        var errorMessage = "One or more coins already exist in the database";
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsResponse(HttpStatusCode.Conflict, new StringContent(errorMessage));
+
+        // Act
+        var result = await _client.CreateCoins(newCoins);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle().Which.Message.Should().Be(errorMessage);
+    }
+
+    [Fact]
     public async Task DeleteCoin_CorrectUrlIsCalled()
     {
         // Arrange

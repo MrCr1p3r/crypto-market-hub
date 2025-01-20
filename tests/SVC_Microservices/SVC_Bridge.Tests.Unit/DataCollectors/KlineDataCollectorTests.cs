@@ -88,11 +88,11 @@ public class KlineDataCollectorTests
     public async Task CollectEntireKlineData_ShouldReturnKlineData_WhenDataExists()
     {
         // Arrange
-        var coins = _fixture.CreateMany<Coin>(2);
+        var nonStableCoins = _fixture.Build<Coin>().With(c => c.IsStablecoin, false).CreateMany(2);
         var quoteCoins = _fixture.CreateMany<Coin>(1);
         var klineData = _fixture.CreateMany<KlineData>(2);
 
-        _mockCoinsClient.Setup(client => client.GetAllCoins()).ReturnsAsync(coins);
+        _mockCoinsClient.Setup(client => client.GetAllCoins()).ReturnsAsync(nonStableCoins);
         _mockCoinsClient
             .Setup(client => client.GetQuoteCoinsPrioritized())
             .ReturnsAsync(quoteCoins);
@@ -100,7 +100,7 @@ public class KlineDataCollectorTests
             .Setup(client => client.GetKlineData(It.IsAny<KlineDataRequest>()))
             .ReturnsAsync(klineData);
 
-        var expectedResult = coins.SelectMany(mainCoin =>
+        var expectedResult = nonStableCoins.SelectMany(mainCoin =>
             klineData.Select(kd => new KlineDataNew
             {
                 IdTradePair = 1,
@@ -119,6 +119,52 @@ public class KlineDataCollectorTests
 
         // Assert
         result.Should().BeEquivalentTo(expectedResult);
+    }
+
+    [Fact]
+    public async Task CollectEntireKlineData_ShouldExcludeStablecoins()
+    {
+        // Arrange
+        var stableCoin = _fixture
+            .Build<Coin>()
+            .With(c => c.IsStablecoin, true)
+            .With(c => c.Symbol, "USDT")
+            .Create();
+        var nonStableCoin = _fixture
+            .Build<Coin>()
+            .With(c => c.IsStablecoin, false)
+            .With(c => c.Symbol, "BTC")
+            .Create();
+        var allCoins = new[] { stableCoin, nonStableCoin };
+        var quoteCoins = _fixture.CreateMany<Coin>(1);
+        var klineData = _fixture.CreateMany<KlineData>(2);
+
+        _mockCoinsClient.Setup(client => client.GetAllCoins()).ReturnsAsync(allCoins);
+        _mockCoinsClient
+            .Setup(client => client.GetQuoteCoinsPrioritized())
+            .ReturnsAsync(quoteCoins);
+        _mockExternalClient
+            .Setup(client => client.GetKlineData(It.IsAny<KlineDataRequest>()))
+            .ReturnsAsync(klineData);
+
+        // Act
+        await _klineDataCollector.CollectEntireKlineData();
+
+        // Assert
+        _mockExternalClient.Verify(
+            client =>
+                client.GetKlineData(
+                    It.Is<KlineDataRequest>(r => r.CoinMainSymbol == nonStableCoin.Symbol)
+                ),
+            Times.AtLeastOnce
+        );
+        _mockExternalClient.Verify(
+            client =>
+                client.GetKlineData(
+                    It.Is<KlineDataRequest>(r => r.CoinMainSymbol == stableCoin.Symbol)
+                ),
+            Times.Never
+        );
     }
 
     [Fact]

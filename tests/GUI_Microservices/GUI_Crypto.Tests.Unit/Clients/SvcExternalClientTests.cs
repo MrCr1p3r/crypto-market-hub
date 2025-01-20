@@ -9,6 +9,7 @@ using GUI_Crypto.Models.Input;
 using GUI_Crypto.Models.Output;
 using Moq;
 using Moq.Contrib.HttpClient;
+using SVC_External.Models.Output;
 
 namespace GUI_Crypto.Tests.Unit.Clients;
 
@@ -107,7 +108,7 @@ public class SvcExternalClientTests
         // Arrange
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<string>()));
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new ListedCoins()));
 
         // Act
         await _client.GetAllListedCoins();
@@ -123,7 +124,7 @@ public class SvcExternalClientTests
     public async Task GetAllListedCoins_ShouldReturnExpectedCoins()
     {
         // Arrange
-        var expectedCoins = _fixture.CreateMany<string>();
+        var expectedCoins = _fixture.Create<ListedCoins>();
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
@@ -137,17 +138,18 @@ public class SvcExternalClientTests
     }
 
     [Fact]
-    public async Task GetAllListedCoins_ShouldReturnEmptyArray()
+    public async Task GetAllListedCoins_WhenResponseIsNull_ShouldReturnEmptyObject()
     {
         // Arrange
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new List<string>()));
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create<ListedCoins>(null));
 
         // Act
         var result = await _client.GetAllListedCoins();
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(new ListedCoins());
     }
 }

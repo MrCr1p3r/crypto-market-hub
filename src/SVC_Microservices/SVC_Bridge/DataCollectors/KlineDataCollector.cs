@@ -23,13 +23,14 @@ public class KlineDataCollector(
     public async Task<IEnumerable<KlineDataNew>> CollectEntireKlineData()
     {
         var allCoins = await _coinsClient.GetAllCoins();
-        return await CollectAllKlineData(allCoins);
+        var coinsWithoutStablecoins = allCoins.Where(coin => !coin.IsStablecoin);
+        return await CollectAllKlineData(coinsWithoutStablecoins);
     }
 
-    private async Task<IEnumerable<KlineDataNew>> CollectAllKlineData(IEnumerable<Coin> allCoins)
+    private async Task<IEnumerable<KlineDataNew>> CollectAllKlineData(IEnumerable<Coin> coins)
     {
         var quoteCoinsPrioritization = await _coinsClient.GetQuoteCoinsPrioritized();
-        var klineDataCollectionTasks = allCoins.Select(coin =>
+        var klineDataCollectionTasks = coins.Select(coin =>
             CollectKlineDataForCoin(coin, quoteCoinsPrioritization)
         );
         var allKlineData = await Task.WhenAll(klineDataCollectionTasks);
@@ -78,7 +79,7 @@ public class KlineDataCollector(
         Coin quoteCoin
     ) => existingTradingPairs.FirstOrDefault(tp => AreCoinsEquivalent(tp.CoinQuote, quoteCoin))?.Id;
 
-    private static bool AreCoinsEquivalent(TradingPairCoin coin, Coin quoteCoin) =>
+    private static bool AreCoinsEquivalent(TradingPairCoinQuote coin, Coin quoteCoin) =>
         coin.Symbol.Equals(quoteCoin.Symbol, StringComparison.OrdinalIgnoreCase)
         && coin.Name.Equals(quoteCoin.Name, StringComparison.OrdinalIgnoreCase);
 

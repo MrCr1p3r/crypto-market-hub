@@ -1,5 +1,6 @@
 using GUI_Crypto.Models.Input;
 using GUI_Crypto.Models.Output;
+using SVC_External.Models.Output;
 
 namespace GUI_Crypto.Clients.Interfaces;
 
@@ -18,6 +19,6 @@ public interface ISvcExternalClient
     /// <summary>
     /// Retrieves all listed coins from the external service.
     /// </summary>
-    /// <returns>A collection of coin symbols.</returns>
-    Task<IEnumerable<string>> GetAllListedCoins();
+    /// <returns>A collection of coins listed on each exchange.</returns>
+    Task<ListedCoins> GetAllListedCoins();
 }

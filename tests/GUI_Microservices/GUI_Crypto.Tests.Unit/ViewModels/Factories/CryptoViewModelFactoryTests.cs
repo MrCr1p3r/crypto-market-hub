@@ -74,7 +74,7 @@ public class CryptoViewModelFactoryTests
             new TradingPair
             {
                 Id = tradingPairId,
-                CoinQuote = new TradingPairCoin
+                CoinQuote = new TradingPairCoinQuote
                 {
                     Id = _fixture.Create<int>(),
                     Symbol = "USDT",
@@ -114,7 +114,7 @@ public class CryptoViewModelFactoryTests
             new TradingPair
             {
                 Id = _fixture.Create<int>(),
-                CoinQuote = new TradingPairCoin
+                CoinQuote = new TradingPairCoinQuote
                 {
                     Id = _fixture.Create<int>(),
                     Symbol = "USDT",

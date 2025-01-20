@@ -1,3 +1,4 @@
+using FluentResults;
 using GUI_Crypto.Clients.Interfaces;
 using GUI_Crypto.Models.Input;
 using GUI_Crypto.Models.Output;
@@ -13,8 +14,23 @@ public class SvcCoinsClient(IHttpClientFactory httpClientFactory) : ISvcCoinsCli
     private const string BaseUrl = "coins";
 
     /// <inheritdoc />
-    public async Task CreateCoin(CoinNew coin) =>
-        await _httpClient.PostAsJsonAsync($"{BaseUrl}/insert", coin);
+    public async Task<bool> CreateCoin(CoinNew coin)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/insert", coin);
+        return response.IsSuccessStatusCode;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result> CreateCoins(IEnumerable<CoinNew> coins)
+    {
+        var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/insert/batch", coins);
+
+        if (response.IsSuccessStatusCode)
+            return Result.Ok();
+
+        var errorMessage = await response.Content.ReadAsStringAsync();
+        return Result.Fail(errorMessage);
+    }
 
     /// <inheritdoc />
     public async Task<IEnumerable<Coin>> GetAllCoins() =>

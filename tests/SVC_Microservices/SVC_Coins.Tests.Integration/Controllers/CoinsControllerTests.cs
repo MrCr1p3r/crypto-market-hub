@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using AutoFixture;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using SVC_Coins.Models.Entities;
 using SVC_Coins.Models.Input;
 using SVC_Coins.Models.Output;
@@ -47,6 +46,55 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
         var message = await response.Content.ReadAsStringAsync();
         message.Should().Contain("already exists");
+    }
+
+    [Fact]
+    public async Task InsertCoins_ReturnsNoContent_WhenSuccessful()
+    {
+        // Arrange
+        var coinsNew = new List<CoinNew>
+        {
+            new() { Name = "Bitcoin", Symbol = "BTC" },
+            new() { Name = "Ethereum", Symbol = "ETH" },
+            new() { Name = "Tether", Symbol = "USDT" },
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins/insert/batch", coinsNew);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        using var dbContext = GetDbContext();
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(3);
+        coinsList.Should().Contain(c => c.Name == "Bitcoin" && c.Symbol == "BTC");
+        coinsList.Should().Contain(c => c.Name == "Ethereum" && c.Symbol == "ETH");
+        coinsList.Should().Contain(c => c.Name == "Tether" && c.Symbol == "USDT");
+    }
+
+    [Fact]
+    public async Task InsertCoins_ReturnsConflict_WhenAnyCoinsExist()
+    {
+        // Arrange
+        await InsertCoinsAsync([new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" }]);
+
+        var coinsNew = new List<CoinNew>
+        {
+            new() { Name = "Bitcoin", Symbol = "BTC" },
+            new() { Name = "Ethereum", Symbol = "ETH" },
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins/insert/batch", coinsNew);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var message = await response.Content.ReadAsStringAsync();
+        message.Should().Contain("Bitcoin (BTC)");
+
+        using var dbContext = GetDbContext();
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(1);
     }
 
     [Fact]
