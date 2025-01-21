@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SVC_Bridge.Clients.Interfaces;
 using SVC_Bridge.DataCollectors.Interfaces;
+using SVC_Bridge.Models.Input;
 
 namespace SVC_Bridge.Controllers;
 
@@ -20,14 +21,16 @@ public class KlineDataController(
     /// <summary>
     /// Updates the entire Kline data for all coins.
     /// </summary>
+    /// <param name="request">The kline data request parameters.</param>
     /// <returns>A status indicating the result of the operation.</returns>
     [HttpPost("updateEntireKlineData")]
+    [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateEntireKlineData()
+    public async Task<IActionResult> UpdateEntireKlineData([FromBody] KlineDataRequest request)
     {
-        var klineData = await _klineDataCollector.CollectEntireKlineData();
+        var klineData = await _klineDataCollector.CollectEntireKlineData(request);
         if (!klineData.Any())
             return BadRequest("No kline data was collected.");
 

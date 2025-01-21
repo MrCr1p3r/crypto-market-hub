@@ -20,18 +20,21 @@ public class KlineDataCollector(
     private readonly ILogger<KlineDataCollector> _logger = logger;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineDataNew>> CollectEntireKlineData()
+    public async Task<IEnumerable<KlineDataNew>> CollectEntireKlineData(KlineDataRequest request)
     {
         var allCoins = await _coinsClient.GetAllCoins();
         var coinsWithoutStablecoins = allCoins.Where(coin => !coin.IsStablecoin);
-        return await CollectAllKlineData(coinsWithoutStablecoins);
+        return await CollectAllKlineData(coinsWithoutStablecoins, request);
     }
 
-    private async Task<IEnumerable<KlineDataNew>> CollectAllKlineData(IEnumerable<Coin> coins)
+    private async Task<IEnumerable<KlineDataNew>> CollectAllKlineData(
+        IEnumerable<Coin> coins,
+        KlineDataRequest request
+    )
     {
         var quoteCoinsPrioritization = await _coinsClient.GetQuoteCoinsPrioritized();
         var klineDataCollectionTasks = coins.Select(coin =>
-            CollectKlineDataForCoin(coin, quoteCoinsPrioritization)
+            CollectKlineDataForCoin(coin, quoteCoinsPrioritization, request)
         );
         var allKlineData = await Task.WhenAll(klineDataCollectionTasks);
         return allKlineData.SelectMany(result => result);
@@ -39,12 +42,15 @@ public class KlineDataCollector(
 
     private async Task<IEnumerable<KlineDataNew>> CollectKlineDataForCoin(
         Coin mainCoin,
-        IEnumerable<Coin> quoteCoinsPrioritization
+        IEnumerable<Coin> quoteCoinsPrioritization,
+        KlineDataRequest baseRequest
     )
     {
         foreach (var quoteCoin in quoteCoinsPrioritization)
         {
-            var klineData = await GetKlineData(mainCoin.Symbol, quoteCoin.Symbol);
+            var request = Mapping.ToKlineDataRequest(mainCoin, baseRequest, quoteCoin);
+
+            var klineData = await _externalClient.GetKlineData(request);
             if (!klineData.Any())
                 continue;
 
@@ -65,15 +71,6 @@ public class KlineDataCollector(
         return [];
     }
 
-    private async Task<IEnumerable<KlineData>> GetKlineData(
-        string symbolCoinMain,
-        string symbolCoinQuote
-    )
-    {
-        var klineDataRequest = Mapping.ToKlineDataRequest(symbolCoinMain, symbolCoinQuote);
-        return await _externalClient.GetKlineData(klineDataRequest);
-    }
-
     private static int? GetTradingPairId(
         IEnumerable<TradingPair> existingTradingPairs,
         Coin quoteCoin
@@ -85,6 +82,21 @@ public class KlineDataCollector(
 
     private static class Mapping
     {
+        public static KlineDataRequest ToKlineDataRequest(
+            Coin mainCoin,
+            KlineDataRequest baseRequest,
+            Coin quoteCoin
+        ) =>
+            new()
+            {
+                CoinMainSymbol = mainCoin.Symbol,
+                CoinQuoteSymbol = quoteCoin.Symbol,
+                Interval = baseRequest.Interval,
+                StartTime = baseRequest.StartTime,
+                EndTime = baseRequest.EndTime,
+                Limit = baseRequest.Limit,
+            };
+
         public static KlineDataNew ToKlineDataNew(KlineData request, int idTradePair) =>
             new()
             {
@@ -96,16 +108,6 @@ public class KlineDataCollector(
                 ClosePrice = request.ClosePrice,
                 Volume = request.Volume,
                 CloseTime = request.CloseTime,
-            };
-
-        public static KlineDataRequest ToKlineDataRequest(string coinMain, string coinQuote) =>
-            new()
-            {
-                CoinMainSymbol = coinMain,
-                CoinQuoteSymbol = coinQuote,
-                Interval = ExchangeKlineInterval.FourHours,
-                StartTime = DateTime.UtcNow.AddDays(-7),
-                EndTime = DateTime.UtcNow,
             };
     }
 }

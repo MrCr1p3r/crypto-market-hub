@@ -2,6 +2,7 @@ using AutoFixture;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using SharedLibrary.Enums;
 using SVC_Bridge.Clients.Interfaces;
 using SVC_Bridge.DataCollectors;
 using SVC_Bridge.DataDistributors.Interfaces;
@@ -18,6 +19,7 @@ public class KlineDataCollectorTests
     private readonly Mock<IKlineDataDistributor> _mockKlineDataDistributor;
     private readonly Mock<ILogger<KlineDataCollector>> _mockLogger;
     private readonly KlineDataCollector _klineDataCollector;
+    private readonly KlineDataRequest _validRequest;
 
     public KlineDataCollectorTests()
     {
@@ -49,13 +51,23 @@ public class KlineDataCollectorTests
             _mockKlineDataDistributor.Object,
             _mockLogger.Object
         );
+
+        _validRequest = new KlineDataRequest
+        {
+            CoinMainSymbol = "BTC",
+            CoinQuoteSymbol = "USDT",
+            Interval = ExchangeKlineInterval.FourHours,
+            StartTime = DateTime.UtcNow.AddDays(-7),
+            EndTime = DateTime.UtcNow,
+            Limit = 100,
+        };
     }
 
     [Fact]
     public async Task CollectEntireKlineData_ShouldCall_GetAllCoins()
     {
         // Act
-        await _klineDataCollector.CollectEntireKlineData();
+        await _klineDataCollector.CollectEntireKlineData(_validRequest);
 
         // Assert
         _mockCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
@@ -65,7 +77,7 @@ public class KlineDataCollectorTests
     public async Task CollectEntireKlineData_ShouldCall_GetQuoteCoinsPrioritized()
     {
         // Act
-        await _klineDataCollector.CollectEntireKlineData();
+        await _klineDataCollector.CollectEntireKlineData(_validRequest);
 
         // Assert
         _mockCoinsClient.Verify(client => client.GetQuoteCoinsPrioritized(), Times.Once);
@@ -75,11 +87,19 @@ public class KlineDataCollectorTests
     public async Task CollectEntireKlineData_ShouldCall_GetKlineData()
     {
         // Act
-        await _klineDataCollector.CollectEntireKlineData();
+        await _klineDataCollector.CollectEntireKlineData(_validRequest);
 
         // Assert
         _mockExternalClient.Verify(
-            client => client.GetKlineData(It.IsAny<KlineDataRequest>()),
+            client =>
+                client.GetKlineData(
+                    It.Is<KlineDataRequest>(r =>
+                        r.Interval == _validRequest.Interval
+                        && r.StartTime == _validRequest.StartTime
+                        && r.EndTime == _validRequest.EndTime
+                        && r.Limit == _validRequest.Limit
+                    )
+                ),
             Times.AtLeastOnce
         );
     }
@@ -115,7 +135,7 @@ public class KlineDataCollectorTests
         );
 
         // Act
-        var result = await _klineDataCollector.CollectEntireKlineData();
+        var result = await _klineDataCollector.CollectEntireKlineData(_validRequest);
 
         // Assert
         result.Should().BeEquivalentTo(expectedResult);
@@ -148,7 +168,7 @@ public class KlineDataCollectorTests
             .ReturnsAsync(klineData);
 
         // Act
-        await _klineDataCollector.CollectEntireKlineData();
+        await _klineDataCollector.CollectEntireKlineData(_validRequest);
 
         // Assert
         _mockExternalClient.Verify(
@@ -176,7 +196,7 @@ public class KlineDataCollectorTests
             .ReturnsAsync([]);
 
         // Act
-        var result = await _klineDataCollector.CollectEntireKlineData();
+        var result = await _klineDataCollector.CollectEntireKlineData(_validRequest);
 
         // Assert
         result.Should().BeEmpty();
