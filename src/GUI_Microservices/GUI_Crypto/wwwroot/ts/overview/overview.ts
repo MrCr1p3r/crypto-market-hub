@@ -1,0 +1,301 @@
+// External modules
+import * as bootstrap from 'bootstrap';
+import toastr from 'toastr';
+
+// Internal modules
+import type { ListedCoins } from './interfaces/listed-coins';
+import { fetchListedCoins, createCoin, deleteCoin } from './services';
+import { initializeMiniCharts } from './mini-chart';
+import { initializeToastr } from '../utils/toastr-config';
+
+export class Overview {
+    private static readonly ITEMS_PER_PAGE = 50;
+    private static instance: Overview | null;
+
+    static {
+        Overview.instance = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!Overview.instance) {
+                Overview.instance = new Overview();
+            }
+            initializeMiniCharts();
+        });
+    }
+
+    private readonly listedCoins: string[] = [];
+    private selectedCoin: string | null = null;
+
+    // DOM Elements
+    private readonly addNewCoinBtn!: HTMLButtonElement;
+    private readonly addCoinModal!: HTMLElement;
+    private readonly coinSearchInput!: HTMLInputElement;
+    private readonly coinNameInput!: HTMLInputElement;
+    private readonly addCoinBtn!: HTMLButtonElement;
+    private readonly loadingSpinner!: HTMLElement;
+    private readonly searchResults!: HTMLElement;
+    private readonly selectedCoinSection!: HTMLElement;
+    private readonly selectedCoinSymbol!: HTMLElement;
+    private readonly deleteConfirmModal!: HTMLElement;
+    private readonly deleteCoinSymbol!: HTMLElement;
+    private readonly confirmDeleteBtn!: HTMLButtonElement;
+
+    private constructor() {
+        this.initializeElements();
+        initializeToastr();
+        this.setupEventListeners();
+    }
+
+    private initializeElements(): void {
+        const elements = {
+            addNewCoinBtn: 'addNewCoinBtn',
+            addCoinModal: 'addCoinModal',
+            coinSearchInput: 'coinSearch',
+            coinNameInput: 'coinName',
+            addCoinBtn: 'addCoinBtn',
+            loadingSpinner: 'loadingSpinner',
+            searchResults: 'searchResults',
+            selectedCoinSection: 'selectedCoin',
+            selectedCoinSymbol: 'selectedCoinSymbol',
+            deleteConfirmModal: 'deleteConfirmModal',
+            deleteCoinSymbol: 'deleteCoinSymbol',
+            confirmDeleteBtn: 'confirmDeleteBtn'
+        } as const;
+
+        // Initialize all DOM elements at once
+        Object.entries(elements).forEach(([key, id]) => {
+            const element = document.getElementById(id);
+            if (!element) {
+                throw new Error(`Element with id '${id}' not found`);
+            }
+            (this as any)[key] = element;
+        });
+    }
+
+    private setupEventListeners(): void {
+        // Add coin modal events
+        this.addNewCoinBtn.addEventListener('click', () => this.openAddCoinModal());
+        this.addCoinModal.addEventListener('shown.bs.modal', () => this.handleModalShown());
+        this.addCoinModal.addEventListener('hidden.bs.modal', () => this.resetModal());
+
+        // Input events
+        this.coinSearchInput.addEventListener('input', (e) => this.handleSearch((e.target as HTMLInputElement).value));
+        this.coinNameInput.addEventListener('input', (e) => this.handleCoinNameInput(e));
+        this.addCoinBtn.addEventListener('click', () => this.handleAddCoin());
+
+        // Delete button event delegation
+        this.setupDeleteButtonEventDelegation();
+    }
+
+    private setupDeleteButtonEventDelegation(): void {
+        document.addEventListener('click', (e) => {
+            const target = e.target as HTMLElement;
+            const deleteButton = target.closest('.delete-coin-btn') as HTMLButtonElement;
+            
+            if (!deleteButton) return;
+
+            const { coinId, coinSymbol } = deleteButton.dataset;
+            if (coinId && coinSymbol) {
+                this.confirmDelete(Number(coinId), coinSymbol);
+            }
+        });
+    }
+
+    private handleModalShown(): void {
+        if (this.listedCoins.length > 0) {
+            this.displayCoins(this.listedCoins.slice(0, Overview.ITEMS_PER_PAGE));
+        }
+    }
+
+    private handleCoinNameInput(e: Event): void {
+        const input = e.target as HTMLInputElement;
+        this.addCoinBtn.disabled = input.value.trim().length === 0;
+    }
+
+    private async openAddCoinModal(): Promise<void> {
+        const modal = new bootstrap.Modal(this.addCoinModal);
+        modal.show();
+        
+        this.showLoading(true);
+        
+        try {
+            const coins = await this.fetchAndProcessCoins();
+            this.listedCoins.push(...coins);
+            this.displayCoins(coins.slice(0, Overview.ITEMS_PER_PAGE));
+        } catch (error) {
+            console.error('Error fetching listed coins:', error);
+            toastr.error('Failed to fetch available coins');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    private async fetchAndProcessCoins(): Promise<string[]> {
+        const data: ListedCoins = await fetchListedCoins();
+        const allCoins: string[] = [
+            ...(data.binanceCoins || []),
+            ...(data.bybitCoins || []),
+            ...(data.mexcCoins || [])
+        ];
+        return [...new Set(allCoins)].sort();
+    }
+
+    private showLoading(show: boolean): void {
+        const elements = [
+            { element: this.loadingSpinner, showClass: !show },
+            { element: this.searchResults, showClass: show },
+        ];
+
+        elements.forEach(({ element, showClass }) => {
+            element.classList.toggle('d-none', showClass);
+        });
+
+        this.coinSearchInput.disabled = show;
+    }
+
+    private handleSearch(searchTerm: string): void {
+        const upperTerm = searchTerm.toUpperCase();
+        const coins = upperTerm.length < 1 
+            ? this.listedCoins 
+            : this.listedCoins.filter(coin => coin.toUpperCase().includes(upperTerm));
+
+        this.displayCoins(coins.slice(0, Overview.ITEMS_PER_PAGE));
+    }
+
+    private displayCoins(coins: readonly string[]): void {
+        if (!this.searchResults) return;
+
+        this.searchResults.innerHTML = '';
+        
+        if (coins.length === 0) {
+            this.appendNoCoinsFoundMessage();
+            return;
+        }
+        coins.forEach(coin => this.appendCoinElement(coin));
+    }
+
+    private appendNoCoinsFoundMessage(): void {
+        const div = document.createElement('div');
+        div.className = 'list-group-item bg-dark text-light text-center';
+        div.textContent = 'No coins found';
+        this.searchResults.appendChild(div);
+    }
+
+    private appendCoinElement(coin: string): void {
+        const div = document.createElement('div');
+        div.className = 'list-group-item list-group-item-action bg-dark text-light';
+        div.textContent = coin;
+        div.onclick = () => this.selectCoin(coin);
+        this.searchResults.appendChild(div);
+    }
+
+    private selectCoin(symbol: string): void {
+        this.selectedCoin = symbol;
+        this.selectedCoinSymbol.textContent = symbol;
+        this.selectedCoinSection.classList.remove('d-none');
+        this.addCoinBtn.disabled = true;
+        this.searchResults.innerHTML = '';
+        this.coinSearchInput.value = symbol;
+        this.coinNameInput.value = '';
+        this.coinNameInput.focus();
+    }
+
+    private async handleAddCoin(): Promise<void> {
+        if (!this.selectedCoin) return;
+
+        const name = this.coinNameInput.value.trim();
+        if (!this.validateCoinName(name)) return;
+
+        try {
+            await this.createNewCoin(name);
+        } catch (error: unknown) {
+            this.handleAddCoinError(error as { status?: number });
+        }
+    }
+
+    private validateCoinName(name: string): boolean {
+        if (!name) {
+            toastr.warning('Please enter a name for the coin');
+            return false;
+        }
+        return true;
+    }
+
+    private async createNewCoin(name: string): Promise<void> {
+        const response = await createCoin({
+            symbol: this.selectedCoin!,
+            name
+        });
+
+        if (response) {
+            toastr.success('Coin added successfully');
+            const modal = bootstrap.Modal.getInstance(this.addCoinModal);
+            modal?.hide();
+            window.location.reload();
+        }
+    }
+
+    private handleAddCoinError(error: { status?: number }): void {
+        if (error.status === 409) {
+            toastr.error('This coin already exists in the database');
+        } else {
+            console.error('Error adding coin:', error);
+            toastr.error('Failed to add coin');
+        }
+    }
+
+    private resetModal(): void {
+        const elements = [
+            { element: this.coinSearchInput, value: '', disabled: false },
+            { element: this.coinNameInput, value: '' }
+        ];
+
+        elements.forEach(({ element, value, disabled }) => {
+            element.value = value;
+            if (disabled !== undefined) element.disabled = disabled;
+        });
+
+        this.selectedCoinSection.classList.add('d-none');
+        this.searchResults.classList.remove('d-none');
+        this.loadingSpinner.classList.add('d-none');
+        this.addCoinBtn.disabled = true;
+        this.selectedCoin = null;
+
+        if (this.listedCoins.length > 0) {
+            this.displayCoins(this.listedCoins.slice(0, Overview.ITEMS_PER_PAGE));
+        }
+    }
+
+    private async confirmDelete(id: number, symbol: string): Promise<void> {
+        this.deleteCoinSymbol.textContent = symbol;
+        const modal = new bootstrap.Modal(this.deleteConfirmModal);
+        modal.show();
+
+        const handleConfirm = async () => {
+            try {
+                await deleteCoin(id);;
+                this.handleDeleteSuccess(modal);
+            } catch (error: unknown) {
+                this.handleDeleteError(error as { status?: number });
+            } finally {
+                this.confirmDeleteBtn.removeEventListener('click', handleConfirm);
+            }
+        };
+
+        this.confirmDeleteBtn.addEventListener('click', handleConfirm);
+    }
+
+    private handleDeleteSuccess(modal: bootstrap.Modal): void {
+        toastr.success('Coin deleted successfully');
+        modal.hide();
+        window.location.reload();
+    }
+
+    private handleDeleteError(error: { status?: number }): void {
+        if (error.status === 404) {
+            toastr.error('Coin not found');
+        } else {
+            console.error('Error deleting coin:', error);
+            toastr.error('Failed to delete coin');
+        }
+    }
+} 

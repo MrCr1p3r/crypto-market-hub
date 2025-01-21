@@ -2,86 +2,31 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Left Sidebar -->
-        <div class="col-md-2 sidebar d-none d-md-block">
-            <h5 class="text-center py-3">Left Sidebar</h5>
-            <ul class="nav flex-column px-2">
-                <li class="nav-item">
-                    <a href="#" class="nav-link text-light">Option 1</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link text-light">Option 2</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link text-light">Option 3</a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Main Content -->
+        <partial name="_FilterSidebar" />
         <div class="col-md-8">
             <h1 class="text-center py-3">Cryptocurrency Overview</h1>
-            <div class="table-responsive">
-                <table class="table table-dark-purple table-striped">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Symbol</th>
-                            <th>Name</th>
-                            <th>Chart (to be implemented)</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var coin in Model.Coins)
-                        {
-                            <tr>
-                                <td>@coin.Id</td>
-                                <td>@coin.Symbol</td>
-                                <td>@coin.Name</td>
-                                <td>@coin.KlineData.Count()</td>
-                                <td>
-                                    @if (coin.TradingPair != null){
-                                        <form action="/chart" method="post" target="_blank">
-                                            <input type="hidden" name="coin.IdCoinMain" value="@coin.Id" />
-                                            <input type="hidden" name="coin.SymbolCoinMain" value="@coin.Symbol" />
-                                            <input type="hidden" name="coin.SymbolCoinQuote" value="@coin.TradingPair.CoinQuote.Symbol" />
-                                            <button type="submit" class="btn btn-primary">
-                                                View Chart
-                                            </button>
-                                        </form>
-                                    } else
-                                    {
-                                        <button type="button" class="btn btn-primary" disabled>
-                                            View Chart
-                                        </button>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <!-- Right Sidebar -->
-        <div class="col-md-2 sidebar d-none d-md-block">
-            <h5 class="text-center py-3">Right Sidebar</h5>
-            <ul class="nav flex-column px-2">
-                <li class="nav-item">
-                    <a href="#" class="nav-link text-light">Option A</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link text-light">Option B</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link text-light">Option C</a>
-                </li>
-            </ul>
+            <!-- Add New Coin Button -->
+            <div class="text-start mb-3">
+                <button type="button" class="btn btn-primary" id="addNewCoinBtn">
+                    <i class="fas fa-plus"></i> Add New Coin
+                </button>
+            </div>
+            
+            <partial name="_CoinTable" model="Model" />
         </div>
+        <partial name="_NewsSidebar" />
     </div>
+
+    <partial name="_AddCoinModal" />
+    <partial name="_DeleteConfirmModal" />
 </div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/overview.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+}
+
+@section Scripts {
+    <script src="~/js/overview.js"></script>
 }

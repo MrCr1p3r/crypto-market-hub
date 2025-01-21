@@ -23,6 +23,11 @@ public class OverviewCoin
     public required string Name { get; set; }
 
     /// <summary>
+    /// Indicates if the coin is a stablecoin.
+    /// </summary>
+    public bool IsStablecoin { get; set; }
+
+    /// <summary>
     /// Trading pair for which kline data is available.
     /// </summary>
     public TradingPair? TradingPair { get; set; }

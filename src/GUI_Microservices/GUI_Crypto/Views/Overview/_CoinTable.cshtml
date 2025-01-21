@@ -1,0 +1,77 @@
+@model GUI_Crypto.ViewModels.OverviewViewModel
+
+<div class="table-responsive">
+    <table class="table table-dark-purple table-striped align-middle">
+        <thead>
+            <tr class="text-center">
+                <th>#</th>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Latest close price</th>
+                <th>Last week chart</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var coin in Model.Coins)
+            {
+                <tr class="text-center">
+                    <td>@coin.Id</td>
+                    <td>@coin.Symbol</td>
+                    <td>@coin.Name</td>
+                    <td>
+                        @if (coin.IsStablecoin)
+                        {
+                            <p>N/A</p>
+                        }
+                        else
+                        {
+                            var latestKline = coin.KlineData.OrderByDescending(k => k.OpenTime).FirstOrDefault();
+                            var closePrice = latestKline?.ClosePrice ?? 0;
+                            @(closePrice.ToString("F2"))
+                        }
+                    </td>
+                    <td class="d-flex justify-content-center">
+                        @if (coin.IsStablecoin)
+                        {
+                            <p>You don't need a chart for stablecoin, do you?🤨</p>
+                        }
+                        else
+                        {
+                            <div class="mini-chart" 
+                                    id="miniChart_@coin.Id" 
+                                    data-kline-data='@Html.Raw(Json.Serialize(coin.KlineData))'
+                                    style="width: 250px; height: 100px;">
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex justify-content-center gap-2">
+                            @if (coin.TradingPair != null){
+                                <form action="/chart" method="post" target="_blank" style="display: inline;">
+                                    <input type="hidden" name="coin.IdCoinMain" value="@coin.Id" />
+                                    <input type="hidden" name="coin.SymbolCoinMain" value="@coin.Symbol" />
+                                    <input type="hidden" name="coin.SymbolCoinQuote" value="@coin.TradingPair.CoinQuote.Symbol" />
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        View Chart
+                                    </button>
+                                </form>
+                            } else
+                            {
+                                <button type="button" class="btn btn-primary btn-sm" disabled>
+                                    View Chart
+                                </button>
+                            }
+                            <button type="button" class="btn btn-danger btn-sm delete-coin-btn" 
+                                    data-coin-id="@coin.Id" 
+                                    data-coin-symbol="@coin.Symbol" 
+                                    title="Delete coin">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

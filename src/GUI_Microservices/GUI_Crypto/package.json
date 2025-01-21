@@ -9,7 +9,9 @@
     "watch": "webpack --watch"
   },
   "devDependencies": {
+    "@types/bootstrap": "^5.2.10",
     "@types/jquery": "^3.5.32",
+    "@types/toastr": "^2.1.43",
     "rimraf": "^6.0.1",
     "ts-loader": "^9.5.2",
     "typescript": "^5.7.3",
@@ -17,8 +19,8 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "@types/toastr": "^2.1.43",
     "apexcharts": "^4.3.0",
+    "bootstrap": "^5.3.3",
     "date-fns": "^4.1.0",
     "toastr": "^2.1.4"
   },

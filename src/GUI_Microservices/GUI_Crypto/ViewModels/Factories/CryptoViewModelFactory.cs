@@ -65,6 +65,7 @@ public class CryptoViewModelFactory(
                 Id = coin.Id,
                 Symbol = coin.Symbol,
                 Name = coin.Name,
+                IsStablecoin = coin.IsStablecoin,
                 TradingPair = tradingPair,
                 KlineData = klineData,
             };

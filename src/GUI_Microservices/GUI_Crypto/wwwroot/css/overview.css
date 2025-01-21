@@ -16,3 +16,28 @@ body {
 .sidebar h5 {
     color: #a29bfe;
 }
+
+/* Scrollbar styles */
+#searchResults::-webkit-scrollbar {
+    width: 6px;
+}
+
+#searchResults::-webkit-scrollbar-track {
+    background: #343a40;
+    border-radius: 3px;
+}
+
+#searchResults::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 3px;
+}
+
+#searchResults::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+/* List group hover effect */
+.list-group-item-action:hover {
+    cursor: pointer;
+    background-color: #2c3136 !important;
+}

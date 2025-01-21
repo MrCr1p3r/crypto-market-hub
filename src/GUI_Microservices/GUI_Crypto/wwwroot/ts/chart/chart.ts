@@ -4,6 +4,7 @@ import { KlineDataRequest } from './interfaces/kline-data-request';
 import { fetchKlineData } from './services';
 import { renderChart, rerenderChart } from './utils/chart-utils';
 import toastr from 'toastr';
+import { initializeToastr } from '../utils/toastr-config';
 
 export class Chart {
     private static instance: Chart | null = null;
@@ -18,7 +19,7 @@ export class Chart {
     private endSelected: boolean = false;
 
     private constructor(klineData: KlineData[], coinSymbol: string) {
-        this.initializeToastr();
+        initializeToastr();
         this.initializeElements();
         this.initializeDateInputs();
         this.chartInstance = renderChart(this.chartContainer, klineData, coinSymbol);
@@ -54,14 +55,6 @@ export class Chart {
         });
     }
 
-    private initializeToastr(): void {
-        toastr.options = {
-            positionClass: "toast-top-right",
-            timeOut: 3000,
-            closeButton: true
-        };
-    }
-
     private initializeElements(): void {
         this.chartContainer = document.getElementById('priceChart') as HTMLElement;
         this.startDateInput = document.getElementById('start') as HTMLInputElement;
@@ -91,7 +84,7 @@ export class Chart {
 
     private handleTradingPairChange(event: Event): void {
         const element = event.currentTarget as HTMLElement;
-        const quoteCoin = element.dataset.quote as string;
+        const quoteCoin = element.dataset['quote'] as string;
         document.getElementById('selectedQuoteCoin')!.textContent = quoteCoin;
 
         this.tradingPairItems.forEach(i => i.classList.remove('active'));
@@ -162,6 +155,7 @@ export class Chart {
             endTime: formatDate(endDate)
         };
         const fetchedKlineData = await fetchKlineData(request);
+        console.log(fetchedKlineData);
         if (fetchedKlineData.length === 0) {
             toastr.warning(
                 `No data found for trading pair ${request.coinMainSymbol}/${request.coinQuoteSymbol}.
