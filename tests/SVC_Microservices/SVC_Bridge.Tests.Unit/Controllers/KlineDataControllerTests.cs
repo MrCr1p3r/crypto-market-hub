@@ -93,7 +93,7 @@ public class KlineDataControllerTests
             .Which.Value.Should()
             .Be("No kline data was collected.");
     }
-    
+
     [Fact]
     public async Task UpdateEntireKlineData_Returns_Ok_When_DataCollectedAndUpdated()
     {
