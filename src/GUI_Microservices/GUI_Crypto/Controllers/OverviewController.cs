@@ -75,4 +75,17 @@ public class OverviewController(
         await _coinsClient.DeleteCoin(idCoin);
         return Ok();
     }
+
+    /// <summary>
+    /// Gets all coins from the database.
+    /// </summary>
+    /// <returns>List of all coins.</returns>
+    /// <response code="200">List of coins retrieved successfully.</response>
+    [HttpGet("coins")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllCoins()
+    {
+        var viewModel = await _viewModelFactory.CreateOverviewViewModel();
+        return Ok(viewModel.Coins);
+    }
 }

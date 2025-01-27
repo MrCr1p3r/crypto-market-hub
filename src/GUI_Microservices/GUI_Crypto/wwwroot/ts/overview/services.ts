@@ -1,5 +1,6 @@
 import { ListedCoins } from './interfaces/listed-coins';
 import { CoinNew } from './interfaces/coin-new';
+import { OverviewCoin } from './interfaces/coin-overview';
 
 export async function fetchListedCoins(): Promise<ListedCoins> {
     const response = await fetch('/listed-coins');
@@ -26,4 +27,10 @@ export async function deleteCoin(id: number): Promise<void> {
     });
     
     if (!response.ok) throw { status: response.status };
+}
+
+export async function fetchCoins(): Promise<OverviewCoin[]> {
+    const response = await fetch('/coins');
+    if (!response.ok) throw { status: response.status };
+    return response.json();
 } 

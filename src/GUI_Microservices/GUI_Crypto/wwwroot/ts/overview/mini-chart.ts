@@ -3,13 +3,18 @@ import { KlineData } from '../chart/interfaces/kline-data';
 
 export function initializeMiniCharts(): void {
     const miniChartElements = document.querySelectorAll('.mini-chart');
-    
-    miniChartElements.forEach((element) => {
+    renderMiniCharts(Array.from(miniChartElements));
+}
+
+export function renderMiniCharts(elements: Element[]): void {
+    elements.forEach((element) => {
         const klineDataStr = element.getAttribute('data-kline-data');
         if (!klineDataStr) return;
         
         const klineData = JSON.parse(klineDataStr) as KlineData[];
         if (klineData.length === 0) return;
+
+        element.innerHTML = '';
 
         const options: ApexOptions = {
             series: [{

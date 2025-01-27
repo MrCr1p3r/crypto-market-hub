@@ -4,13 +4,14 @@ import toastr from 'toastr';
 
 // Internal modules
 import type { ListedCoins } from './interfaces/listed-coins';
-import { fetchListedCoins, createCoin, deleteCoin } from './services';
-import { initializeMiniCharts } from './mini-chart';
+import { fetchListedCoins, createCoin } from './services';
 import { initializeToastr } from '../utils/toastr-config';
+import { TableManager } from './table-manager';
 
 export class Overview {
-    private static readonly ITEMS_PER_PAGE = 50;
+    private static readonly ITEMS_PER_PAGE = 40;
     private static instance: Overview | null;
+    private readonly tableManager: TableManager;
 
     static {
         Overview.instance = null;
@@ -18,7 +19,6 @@ export class Overview {
             if (!Overview.instance) {
                 Overview.instance = new Overview();
             }
-            initializeMiniCharts();
         });
     }
 
@@ -35,14 +35,12 @@ export class Overview {
     private readonly searchResults!: HTMLElement;
     private readonly selectedCoinSection!: HTMLElement;
     private readonly selectedCoinSymbol!: HTMLElement;
-    private readonly deleteConfirmModal!: HTMLElement;
-    private readonly deleteCoinSymbol!: HTMLElement;
-    private readonly confirmDeleteBtn!: HTMLButtonElement;
 
     private constructor() {
         this.initializeElements();
         initializeToastr();
         this.setupEventListeners();
+        this.tableManager = new TableManager();
     }
 
     private initializeElements(): void {
@@ -55,10 +53,7 @@ export class Overview {
             loadingSpinner: 'loadingSpinner',
             searchResults: 'searchResults',
             selectedCoinSection: 'selectedCoin',
-            selectedCoinSymbol: 'selectedCoinSymbol',
-            deleteConfirmModal: 'deleteConfirmModal',
-            deleteCoinSymbol: 'deleteCoinSymbol',
-            confirmDeleteBtn: 'confirmDeleteBtn'
+            selectedCoinSymbol: 'selectedCoinSymbol'
         } as const;
 
         // Initialize all DOM elements at once
@@ -81,23 +76,6 @@ export class Overview {
         this.coinSearchInput.addEventListener('input', (e) => this.handleSearch((e.target as HTMLInputElement).value));
         this.coinNameInput.addEventListener('input', (e) => this.handleCoinNameInput(e));
         this.addCoinBtn.addEventListener('click', () => this.handleAddCoin());
-
-        // Delete button event delegation
-        this.setupDeleteButtonEventDelegation();
-    }
-
-    private setupDeleteButtonEventDelegation(): void {
-        document.addEventListener('click', (e) => {
-            const target = e.target as HTMLElement;
-            const deleteButton = target.closest('.delete-coin-btn') as HTMLButtonElement;
-            
-            if (!deleteButton) return;
-
-            const { coinId, coinSymbol } = deleteButton.dataset;
-            if (coinId && coinSymbol) {
-                this.confirmDelete(Number(coinId), coinSymbol);
-            }
-        });
     }
 
     private handleModalShown(): void {
@@ -262,40 +240,6 @@ export class Overview {
 
         if (this.listedCoins.length > 0) {
             this.displayCoins(this.listedCoins.slice(0, Overview.ITEMS_PER_PAGE));
-        }
-    }
-
-    private async confirmDelete(id: number, symbol: string): Promise<void> {
-        this.deleteCoinSymbol.textContent = symbol;
-        const modal = new bootstrap.Modal(this.deleteConfirmModal);
-        modal.show();
-
-        const handleConfirm = async () => {
-            try {
-                await deleteCoin(id);;
-                this.handleDeleteSuccess(modal);
-            } catch (error: unknown) {
-                this.handleDeleteError(error as { status?: number });
-            } finally {
-                this.confirmDeleteBtn.removeEventListener('click', handleConfirm);
-            }
-        };
-
-        this.confirmDeleteBtn.addEventListener('click', handleConfirm);
-    }
-
-    private handleDeleteSuccess(modal: bootstrap.Modal): void {
-        toastr.success('Coin deleted successfully');
-        modal.hide();
-        window.location.reload();
-    }
-
-    private handleDeleteError(error: { status?: number }): void {
-        if (error.status === 404) {
-            toastr.error('Coin not found');
-        } else {
-            console.error('Error deleting coin:', error);
-            toastr.error('Failed to delete coin');
         }
     }
 } 

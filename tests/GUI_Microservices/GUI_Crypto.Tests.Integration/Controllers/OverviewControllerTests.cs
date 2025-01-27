@@ -159,4 +159,16 @@ public class OverviewControllerTests : IClassFixture<CustomWebApplicationFactory
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
+
+    [Fact]
+    public async Task GetAllCoins_ReturnsSuccessStatusCodeAndData()
+    {
+        // Act
+        var response = await _client.GetAsync("/coins");
+        var content = await response.Content.ReadFromJsonAsync<IEnumerable<object>>();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        content.Should().NotBeNull();
+    }
 }

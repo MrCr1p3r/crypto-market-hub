@@ -139,4 +139,38 @@ public class OverviewControllerTests
         result.Should().BeOfType<OkResult>();
         _coinsClientMock.Verify(client => client.DeleteCoin(idCoin), Times.Once);
     }
+
+    [Fact]
+    public async Task GetAllCoins_ShouldCallCreateOverviewViewModel()
+    {
+        // Arrange
+        var expectedViewModel = _fixture.Create<OverviewViewModel>();
+        _viewModelFactoryMock
+            .Setup(factory => factory.CreateOverviewViewModel())
+            .ReturnsAsync(expectedViewModel);
+
+        // Act
+        await _controller.GetAllCoins();
+
+        // Assert
+        _viewModelFactoryMock.Verify(factory => factory.CreateOverviewViewModel(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllCoins_ShouldReturnCoinsFromViewModel()
+    {
+        // Arrange
+        var expectedViewModel = _fixture.Create<OverviewViewModel>();
+        _viewModelFactoryMock
+            .Setup(factory => factory.CreateOverviewViewModel())
+            .ReturnsAsync(expectedViewModel);
+
+        // Act
+        var result = await _controller.GetAllCoins();
+
+        // Assert
+        var okResult = result as OkObjectResult;
+        okResult.Should().NotBeNull();
+        okResult!.Value.Should().BeEquivalentTo(expectedViewModel.Coins);
+    }
 }
