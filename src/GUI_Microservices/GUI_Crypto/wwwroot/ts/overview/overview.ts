@@ -24,10 +24,11 @@ export class Overview {
 
     private readonly listedCoins: string[] = [];
     private selectedCoin: string | null = null;
+    private addCoinModal: bootstrap.Modal;
 
     // DOM Elements
     private readonly addNewCoinBtn!: HTMLButtonElement;
-    private readonly addCoinModal!: HTMLElement;
+    private readonly addCoinModalElement!: HTMLElement;
     private readonly coinSearchInput!: HTMLInputElement;
     private readonly coinNameInput!: HTMLInputElement;
     private readonly addCoinBtn!: HTMLButtonElement;
@@ -40,13 +41,14 @@ export class Overview {
         this.initializeElements();
         initializeToastr();
         this.setupEventListeners();
+        this.addCoinModal = new bootstrap.Modal(this.addCoinModalElement);
         this.tableManager = new TableManager();
     }
 
     private initializeElements(): void {
         const elements = {
             addNewCoinBtn: 'addNewCoinBtn',
-            addCoinModal: 'addCoinModal',
+            addCoinModalElement: 'addCoinModal',
             coinSearchInput: 'coinSearch',
             coinNameInput: 'coinName',
             addCoinBtn: 'addCoinBtn',
@@ -69,8 +71,6 @@ export class Overview {
     private setupEventListeners(): void {
         // Add coin modal events
         this.addNewCoinBtn.addEventListener('click', () => this.openAddCoinModal());
-        this.addCoinModal.addEventListener('shown.bs.modal', () => this.handleModalShown());
-        this.addCoinModal.addEventListener('hidden.bs.modal', () => this.resetModal());
 
         // Input events
         this.coinSearchInput.addEventListener('input', (e) => this.handleSearch((e.target as HTMLInputElement).value));
@@ -78,20 +78,13 @@ export class Overview {
         this.addCoinBtn.addEventListener('click', () => this.handleAddCoin());
     }
 
-    private handleModalShown(): void {
-        if (this.listedCoins.length > 0) {
-            this.displayCoins(this.listedCoins.slice(0, Overview.ITEMS_PER_PAGE));
-        }
-    }
-
     private handleCoinNameInput(e: Event): void {
         const input = e.target as HTMLInputElement;
         this.addCoinBtn.disabled = input.value.trim().length === 0;
     }
 
-    private async openAddCoinModal(): Promise<void> {
-        const modal = new bootstrap.Modal(this.addCoinModal);
-        modal.show();
+    private async openAddCoinModal(): Promise<void> {;
+        this.addCoinModal.show();
         
         this.showLoading(true);
         
@@ -206,9 +199,9 @@ export class Overview {
 
         if (response) {
             toastr.success('Coin added successfully');
-            const modal = bootstrap.Modal.getInstance(this.addCoinModal);
-            modal?.hide();
-            window.location.reload();
+            this.addCoinModal.hide();
+            this.resetModal();
+            this.tableManager.refreshTableData();
         }
     }
 
