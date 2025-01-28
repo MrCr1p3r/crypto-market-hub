@@ -127,4 +127,17 @@ public class CoinsController(ICoinsRepository repository) : ControllerBase
         var coins = await _repository.GetCoinsByIds(ids);
         return Ok(coins);
     }
+
+    /// <summary>
+    /// Resets all data from the Coins, TradingPairs and KlineData tables in the database.
+    /// </summary>
+    /// <returns>A status indicating the result of the operation.</returns>
+    /// <response code="204">The database was successfully reset.</response>
+    [HttpDelete("database/reset")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ResetDatabase()
+    {
+        await _repository.ResetDatabase();
+        return NoContent();
+    }
 }

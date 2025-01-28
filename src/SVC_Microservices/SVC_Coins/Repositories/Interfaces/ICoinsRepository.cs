@@ -56,4 +56,10 @@ public interface ICoinsRepository
     /// <param name="ids">The IDs of the coins to retrieve.</param>
     /// <returns>A collection of coins.</returns>
     Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids);
+
+    /// <summary>
+    /// Clears all data from the Coins, TradingPairs and KlineData tables in the database.
+    /// </summary>
+    /// <returns>Task, that clears the database.</returns>
+    Task ResetDatabase();
 }

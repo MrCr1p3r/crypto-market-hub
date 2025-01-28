@@ -364,4 +364,30 @@ public class CoinsControllerTests
         // Assert
         result.Should().BeOfType<OkObjectResult>().Which.Value.Should().BeEquivalentTo(emptyList);
     }
+
+    [Fact]
+    public async Task ResetDatabase_CallsRepository()
+    {
+        // Arrange
+        _mockRepository.Setup(repo => repo.ResetDatabase()).Returns(Task.CompletedTask);
+
+        // Act
+        await _controller.ResetDatabase();
+
+        // Assert
+        _mockRepository.Verify(repo => repo.ResetDatabase(), Times.Once);
+    }
+
+    [Fact]
+    public async Task ResetDatabase_ReturnsNoContent()
+    {
+        // Arrange
+        _mockRepository.Setup(repo => repo.ResetDatabase()).Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _controller.ResetDatabase();
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+    }
 }

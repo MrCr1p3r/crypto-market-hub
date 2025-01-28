@@ -269,4 +269,33 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         coinsList.Should().NotBeNull();
         coinsList.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task ResetDatabase_ShouldReturnNoContent_WhenSuccessful()
+    {
+        // Arrange
+        var coins = new List<CoinsEntity>
+        {
+            new() { Name = "Bitcoin", Symbol = "BTC" },
+            new() { Name = "Ethereum", Symbol = "ETH" },
+        };
+        var insertedCoins = (await InsertCoinsAsync(coins)).ToList();
+
+        using var dbContext = GetDbContext();
+        var tradingPair = new TradingPairsEntity
+        {
+            IdCoinMain = insertedCoins[0].Id,
+            IdCoinQuote = insertedCoins[1].Id,
+        };
+        await dbContext.TradingPairs.AddAsync(tradingPair);
+        await dbContext.SaveChangesAsync();
+
+        // Act
+        var response = await Client.DeleteAsync("/coins/database/reset");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await dbContext.Coins.CountAsync()).Should().Be(0);
+        (await dbContext.TradingPairs.CountAsync()).Should().Be(0);
+    }
 }

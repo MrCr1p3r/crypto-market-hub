@@ -137,6 +137,14 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         return coins.Select(Mapping.ToCoin);
     }
 
+    /// <inheritdoc />
+    public async Task ResetDatabase()
+    {
+        _context.TradingPairs.RemoveRange(_context.TradingPairs);
+        _context.Coins.RemoveRange(_context.Coins);
+        await _context.SaveChangesAsync();
+    }
+
     private static class Mapping
     {
         public static CoinsEntity ToCoinEntity(CoinNew coinNew) =>

@@ -530,4 +530,49 @@ public class CoinsRepositoryTests
         // Assert
         result.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task ResetDatabase_ShouldRemoveAllCoinsAndTradingPairs()
+    {
+        // Arrange
+        var coin1 = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
+        var coin2 = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
+        var coin3 = new CoinsEntity { Name = "Tether", Symbol = "USDT" };
+
+        await _context.Coins.AddRangeAsync([coin1, coin2, coin3]);
+        await _context.SaveChangesAsync();
+
+        var tradingPair1 = new TradingPairsEntity
+        {
+            IdCoinMain = coin1.Id,
+            IdCoinQuote = coin2.Id,
+            CoinMain = coin1,
+            CoinQuote = coin2,
+        };
+        var tradingPair2 = new TradingPairsEntity
+        {
+            IdCoinMain = coin2.Id,
+            IdCoinQuote = coin3.Id,
+            CoinMain = coin2,
+            CoinQuote = coin3,
+        };
+
+        await _context.TradingPairs.AddRangeAsync([tradingPair1, tradingPair2]);
+        await _context.SaveChangesAsync();
+
+        // Verify initial state
+        (await _context.Coins.CountAsync())
+            .Should()
+            .Be(3);
+        (await _context.TradingPairs.CountAsync()).Should().Be(2);
+
+        // Act
+        await _repository.ResetDatabase();
+
+        // Assert
+        (await _context.Coins.CountAsync())
+            .Should()
+            .Be(0);
+        (await _context.TradingPairs.CountAsync()).Should().Be(0);
+    }
 }
