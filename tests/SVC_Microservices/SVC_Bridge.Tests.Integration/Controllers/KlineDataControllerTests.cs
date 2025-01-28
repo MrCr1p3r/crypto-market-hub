@@ -37,7 +37,7 @@ public class KlineDataControllerTests
         };
 
         _mockKlineDataCollector
-            .Setup(dc => dc.CollectEntireKlineData(It.IsAny<KlineDataRequest>()))
+            .Setup(dc => dc.CollectEntireKlineData(It.IsAny<KlineDataUpdateRequest>()))
             .ReturnsAsync(_fixture.CreateMany<KlineDataNew>(5));
 
         var factory = new CustomWebApplicationFactory(
@@ -72,7 +72,7 @@ public class KlineDataControllerTests
     {
         // Arrange
         _mockKlineDataCollector
-            .Setup(dc => dc.CollectEntireKlineData(It.IsAny<KlineDataRequest>()))
+            .Setup(dc => dc.CollectEntireKlineData(It.IsAny<KlineDataUpdateRequest>()))
             .ReturnsAsync([]);
 
         var content = new StringContent(

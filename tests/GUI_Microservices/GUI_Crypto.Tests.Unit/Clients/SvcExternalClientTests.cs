@@ -143,7 +143,7 @@ public class SvcExternalClientTests
         // Arrange
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, url => true)
-            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create<ListedCoins>(null));
+            .ReturnsResponse(HttpStatusCode.OK, JsonContent.Create(new ListedCoins()));
 
         // Act
         var result = await _client.GetAllListedCoins();

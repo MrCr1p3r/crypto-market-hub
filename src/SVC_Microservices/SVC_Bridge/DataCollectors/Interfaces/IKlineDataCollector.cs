@@ -13,5 +13,5 @@ public interface IKlineDataCollector
     /// </summary>
     /// <param name="request">The kline data request parameters.</param>
     /// <returns>A task that replaces all the kline data in the database with new data.</returns>
-    Task<IEnumerable<KlineDataNew>> CollectEntireKlineData(KlineDataRequest request);
+    Task<IEnumerable<KlineDataNew>> CollectEntireKlineData(KlineDataUpdateRequest request);
 }

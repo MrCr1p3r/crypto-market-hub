@@ -20,7 +20,9 @@ public class KlineDataCollector(
     private readonly ILogger<KlineDataCollector> _logger = logger;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineDataNew>> CollectEntireKlineData(KlineDataRequest request)
+    public async Task<IEnumerable<KlineDataNew>> CollectEntireKlineData(
+        KlineDataUpdateRequest request
+    )
     {
         var allCoins = await _coinsClient.GetAllCoins();
         var coinsWithoutStablecoins = allCoins.Where(coin => !coin.IsStablecoin);
@@ -29,7 +31,7 @@ public class KlineDataCollector(
 
     private async Task<IEnumerable<KlineDataNew>> CollectAllKlineData(
         IEnumerable<Coin> coins,
-        KlineDataRequest request
+        KlineDataUpdateRequest request
     )
     {
         var quoteCoinsPrioritization = await _coinsClient.GetQuoteCoinsPrioritized();
@@ -43,7 +45,7 @@ public class KlineDataCollector(
     private async Task<IEnumerable<KlineDataNew>> CollectKlineDataForCoin(
         Coin mainCoin,
         IEnumerable<Coin> quoteCoinsPrioritization,
-        KlineDataRequest baseRequest
+        KlineDataUpdateRequest baseRequest
     )
     {
         foreach (var quoteCoin in quoteCoinsPrioritization)
@@ -84,7 +86,7 @@ public class KlineDataCollector(
     {
         public static KlineDataRequest ToKlineDataRequest(
             Coin mainCoin,
-            KlineDataRequest baseRequest,
+            KlineDataUpdateRequest baseRequest,
             Coin quoteCoin
         ) =>
             new()

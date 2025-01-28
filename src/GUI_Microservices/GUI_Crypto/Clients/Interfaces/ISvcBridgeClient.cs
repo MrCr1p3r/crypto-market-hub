@@ -12,5 +12,5 @@ public interface ISvcBridgeClient
     /// </summary>
     /// <param name="request">The kline data request parameters.</param>
     /// <returns>A task that updates the entire Kline data.</returns>
-    Task UpdateEntireKlineData(KlineDataRequest request);
+    Task UpdateEntireKlineData(KlineDataUpdateRequest request);
 }

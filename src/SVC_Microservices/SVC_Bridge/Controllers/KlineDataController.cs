@@ -28,7 +28,9 @@ public class KlineDataController(
     [Produces("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> UpdateEntireKlineData([FromBody] KlineDataRequest request)
+    public async Task<IActionResult> UpdateEntireKlineData(
+        [FromBody] KlineDataUpdateRequest request
+    )
     {
         var klineData = await _klineDataCollector.CollectEntireKlineData(request);
         if (!klineData.Any())

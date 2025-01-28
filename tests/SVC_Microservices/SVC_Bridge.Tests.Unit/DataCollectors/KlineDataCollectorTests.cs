@@ -19,7 +19,7 @@ public class KlineDataCollectorTests
     private readonly Mock<IKlineDataDistributor> _mockKlineDataDistributor;
     private readonly Mock<ILogger<KlineDataCollector>> _mockLogger;
     private readonly KlineDataCollector _klineDataCollector;
-    private readonly KlineDataRequest _validRequest;
+    private readonly KlineDataUpdateRequest _validRequest;
 
     public KlineDataCollectorTests()
     {
@@ -52,10 +52,8 @@ public class KlineDataCollectorTests
             _mockLogger.Object
         );
 
-        _validRequest = new KlineDataRequest
+        _validRequest = new KlineDataUpdateRequest
         {
-            CoinMainSymbol = "BTC",
-            CoinQuoteSymbol = "USDT",
             Interval = ExchangeKlineInterval.FourHours,
             StartTime = DateTime.UtcNow.AddDays(-7),
             EndTime = DateTime.UtcNow,

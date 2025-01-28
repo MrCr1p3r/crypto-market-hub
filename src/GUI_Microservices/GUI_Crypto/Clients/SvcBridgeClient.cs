@@ -11,7 +11,7 @@ public class SvcBridgeClient(IHttpClientFactory httpClientFactory) : ISvcBridgeC
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("SvcBridgeClient");
 
     /// <inheritdoc />
-    public async Task UpdateEntireKlineData(KlineDataRequest request)
+    public async Task UpdateEntireKlineData(KlineDataUpdateRequest request)
     {
         var response = await _httpClient.PostAsJsonAsync(
             "/bridge/kline/updateEntireKlineData",

@@ -16,7 +16,7 @@ public class KlineDataControllerTests
     private readonly Mock<IKlineDataCollector> _mockKlineDataCollector;
     private readonly Mock<ISvcKlineClient> _mockKlineClient;
     private readonly KlineDataController _controller;
-    private readonly KlineDataRequest _validRequest;
+    private readonly KlineDataUpdateRequest _validRequest;
 
     public KlineDataControllerTests()
     {
@@ -29,10 +29,8 @@ public class KlineDataControllerTests
             _mockKlineClient.Object
         );
 
-        _validRequest = new KlineDataRequest
+        _validRequest = new KlineDataUpdateRequest
         {
-            CoinMainSymbol = "BTC",
-            CoinQuoteSymbol = "USDT",
             Interval = ExchangeKlineInterval.FourHours,
             StartTime = DateTime.UtcNow.AddDays(-7),
             EndTime = DateTime.UtcNow,
@@ -46,7 +44,9 @@ public class KlineDataControllerTests
         // Arrange
         var klineData = _fixture.CreateMany<KlineDataNew>(5).ToList();
         _mockKlineDataCollector
-            .Setup(collector => collector.CollectEntireKlineData(It.IsAny<KlineDataRequest>()))
+            .Setup(collector =>
+                collector.CollectEntireKlineData(It.IsAny<KlineDataUpdateRequest>())
+            )
             .ReturnsAsync(klineData);
 
         // Act
@@ -65,7 +65,9 @@ public class KlineDataControllerTests
         // Arrange
         var klineData = _fixture.CreateMany<KlineDataNew>(5).ToList();
         _mockKlineDataCollector
-            .Setup(collector => collector.CollectEntireKlineData(It.IsAny<KlineDataRequest>()))
+            .Setup(collector =>
+                collector.CollectEntireKlineData(It.IsAny<KlineDataUpdateRequest>())
+            )
             .ReturnsAsync(klineData);
 
         // Act
@@ -80,7 +82,9 @@ public class KlineDataControllerTests
     {
         // Arrange
         _mockKlineDataCollector
-            .Setup(collector => collector.CollectEntireKlineData(It.IsAny<KlineDataRequest>()))
+            .Setup(collector =>
+                collector.CollectEntireKlineData(It.IsAny<KlineDataUpdateRequest>())
+            )
             .ReturnsAsync([]);
 
         // Act
@@ -100,7 +104,9 @@ public class KlineDataControllerTests
         // Arrange
         var klineData = _fixture.CreateMany<KlineDataNew>(5).ToList();
         _mockKlineDataCollector
-            .Setup(collector => collector.CollectEntireKlineData(It.IsAny<KlineDataRequest>()))
+            .Setup(collector =>
+                collector.CollectEntireKlineData(It.IsAny<KlineDataUpdateRequest>())
+            )
             .ReturnsAsync(klineData);
 
         // Act

@@ -35,7 +35,7 @@ public class SvcBridgeClientTests
     public async Task UpdateEntireKlineData_CorrectUrlIsCalled()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequest>();
+        var request = _fixture.Create<KlineDataUpdateRequest>();
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Post, "https://example.com/bridge/kline/updateEntireKlineData")
@@ -56,7 +56,7 @@ public class SvcBridgeClientTests
     public async Task UpdateEntireKlineData_WhenRequestFails_ThrowsHttpRequestException()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequest>();
+        var request = _fixture.Create<KlineDataUpdateRequest>();
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Post, "https://example.com/bridge/kline/updateEntireKlineData")
