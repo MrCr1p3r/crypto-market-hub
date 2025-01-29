@@ -33,10 +33,10 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
                 .HasKey(e => new { e.IdTradePair, e.OpenTime })
                 .HasName("PK__KlineDat__031B42F9984E192C");
 
-            entity.Property(e => e.ClosePrice).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.HighPrice).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.LowPrice).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.OpenPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ClosePrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.HighPrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.LowPrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.OpenPrice).HasMaxLength(100).IsUnicode(true);
             entity.Property(e => e.Volume).HasColumnType("decimal(18, 2)");
 
             entity

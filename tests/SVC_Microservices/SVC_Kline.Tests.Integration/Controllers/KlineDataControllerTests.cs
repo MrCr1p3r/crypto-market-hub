@@ -40,7 +40,7 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             k.IdTradePair == klineData.IdTradePair
         );
         entity.Should().NotBeNull();
-        entity!.OpenPrice.Should().Be(klineData.OpenPrice);
+        entity!.OpenPrice.Should().Be(klineData.OpenPrice.ToString());
     }
 
     [Fact]
@@ -167,6 +167,10 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
         return _fixture
             .Build<KlineDataEntity>()
             .With(x => x.IdTradePair, tradingPairId)
+            .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+            .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+            .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+            .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
             .Without(x => x.IdTradePairNavigation)
             .Create();
     }

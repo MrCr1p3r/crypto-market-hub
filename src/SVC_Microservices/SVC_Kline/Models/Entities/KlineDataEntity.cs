@@ -26,29 +26,29 @@ public class KlineDataEntity
     /// The opening price at the start of the Kline period.
     /// </summary>
     [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal OpenPrice { get; set; }
+    [StringLength(100)]
+    public required string OpenPrice { get; set; }
 
     /// <summary>
     /// The highest price during the Kline period.
     /// </summary>
     [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal HighPrice { get; set; }
+    [StringLength(100)]
+    public required string HighPrice { get; set; }
 
     /// <summary>
     /// The lowest price during the Kline period.
     /// </summary>
     [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal LowPrice { get; set; }
+    [StringLength(100)]
+    public required string LowPrice { get; set; }
 
     /// <summary>
     /// The closing price at the end of the Kline period.
     /// </summary>
     [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal ClosePrice { get; set; }
+    [StringLength(100)]
+    public required string ClosePrice { get; set; }
 
     /// <summary>
     /// The total volume traded during the Kline period.

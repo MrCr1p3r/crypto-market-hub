@@ -68,10 +68,10 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
             {
                 IdTradePair = klineDataNew.IdTradePair,
                 OpenTime = klineDataNew.OpenTime,
-                OpenPrice = klineDataNew.OpenPrice,
-                HighPrice = klineDataNew.HighPrice,
-                LowPrice = klineDataNew.LowPrice,
-                ClosePrice = klineDataNew.ClosePrice,
+                OpenPrice = klineDataNew.OpenPrice.ToString(),
+                HighPrice = klineDataNew.HighPrice.ToString(),
+                LowPrice = klineDataNew.LowPrice.ToString(),
+                ClosePrice = klineDataNew.ClosePrice.ToString(),
                 Volume = klineDataNew.Volume,
                 CloseTime = klineDataNew.CloseTime,
             };
@@ -81,10 +81,10 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
             {
                 IdTradePair = klineDataEntity.IdTradePair,
                 OpenTime = klineDataEntity.OpenTime,
-                OpenPrice = klineDataEntity.OpenPrice,
-                HighPrice = klineDataEntity.HighPrice,
-                LowPrice = klineDataEntity.LowPrice,
-                ClosePrice = klineDataEntity.ClosePrice,
+                OpenPrice = decimal.Parse(klineDataEntity.OpenPrice),
+                HighPrice = decimal.Parse(klineDataEntity.HighPrice),
+                LowPrice = decimal.Parse(klineDataEntity.LowPrice),
+                ClosePrice = decimal.Parse(klineDataEntity.ClosePrice),
                 Volume = klineDataEntity.Volume,
                 CloseTime = klineDataEntity.CloseTime,
             };

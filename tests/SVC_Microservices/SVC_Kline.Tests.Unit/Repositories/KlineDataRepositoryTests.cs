@@ -1,5 +1,4 @@
 using AutoFixture;
-using AutoFixture.AutoMoq;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Kline.Models.Entities;
@@ -16,7 +15,7 @@ public class KlineDataRepositoryTests
 
     public KlineDataRepositoryTests()
     {
-        _fixture = new Fixture().Customize(new AutoMoqCustomization());
+        _fixture = new Fixture();
 
         var options = new DbContextOptionsBuilder<KlineDataDbContext>()
             .UseSqlite("DataSource=:memory:")
@@ -55,7 +54,7 @@ public class KlineDataRepositoryTests
             e.IdTradePair == klineData.IdTradePair
         );
         entity.Should().NotBeNull();
-        entity!.OpenPrice.Should().Be(klineData.OpenPrice);
+        entity!.OpenPrice.Should().Be(klineData.OpenPrice.ToString());
     }
 
     [Fact]
@@ -89,16 +88,28 @@ public class KlineDataRepositoryTests
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradePair, tradingPair1.Id)
+                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradePair, tradingPair1.Id)
+                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradePair, tradingPair2.Id)
+                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
         };
