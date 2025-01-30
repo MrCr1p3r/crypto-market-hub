@@ -72,7 +72,7 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
                 HighPrice = klineDataNew.HighPrice.ToString(),
                 LowPrice = klineDataNew.LowPrice.ToString(),
                 ClosePrice = klineDataNew.ClosePrice.ToString(),
-                Volume = klineDataNew.Volume,
+                Volume = klineDataNew.Volume.ToString(),
                 CloseTime = klineDataNew.CloseTime,
             };
 
@@ -85,7 +85,7 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
                 HighPrice = decimal.Parse(klineDataEntity.HighPrice),
                 LowPrice = decimal.Parse(klineDataEntity.LowPrice),
                 ClosePrice = decimal.Parse(klineDataEntity.ClosePrice),
-                Volume = klineDataEntity.Volume,
+                Volume = decimal.Parse(klineDataEntity.Volume),
                 CloseTime = klineDataEntity.CloseTime,
             };
     }

@@ -54,8 +54,8 @@ public class KlineDataEntity
     /// The total volume traded during the Kline period.
     /// </summary>
     [Required]
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal Volume { get; set; }
+    [StringLength(200)]
+    public required string Volume { get; set; }
 
     /// <summary>
     /// The closing time of the Kline in milliseconds since the Unix epoch.

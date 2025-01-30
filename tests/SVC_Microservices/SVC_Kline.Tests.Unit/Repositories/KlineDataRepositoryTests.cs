@@ -92,6 +92,7 @@ public class KlineDataRepositoryTests
                 .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
                 .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
                 .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
@@ -101,6 +102,7 @@ public class KlineDataRepositoryTests
                 .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
                 .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
                 .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
@@ -110,6 +112,7 @@ public class KlineDataRepositoryTests
                 .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
                 .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
                 .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
         };

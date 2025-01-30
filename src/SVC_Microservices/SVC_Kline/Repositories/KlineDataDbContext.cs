@@ -37,7 +37,7 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
             entity.Property(e => e.HighPrice).HasMaxLength(100).IsUnicode(true);
             entity.Property(e => e.LowPrice).HasMaxLength(100).IsUnicode(true);
             entity.Property(e => e.OpenPrice).HasMaxLength(100).IsUnicode(true);
-            entity.Property(e => e.Volume).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Volume).HasMaxLength(100).IsUnicode(true);
 
             entity
                 .HasOne(d => d.IdTradePairNavigation)
