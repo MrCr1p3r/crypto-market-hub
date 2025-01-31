@@ -14,5 +14,5 @@ public enum ExchangeKlineInterval
     FourHours = 240,
     OneDay = 1440,
     OneWeek = 10080,
-    OneMonth = 43200
+    OneMonth = 43200,
 }
