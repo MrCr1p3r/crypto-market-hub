@@ -8,6 +8,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 Env.TraversePath().Load();
 
+// Add Aspire service defaults (includes OpenTelemetry)
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -31,6 +34,9 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+// Map health check endpoints
+app.MapDefaultEndpoints();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

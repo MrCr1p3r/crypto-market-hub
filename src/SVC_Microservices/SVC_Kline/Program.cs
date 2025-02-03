@@ -9,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Load environment variables from the .env file
 Env.TraversePath().Load();
 
+// Add Aspire service defaults
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -30,6 +33,7 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+app.MapDefaultEndpoints();
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 

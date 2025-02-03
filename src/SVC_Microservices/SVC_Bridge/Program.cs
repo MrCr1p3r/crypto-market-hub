@@ -8,31 +8,44 @@ using SVC_Bridge.DataDistributors.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Aspire service defaults
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddHttpClient(
     "SvcCoinsClient",
     client =>
     {
-        client.BaseAddress = new Uri("http://localhost:5161");
+        var baseAddress =
+            builder.Configuration["Services:SvcCoinsClient:BaseUrl"] ?? "http://localhost:5161";
+        client.BaseAddress = new Uri(baseAddress);
     }
-);
+); // Add resilience to HTTP client
+
 builder.Services.AddHttpClient(
     "SvcExternalClient",
     client =>
     {
-        client.BaseAddress = new Uri("http://localhost:5135");
+        var baseAddress =
+            builder.Configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
+        client.BaseAddress = new Uri(baseAddress);
     }
 );
+
 builder.Services.AddHttpClient(
     "SvcKlineClient",
     client =>
     {
-        client.BaseAddress = new Uri("http://localhost:5117");
+        var baseAddress =
+            builder.Configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5117";
+        client.BaseAddress = new Uri(baseAddress);
     }
 );
+
 builder.Services.AddScoped<ISvcCoinsClient, SvcCoinsClient>();
 builder.Services.AddScoped<ISvcExternalClient, SvcExternalClient>();
 builder.Services.AddScoped<ISvcKlineClient, SvcKlineClient>();
@@ -42,6 +55,9 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+// Map health check endpoints
+app.MapDefaultEndpoints();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

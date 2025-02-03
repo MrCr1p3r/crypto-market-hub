@@ -6,6 +6,9 @@ using SharedLibrary.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add Aspire service defaults
+builder.AddServiceDefaults();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
@@ -44,8 +47,9 @@ builder.Services.AddHttpClient(
     client =>
     {
         var baseAddress =
-            builder.Configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5135";
+            builder.Configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
         client.BaseAddress = new Uri(baseAddress);
+        client.Timeout = TimeSpan.FromMinutes(5);
     }
 );
 
@@ -58,6 +62,9 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+// Map health check endpoints
+app.MapDefaultEndpoints();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
