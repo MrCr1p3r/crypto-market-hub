@@ -13,10 +13,11 @@ max_line_length = 100
 [*.{cs,vb}]
 # Analyzer severity levels: none, silent, suggestion, warning, error
 dotnet_analyzer_diagnostic.severity = warning
+dotnet_diagnostic.CA1707.severity = none  # Remove the underscores from member name 
 dotnet_diagnostic.CA1851.severity = error  # Possible multiple enumeration of IEnumerable
 dotnet_diagnostic.IDE0007.severity = suggestion # Use 'var' instead of explicit type
 dotnet_diagnostic.IDE0008.severity = none # Use explicit type instead of 'var'
 dotnet_diagnostic.IDE0011.severity = none # Use explicit type instead of 'var'
 dotnet_diagnostic.IDE0022.severity = none # Use block body for method
+dotnet_diagnostic.IDE0058.severity = none # Expression value is never used
 dotnet_diagnostic.IDE0160.severity = none # Convert to block scoped namespace
-
