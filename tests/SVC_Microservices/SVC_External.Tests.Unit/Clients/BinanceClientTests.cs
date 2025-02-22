@@ -6,9 +6,10 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
 using SharedLibrary.Enums;
-using SVC_External.Clients;
-using SVC_External.Models.Input;
-using SVC_External.Models.Output;
+using SVC_External.Clients.Exchanges;
+using SVC_External.Models.Exchanges.ClientResponses;
+using SVC_External.Models.Exchanges.Input;
+using SVC_External.Models.Exchanges.Output;
 
 namespace SVC_External.Tests.Unit.Clients;
 
@@ -35,10 +36,46 @@ public class BinanceClientTests
     }
 
     [Fact]
+    public async Task GetAllSpotCoins_ReturnsExpectedData()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.binance.com/api/v3/exchangeInfo?showPermissionSets=false"
+            )
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.Should().BeEquivalentTo(TestData.ExpectedResult);
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_ErrorResponse_ReturnsEmptyCollection()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.binance.com/api/v3/exchangeInfo?showPermissionSets=false"
+            )
+            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetKlineData_ReturnsExpectedData()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
+        var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToBinanceKlineEndpoint(request);
         var expectedResponse = new List<List<object>>
         {
@@ -76,7 +113,7 @@ public class BinanceClientTests
     public async Task GetKlineData_ErrorResponse_ReturnsEmptyCollection()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
+        var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToBinanceKlineEndpoint(request);
 
         _httpMessageHandlerMock
@@ -86,57 +123,96 @@ public class BinanceClientTests
         // Act
         var result = await _client.GetKlineData(request);
 
+        // Assert
         result.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task GetAllListedCoins_ReturnsExpectedData()
+    private static class TestData
     {
-        // Arrange
-        var listedCoinsParameter = new ListedCoins();
-        var expectedBaseAssets = new List<string> { "BTC", "ETH", "BNB" };
-        var symbols = expectedBaseAssets
-            .Select(baseAsset => new Dictionary<string, object>
+        public static readonly BinanceDtos.Response Response = new()
+        {
+            TradingPairs =
+            [
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "USDT",
+                    Status = BinanceDtos.TradingPairStatus.TRADING,
+                },
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "ETH",
+                    Status = BinanceDtos.TradingPairStatus.HALT,
+                },
+                new()
+                {
+                    BaseAssetSymbol = "ETH",
+                    QuoteAssetSymbol = "USDT",
+                    Status = BinanceDtos.TradingPairStatus.TRADING,
+                },
+            ],
+        };
+        public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
+
+        public static readonly List<ExchangeCoin> ExpectedResult =
+        [
+            new()
             {
-                { "symbol", baseAsset + "USDT" },
-                { "baseAsset", baseAsset },
-                { "quoteAsset", "USDT" },
-            })
-            .ToList();
-
-        var exchangeInfo = new Dictionary<string, object> { { "symbols", symbols } };
-        var jsonResponse = JsonSerializer.Serialize(exchangeInfo);
-
-        _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, "https://api.binance.com/api/v3/exchangeInfo")
-            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
-
-        // Act
-        var listedCoins = await _client.GetAllListedCoins(listedCoinsParameter);
-
-        // Assert
-        listedCoins.BinanceCoins.Should().BeEquivalentTo(expectedBaseAssets);
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_ErrorResponse_ReturnsListWithoutNewCoins()
-    {
-        // Arrange
-        var listedCoinsParameter = new ListedCoins();
-
-        _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, "https://api.binance.com/api/v3/exchangeInfo")
-            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
-
-        // Act
-        var result = await _client.GetAllListedCoins(listedCoinsParameter);
-
-        result.BinanceCoins.Should().BeEmpty();
+                Symbol = "BTC",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Binance,
+                                Status = ExchangeTradingPairStatus.Available,
+                            },
+                        ],
+                    },
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "ETH" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Binance,
+                                Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                            },
+                        ],
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "ETH",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Binance,
+                                Status = ExchangeTradingPairStatus.Available,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
     }
 
     private static class Mapping
     {
-        public static string ToBinanceKlineEndpoint(KlineDataRequestFormatted request) =>
+        public static string ToBinanceKlineEndpoint(ExchangeKlineDataRequest request) =>
             $"/api/v3/klines?symbol={request.CoinMain + request.CoinQuote}"
             + $"&interval={ToBinanceTimeFrame(request.Interval)}"
             + $"&limit={request.Limit}"

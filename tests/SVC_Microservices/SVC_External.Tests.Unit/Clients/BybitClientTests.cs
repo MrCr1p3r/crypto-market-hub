@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using AutoFixture;
@@ -6,9 +7,10 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
 using SharedLibrary.Enums;
-using SVC_External.Clients;
-using SVC_External.Models.Input;
-using SVC_External.Models.Output;
+using SVC_External.Clients.Exchanges;
+using SVC_External.Models.Exchanges.ClientResponses;
+using SVC_External.Models.Exchanges.Input;
+using SVC_External.Models.Exchanges.Output;
 
 namespace SVC_External.Tests.Unit.Clients;
 
@@ -35,10 +37,46 @@ public class BybitClientTests
     }
 
     [Fact]
+    public async Task GetAllSpotCoins_ReturnsExpectedData()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.bybit.com/v5/market/instruments-info?category=spot"
+            )
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.Should().BeEquivalentTo(TestData.ExpectedResult);
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_ErrorResponse_ReturnsEmptyCollection()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.bybit.com/v5/market/instruments-info?category=spot"
+            )
+            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetKlineData_ReturnsExpectedData()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
+        var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToBybitKlineEndpoint(request);
         var expectedResponse = new
         {
@@ -82,7 +120,7 @@ public class BybitClientTests
     public async Task GetKlineData_ErrorResponse_ReturnsEmptyCollection()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
+        var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToBybitKlineEndpoint(request);
 
         _httpMessageHandlerMock
@@ -96,61 +134,10 @@ public class BybitClientTests
         result.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task GetAllListedCoins_ReturnsExpectedData()
-    {
-        // Arrange
-        var listedCoinsParameter = new ListedCoins();
-        var expectedBaseAssets = new List<string> { "BTC", "ETH", "BNB" };
-        var response = new
-        {
-            result = new
-            {
-                list = expectedBaseAssets
-                    .Select(baseAsset => new { baseCoin = baseAsset })
-                    .ToList(),
-            },
-        };
-        var jsonResponse = JsonSerializer.Serialize(response);
-
-        _httpMessageHandlerMock
-            .SetupRequest(
-                HttpMethod.Get,
-                "https://api.bybit.com/v5/market/instruments-info?category=linear"
-            )
-            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
-
-        // Act
-        var listedCoins = await _client.GetAllListedCoins(listedCoinsParameter);
-
-        // Assert
-        listedCoins.BybitCoins.Should().BeEquivalentTo(expectedBaseAssets);
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_ErrorResponse_ReturnsListWithoutNewCoins()
-    {
-        // Arrange
-        var listedCoinsParameter = new ListedCoins();
-
-        _httpMessageHandlerMock
-            .SetupRequest(
-                HttpMethod.Get,
-                "https://api.bybit.com/v5/market/instruments-info?category=linear"
-            )
-            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
-
-        // Act
-        var result = await _client.GetAllListedCoins(listedCoinsParameter);
-
-        // Assert
-        result.BybitCoins.Should().BeEmpty();
-    }
-
     private static class Mapping
     {
-        public static string ToBybitKlineEndpoint(KlineDataRequestFormatted request) =>
-            $"/v5/market/kline?category=linear"
+        public static string ToBybitKlineEndpoint(ExchangeKlineDataRequest request) =>
+            $"/v5/market/kline?category=spot"
             + $"&symbol={request.CoinMain}{request.CoinQuote}"
             + $"&interval={ToBybitTimeFrame(request.Interval)}"
             + $"&start={request.StartTimeUnix}"
@@ -174,9 +161,96 @@ public class BybitClientTests
 
         public static long CalculateCloseTime(string openTimeString, ExchangeKlineInterval interval)
         {
-            var openTime = long.Parse(openTimeString);
+            var openTime = long.Parse(openTimeString, CultureInfo.InvariantCulture);
             var durationInMinutes = (long)interval;
-            return openTime + durationInMinutes * 60 * 1000;
+            return openTime + (durationInMinutes * 60 * 1000);
         }
+    }
+
+    private static class TestData
+    {
+        public static readonly BybitDtos.BybitSpotAssetsResponse Response = new()
+        {
+            Result = new()
+            {
+                TradingPairs =
+                [
+                    new()
+                    {
+                        BaseAssetSymbol = "BTC",
+                        QuoteAssetSymbol = "USDT",
+                        TradingStatus = BybitDtos.TradingPairStatus.Trading,
+                    },
+                    new()
+                    {
+                        BaseAssetSymbol = "BTC",
+                        QuoteAssetSymbol = "ETH",
+                        TradingStatus = BybitDtos.TradingPairStatus.PreLaunch,
+                    },
+                    new()
+                    {
+                        BaseAssetSymbol = "ETH",
+                        QuoteAssetSymbol = "USDT",
+                        TradingStatus = BybitDtos.TradingPairStatus.Trading,
+                    },
+                ],
+            },
+        };
+
+        public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
+
+        public static readonly List<ExchangeCoin> ExpectedResult =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Bybit,
+                                Status = ExchangeTradingPairStatus.Available,
+                            },
+                        ],
+                    },
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "ETH" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Bybit,
+                                Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                            },
+                        ],
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "ETH",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Bybit,
+                                Status = ExchangeTradingPairStatus.Available,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
     }
 }
