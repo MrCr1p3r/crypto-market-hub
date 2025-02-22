@@ -6,9 +6,10 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
 using SharedLibrary.Enums;
-using SVC_External.Clients;
-using SVC_External.Models.Input;
-using SVC_External.Models.Output;
+using SVC_External.Clients.Exchanges;
+using SVC_External.Models.Exchanges.ClientResponses;
+using SVC_External.Models.Exchanges.Input;
+using SVC_External.Models.Exchanges.Output;
 
 namespace SVC_External.Tests.Unit.Clients;
 
@@ -22,9 +23,9 @@ public class MexcClientTests
     public MexcClientTests()
     {
         _fixture = new Fixture();
-        _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _loggerMock = new Mock<ILogger<MexcClient>>();
 
+        _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         var httpClient = _httpMessageHandlerMock.CreateClient();
         httpClient.BaseAddress = new Uri("https://api.mexc.com");
 
@@ -35,10 +36,40 @@ public class MexcClientTests
     }
 
     [Fact]
+    public async Task GetAllSpotCoins_ReturnsExpectedData()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.Should().BeEquivalentTo(TestData.ExpectedResult);
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_ErrorResponse_ReturnsEmptyCollection()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
+            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetKlineData_ReturnsExpectedData()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
+        var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToMexcKlineEndpoint(request);
         var expectedResponse = new List<List<object>>
         {
@@ -76,7 +107,7 @@ public class MexcClientTests
     public async Task GetKlineData_ErrorResponse_ReturnsEmptyCollection()
     {
         // Arrange
-        var request = _fixture.Create<KlineDataRequestFormatted>();
+        var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToMexcKlineEndpoint(request);
 
         _httpMessageHandlerMock
@@ -90,55 +121,9 @@ public class MexcClientTests
         result.Should().BeEmpty();
     }
 
-    [Fact]
-    public async Task GetAllListedCoins_ReturnsExpectedData()
-    {
-        // Arrange
-        var listedCoinsParameter = new ListedCoins();
-        var expectedBaseAssets = new List<string> { "BTC", "ETH", "BNB" };
-        var symbols = expectedBaseAssets
-            .Select(baseAsset => new Dictionary<string, object>
-            {
-                { "symbol", baseAsset + "USDT" },
-                { "baseAsset", baseAsset },
-                { "quoteAsset", "USDT" },
-            })
-            .ToList();
-
-        var exchangeInfo = new Dictionary<string, object> { { "symbols", symbols } };
-        var jsonResponse = JsonSerializer.Serialize(exchangeInfo);
-
-        _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
-            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
-
-        // Act
-        var listedCoins = await _client.GetAllListedCoins(listedCoinsParameter);
-
-        // Assert
-        listedCoins.MexcCoins.Should().BeEquivalentTo(expectedBaseAssets);
-    }
-
-    [Fact]
-    public async Task GetAllListedCoins_ErrorResponse_ReturnsListWithoutNewCoins()
-    {
-        // Arrange
-        var listedCoinsParameter = new ListedCoins();
-
-        _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
-            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
-
-        // Act
-        var result = await _client.GetAllListedCoins(listedCoinsParameter);
-
-        // Assert
-        result.MexcCoins.Should().BeEmpty();
-    }
-
     private static class Mapping
     {
-        public static string ToMexcKlineEndpoint(KlineDataRequestFormatted request) =>
+        public static string ToMexcKlineEndpoint(ExchangeKlineDataRequest request) =>
             $"/api/v3/klines?symbol={request.CoinMain + request.CoinQuote}"
             + $"&interval={ToMexcTimeFrame(request.Interval)}"
             + $"&limit={request.Limit}"
@@ -159,5 +144,94 @@ public class MexcClientTests
                 ExchangeKlineInterval.OneMonth => "1M",
                 _ => throw new ArgumentException($"Unsupported TimeFrame: {timeFrame}"),
             };
+    }
+
+    private static class TestData
+    {
+        public static readonly MexcDtos.Response Response = new()
+        {
+            TradingPairs =
+            [
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "USDT",
+                    Status = MexcDtos.TradingPairStatus.Trading,
+                    BaseAssetFullName = "Bitcoin",
+                },
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "ETH",
+                    Status = MexcDtos.TradingPairStatus.CurrentlyUnavailable,
+                    BaseAssetFullName = "Bitcoin",
+                },
+                new()
+                {
+                    BaseAssetSymbol = "ETH",
+                    QuoteAssetSymbol = "USDT",
+                    Status = MexcDtos.TradingPairStatus.Trading,
+                    BaseAssetFullName = "Ethereum",
+                },
+            ],
+        };
+
+        public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
+
+        public static readonly List<ExchangeCoin> ExpectedResult =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Mexc,
+                                Status = ExchangeTradingPairStatus.Available,
+                            },
+                        ],
+                    },
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "ETH", Name = "Ethereum" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Mexc,
+                                Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                            },
+                        ],
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "ETH",
+                Name = "Ethereum",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfos =
+                        [
+                            new()
+                            {
+                                Exchange = Exchange.Mexc,
+                                Status = ExchangeTradingPairStatus.Available,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
     }
 }
