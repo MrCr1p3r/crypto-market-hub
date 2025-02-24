@@ -69,7 +69,7 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
             new()
             {
                 CoinQuote = new() { Symbol = bybitSymbol.QuoteAssetSymbol },
-                ExchangeInfos = [ToExchangeInfo(bybitSymbol.TradingStatus)],
+                ExchangeInfo = ToExchangeInfo(bybitSymbol.TradingStatus),
             };
 
         private static ExchangeTradingPairExchangeInfo ToExchangeInfo(

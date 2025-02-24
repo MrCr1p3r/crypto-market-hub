@@ -71,7 +71,7 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
             new()
             {
                 CoinQuote = new() { Symbol = tradingPair.QuoteAssetSymbol },
-                ExchangeInfos = [ToExchangeInfo(tradingPair.Status)],
+                ExchangeInfo = ToExchangeInfo(tradingPair.Status),
             };
 
         private static ExchangeTradingPairExchangeInfo ToExchangeInfo(

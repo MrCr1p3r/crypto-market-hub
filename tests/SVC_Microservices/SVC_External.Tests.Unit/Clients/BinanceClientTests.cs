@@ -165,26 +165,20 @@ public class BinanceClientTests
                     new()
                     {
                         CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Binance,
-                                Status = ExchangeTradingPairStatus.Available,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
                     },
                     new()
                     {
                         CoinQuote = new() { Symbol = "ETH" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Binance,
-                                Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                        },
                     },
                 ],
             },
@@ -196,14 +190,11 @@ public class BinanceClientTests
                     new()
                     {
                         CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Binance,
-                                Status = ExchangeTradingPairStatus.Available,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
                     },
                 ],
             },

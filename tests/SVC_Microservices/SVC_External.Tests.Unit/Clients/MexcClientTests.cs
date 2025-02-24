@@ -189,26 +189,20 @@ public class MexcClientTests
                     new()
                     {
                         CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Mexc,
-                                Status = ExchangeTradingPairStatus.Available,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Mexc,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
                     },
                     new()
                     {
                         CoinQuote = new() { Symbol = "ETH", Name = "Ethereum" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Mexc,
-                                Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Mexc,
+                            Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                        },
                     },
                 ],
             },
@@ -221,14 +215,11 @@ public class MexcClientTests
                     new()
                     {
                         CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Mexc,
-                                Status = ExchangeTradingPairStatus.Available,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Mexc,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
                     },
                 ],
             },
