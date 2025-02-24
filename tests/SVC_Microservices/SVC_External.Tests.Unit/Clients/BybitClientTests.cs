@@ -209,26 +209,20 @@ public class BybitClientTests
                     new()
                     {
                         CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Bybit,
-                                Status = ExchangeTradingPairStatus.Available,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Bybit,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
                     },
                     new()
                     {
                         CoinQuote = new() { Symbol = "ETH" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Bybit,
-                                Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Bybit,
+                            Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                        },
                     },
                 ],
             },
@@ -240,14 +234,11 @@ public class BybitClientTests
                     new()
                     {
                         CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfos =
-                        [
-                            new()
-                            {
-                                Exchange = Exchange.Bybit,
-                                Status = ExchangeTradingPairStatus.Available,
-                            },
-                        ],
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Bybit,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
                     },
                 ],
             },

@@ -89,7 +89,7 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
             new()
             {
                 CoinQuote = ToCoinQuote(symbol.QuoteAssetSymbol, symbolToName),
-                ExchangeInfos = [ToExchangeInfo(symbol.Status)],
+                ExchangeInfo = ToExchangeInfo(symbol.Status),
             };
 
         private static ExchangeTradingPairCoinQuote ToCoinQuote(

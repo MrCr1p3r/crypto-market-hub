@@ -11,7 +11,7 @@ public record ExchangeTradingPair
     public required ExchangeTradingPairCoinQuote CoinQuote { get; set; }
 
     /// <summary>
-    /// Collection of exchange-specific information for this trading pair.
+    /// Exchange-specific information for this trading pair.
     /// </summary>
-    public IEnumerable<ExchangeTradingPairExchangeInfo> ExchangeInfos { get; set; } = [];
+    public required ExchangeTradingPairExchangeInfo ExchangeInfo { get; set; }
 }
