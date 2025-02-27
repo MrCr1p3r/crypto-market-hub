@@ -1,12 +1,15 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Events;
+using Serilog.Extensions.Hosting;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -17,6 +20,8 @@ public static class Extensions
 {
     public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder)
     {
+        builder.ConfigureSerilog();
+
         builder.ConfigureOpenTelemetry();
 
         builder.AddDefaultHealthChecks();
@@ -37,6 +42,41 @@ public static class Extensions
         // {
         //     options.AllowedSchemes = ["https"];
         // });
+
+        return builder;
+    }
+
+    public static IHostApplicationBuilder ConfigureSerilog(this IHostApplicationBuilder builder)
+    {
+        // Configure Serilog directly with the builder
+        builder.Services.AddSerilog(
+            (serviceProvider, loggerConfiguration) =>
+            {
+                var applicationName = builder.Environment.ApplicationName;
+                var configuration = builder.Configuration;
+
+                loggerConfiguration
+                    .ReadFrom.Configuration(configuration)
+                    .ReadFrom.Services(serviceProvider)
+                    .Enrich.FromLogContext()
+                    .Enrich.WithMachineName()
+                    .Enrich.WithProcessId()
+                    .Enrich.WithThreadId()
+                    .Enrich.WithProperty("ApplicationName", applicationName)
+                    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                    .MinimumLevel.Override("System", LogEventLevel.Information)
+                    .WriteTo.Console(
+                        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [{ApplicationName}] {Message:lj}{NewLine}{Exception}",
+                        formatProvider: CultureInfo.InvariantCulture
+                    );
+
+                // If OpenTelemetry endpoint is configured, add the OpenTelemetry sink
+                if (!string.IsNullOrWhiteSpace(configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]))
+                {
+                    loggerConfiguration.WriteTo.OpenTelemetry();
+                }
+            }
+        );
 
         return builder;
     }
