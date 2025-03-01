@@ -10,7 +10,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.Testing" />
     <PackageReference Include="Moq" />
+    <PackageReference Include="FluentAssertions" />
     <PackageReference Include="ZiggyCreatures.FusionCache" />
   </ItemGroup>
 
