@@ -19,6 +19,9 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
     private readonly ILogger<BinanceClient> _logger = logger;
 
     /// <inheritdoc />
+    public Exchange CurrentExchange => Exchange.Binance;
+
+    /// <inheritdoc />
     public async Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins()
     {
         var endpoint = "/api/v3/exchangeInfo";
@@ -93,7 +96,7 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
 
         #region GetKlineData
         public static string ToBinanceKlineEndpoint(ExchangeKlineDataRequest request) =>
-            $"/api/v3/klines?symbol={request.CoinMain + request.CoinQuote}"
+            $"/api/v3/klines?symbol={request.CoinMainSymbol + request.CoinQuoteSymbol}"
             + $"&interval={ToBinanceTimeFrame(request.Interval)}"
             + $"&limit={request.Limit}"
             + $"&startTime={request.StartTimeUnix}"

@@ -11,28 +11,28 @@ using SVC_External.Models.Exchanges.ClientResponses;
 using SVC_External.Models.Exchanges.Input;
 using SVC_External.Models.Exchanges.Output;
 
-namespace SVC_External.Tests.Unit.Clients;
+namespace SVC_External.Tests.Unit.Clients.Exchanges;
 
-public class MexcClientTests
+public class BinanceClientTests
 {
     private readonly IFixture _fixture;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly Mock<ILogger<MexcClient>> _loggerMock;
-    private readonly MexcClient _client;
+    private readonly Mock<ILogger<BinanceClient>> _loggerMock;
+    private readonly BinanceClient _client;
 
-    public MexcClientTests()
+    public BinanceClientTests()
     {
         _fixture = new Fixture();
-        _loggerMock = new Mock<ILogger<MexcClient>>();
-
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        _loggerMock = new Mock<ILogger<BinanceClient>>();
+
         var httpClient = _httpMessageHandlerMock.CreateClient();
-        httpClient.BaseAddress = new Uri("https://api.mexc.com");
+        httpClient.BaseAddress = new Uri("https://api.binance.com");
 
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock.Setup(f => f.CreateClient("MexcClient")).Returns(httpClient);
+        httpClientFactoryMock.Setup(f => f.CreateClient("BinanceClient")).Returns(httpClient);
 
-        _client = new MexcClient(httpClientFactoryMock.Object, _loggerMock.Object);
+        _client = new BinanceClient(httpClientFactoryMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -40,7 +40,10 @@ public class MexcClientTests
     {
         // Arrange
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.binance.com/api/v3/exchangeInfo?showPermissionSets=false"
+            )
             .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
 
         // Act
@@ -55,7 +58,10 @@ public class MexcClientTests
     {
         // Arrange
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
+            .SetupRequest(
+                HttpMethod.Get,
+                "https://api.binance.com/api/v3/exchangeInfo?showPermissionSets=false"
+            )
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
@@ -70,7 +76,7 @@ public class MexcClientTests
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
-        var endpoint = Mapping.ToMexcKlineEndpoint(request);
+        var endpoint = Mapping.ToBinanceKlineEndpoint(request);
         var expectedResponse = new List<List<object>>
         {
             new() { 123456789, "0.001", "0.002", "0.0005", "0.0015", "100", 123456799 },
@@ -78,7 +84,7 @@ public class MexcClientTests
         var jsonResponse = JsonSerializer.Serialize(expectedResponse);
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, $"https://api.mexc.com{endpoint}")
+            .SetupRequest(HttpMethod.Get, $"https://api.binance.com{endpoint}")
             .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
 
         // Act
@@ -108,10 +114,10 @@ public class MexcClientTests
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
-        var endpoint = Mapping.ToMexcKlineEndpoint(request);
+        var endpoint = Mapping.ToBinanceKlineEndpoint(request);
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, $"https://api.mexc.com{endpoint}")
+            .SetupRequest(HttpMethod.Get, $"https://api.binance.com{endpoint}")
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
@@ -121,16 +127,90 @@ public class MexcClientTests
         result.Should().BeEmpty();
     }
 
+    private static class TestData
+    {
+        public static readonly BinanceDtos.Response Response = new()
+        {
+            TradingPairs =
+            [
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "USDT",
+                    Status = BinanceDtos.TradingPairStatus.TRADING,
+                },
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "ETH",
+                    Status = BinanceDtos.TradingPairStatus.HALT,
+                },
+                new()
+                {
+                    BaseAssetSymbol = "ETH",
+                    QuoteAssetSymbol = "USDT",
+                    Status = BinanceDtos.TradingPairStatus.TRADING,
+                },
+            ],
+        };
+        public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
+
+        public static readonly List<ExchangeCoin> ExpectedResult =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "ETH" },
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
+                        },
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "ETH",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "USDT" },
+                        ExchangeInfo = new()
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                ],
+            },
+        ];
+    }
+
     private static class Mapping
     {
-        public static string ToMexcKlineEndpoint(ExchangeKlineDataRequest request) =>
-            $"/api/v3/klines?symbol={request.CoinMain + request.CoinQuote}"
-            + $"&interval={ToMexcTimeFrame(request.Interval)}"
+        public static string ToBinanceKlineEndpoint(ExchangeKlineDataRequest request) =>
+            $"/api/v3/klines?symbol={request.CoinMainSymbol + request.CoinQuoteSymbol}"
+            + $"&interval={ToBinanceTimeFrame(request.Interval)}"
             + $"&limit={request.Limit}"
             + $"&startTime={request.StartTimeUnix}"
             + $"&endTime={request.EndTimeUnix}";
 
-        public static string ToMexcTimeFrame(ExchangeKlineInterval timeFrame) =>
+        public static string ToBinanceTimeFrame(ExchangeKlineInterval timeFrame) =>
             timeFrame switch
             {
                 ExchangeKlineInterval.OneMinute => "1m",
@@ -144,85 +224,5 @@ public class MexcClientTests
                 ExchangeKlineInterval.OneMonth => "1M",
                 _ => throw new ArgumentException($"Unsupported TimeFrame: {timeFrame}"),
             };
-    }
-
-    private static class TestData
-    {
-        public static readonly MexcDtos.Response Response = new()
-        {
-            TradingPairs =
-            [
-                new()
-                {
-                    BaseAssetSymbol = "BTC",
-                    QuoteAssetSymbol = "USDT",
-                    Status = MexcDtos.TradingPairStatus.Trading,
-                    BaseAssetFullName = "Bitcoin",
-                },
-                new()
-                {
-                    BaseAssetSymbol = "BTC",
-                    QuoteAssetSymbol = "ETH",
-                    Status = MexcDtos.TradingPairStatus.CurrentlyUnavailable,
-                    BaseAssetFullName = "Bitcoin",
-                },
-                new()
-                {
-                    BaseAssetSymbol = "ETH",
-                    QuoteAssetSymbol = "USDT",
-                    Status = MexcDtos.TradingPairStatus.Trading,
-                    BaseAssetFullName = "Ethereum",
-                },
-            ],
-        };
-
-        public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
-
-        public static readonly List<ExchangeCoin> ExpectedResult =
-        [
-            new()
-            {
-                Symbol = "BTC",
-                Name = "Bitcoin",
-                TradingPairs =
-                [
-                    new()
-                    {
-                        CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfo = new()
-                        {
-                            Exchange = Exchange.Mexc,
-                            Status = ExchangeTradingPairStatus.Available,
-                        },
-                    },
-                    new()
-                    {
-                        CoinQuote = new() { Symbol = "ETH", Name = "Ethereum" },
-                        ExchangeInfo = new()
-                        {
-                            Exchange = Exchange.Mexc,
-                            Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
-                        },
-                    },
-                ],
-            },
-            new()
-            {
-                Symbol = "ETH",
-                Name = "Ethereum",
-                TradingPairs =
-                [
-                    new()
-                    {
-                        CoinQuote = new() { Symbol = "USDT" },
-                        ExchangeInfo = new()
-                        {
-                            Exchange = Exchange.Mexc,
-                            Status = ExchangeTradingPairStatus.Available,
-                        },
-                    },
-                ],
-            },
-        ];
     }
 }

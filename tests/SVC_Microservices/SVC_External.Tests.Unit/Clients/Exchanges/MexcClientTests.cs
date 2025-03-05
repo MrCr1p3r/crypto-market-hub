@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using AutoFixture;
@@ -12,28 +11,28 @@ using SVC_External.Models.Exchanges.ClientResponses;
 using SVC_External.Models.Exchanges.Input;
 using SVC_External.Models.Exchanges.Output;
 
-namespace SVC_External.Tests.Unit.Clients;
+namespace SVC_External.Tests.Unit.Clients.Exchanges;
 
-public class BybitClientTests
+public class MexcClientTests
 {
     private readonly IFixture _fixture;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly Mock<ILogger<BybitClient>> _loggerMock;
-    private readonly BybitClient _client;
+    private readonly Mock<ILogger<MexcClient>> _loggerMock;
+    private readonly MexcClient _client;
 
-    public BybitClientTests()
+    public MexcClientTests()
     {
         _fixture = new Fixture();
-        _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        _loggerMock = new Mock<ILogger<BybitClient>>();
+        _loggerMock = new Mock<ILogger<MexcClient>>();
 
+        _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         var httpClient = _httpMessageHandlerMock.CreateClient();
-        httpClient.BaseAddress = new Uri("https://api.bybit.com");
+        httpClient.BaseAddress = new Uri("https://api.mexc.com");
 
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock.Setup(f => f.CreateClient("BybitClient")).Returns(httpClient);
+        httpClientFactoryMock.Setup(f => f.CreateClient("MexcClient")).Returns(httpClient);
 
-        _client = new BybitClient(httpClientFactoryMock.Object, _loggerMock.Object);
+        _client = new MexcClient(httpClientFactoryMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -41,10 +40,7 @@ public class BybitClientTests
     {
         // Arrange
         _httpMessageHandlerMock
-            .SetupRequest(
-                HttpMethod.Get,
-                "https://api.bybit.com/v5/market/instruments-info?category=spot"
-            )
+            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
             .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
 
         // Act
@@ -59,10 +55,7 @@ public class BybitClientTests
     {
         // Arrange
         _httpMessageHandlerMock
-            .SetupRequest(
-                HttpMethod.Get,
-                "https://api.bybit.com/v5/market/instruments-info?category=spot"
-            )
+            .SetupRequest(HttpMethod.Get, "https://api.mexc.com/api/v3/exchangeInfo")
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
@@ -77,21 +70,15 @@ public class BybitClientTests
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
-        var endpoint = Mapping.ToBybitKlineEndpoint(request);
-        var expectedResponse = new
+        var endpoint = Mapping.ToMexcKlineEndpoint(request);
+        var expectedResponse = new List<List<object>>
         {
-            result = new
-            {
-                list = new List<List<string>>
-                {
-                    new() { "123456789", "0.001", "0.002", "0.0005", "0.0015", "100" },
-                },
-            },
+            new() { 123456789, "0.001", "0.002", "0.0005", "0.0015", "100", 123456799 },
         };
         var jsonResponse = JsonSerializer.Serialize(expectedResponse);
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
+            .SetupRequest(HttpMethod.Get, $"https://api.mexc.com{endpoint}")
             .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
 
         // Act
@@ -111,7 +98,7 @@ public class BybitClientTests
                     LowPrice = 0.0005m,
                     ClosePrice = 0.0015m,
                     Volume = 100m,
-                    CloseTime = Mapping.CalculateCloseTime("123456789", request.Interval),
+                    CloseTime = 123456799,
                 }
             );
     }
@@ -121,10 +108,10 @@ public class BybitClientTests
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
-        var endpoint = Mapping.ToBybitKlineEndpoint(request);
+        var endpoint = Mapping.ToMexcKlineEndpoint(request);
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
+            .SetupRequest(HttpMethod.Get, $"https://api.mexc.com{endpoint}")
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
@@ -136,65 +123,57 @@ public class BybitClientTests
 
     private static class Mapping
     {
-        public static string ToBybitKlineEndpoint(ExchangeKlineDataRequest request) =>
-            $"/v5/market/kline?category=spot"
-            + $"&symbol={request.CoinMain}{request.CoinQuote}"
-            + $"&interval={ToBybitTimeFrame(request.Interval)}"
-            + $"&start={request.StartTimeUnix}"
-            + $"&end={request.EndTimeUnix}"
-            + $"&limit={request.Limit}";
+        public static string ToMexcKlineEndpoint(ExchangeKlineDataRequest request) =>
+            $"/api/v3/klines?symbol={request.CoinMainSymbol + request.CoinQuoteSymbol}"
+            + $"&interval={ToMexcTimeFrame(request.Interval)}"
+            + $"&limit={request.Limit}"
+            + $"&startTime={request.StartTimeUnix}"
+            + $"&endTime={request.EndTimeUnix}";
 
-        public static string ToBybitTimeFrame(ExchangeKlineInterval interval) =>
-            interval switch
+        public static string ToMexcTimeFrame(ExchangeKlineInterval timeFrame) =>
+            timeFrame switch
             {
-                ExchangeKlineInterval.OneMinute => "1",
-                ExchangeKlineInterval.FiveMinutes => "5",
-                ExchangeKlineInterval.FifteenMinutes => "15",
-                ExchangeKlineInterval.ThirtyMinutes => "30",
-                ExchangeKlineInterval.OneHour => "60",
-                ExchangeKlineInterval.FourHours => "240",
-                ExchangeKlineInterval.OneDay => "D",
-                ExchangeKlineInterval.OneWeek => "W",
-                ExchangeKlineInterval.OneMonth => "M",
-                _ => throw new ArgumentException($"Unsupported TimeFrame: {interval}"),
+                ExchangeKlineInterval.OneMinute => "1m",
+                ExchangeKlineInterval.FiveMinutes => "5m",
+                ExchangeKlineInterval.FifteenMinutes => "15m",
+                ExchangeKlineInterval.ThirtyMinutes => "30m",
+                ExchangeKlineInterval.OneHour => "1h",
+                ExchangeKlineInterval.FourHours => "4h",
+                ExchangeKlineInterval.OneDay => "1d",
+                ExchangeKlineInterval.OneWeek => "1w",
+                ExchangeKlineInterval.OneMonth => "1M",
+                _ => throw new ArgumentException($"Unsupported TimeFrame: {timeFrame}"),
             };
-
-        public static long CalculateCloseTime(string openTimeString, ExchangeKlineInterval interval)
-        {
-            var openTime = long.Parse(openTimeString, CultureInfo.InvariantCulture);
-            var durationInMinutes = (long)interval;
-            return openTime + (durationInMinutes * 60 * 1000);
-        }
     }
 
     private static class TestData
     {
-        public static readonly BybitDtos.BybitSpotAssetsResponse Response = new()
+        public static readonly MexcDtos.Response Response = new()
         {
-            Result = new()
-            {
-                TradingPairs =
-                [
-                    new()
-                    {
-                        BaseAssetSymbol = "BTC",
-                        QuoteAssetSymbol = "USDT",
-                        TradingStatus = BybitDtos.TradingPairStatus.Trading,
-                    },
-                    new()
-                    {
-                        BaseAssetSymbol = "BTC",
-                        QuoteAssetSymbol = "ETH",
-                        TradingStatus = BybitDtos.TradingPairStatus.PreLaunch,
-                    },
-                    new()
-                    {
-                        BaseAssetSymbol = "ETH",
-                        QuoteAssetSymbol = "USDT",
-                        TradingStatus = BybitDtos.TradingPairStatus.Trading,
-                    },
-                ],
-            },
+            TradingPairs =
+            [
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "USDT",
+                    Status = MexcDtos.TradingPairStatus.Trading,
+                    BaseAssetFullName = "Bitcoin",
+                },
+                new()
+                {
+                    BaseAssetSymbol = "BTC",
+                    QuoteAssetSymbol = "ETH",
+                    Status = MexcDtos.TradingPairStatus.CurrentlyUnavailable,
+                    BaseAssetFullName = "Bitcoin",
+                },
+                new()
+                {
+                    BaseAssetSymbol = "ETH",
+                    QuoteAssetSymbol = "USDT",
+                    Status = MexcDtos.TradingPairStatus.Trading,
+                    BaseAssetFullName = "Ethereum",
+                },
+            ],
         };
 
         public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
@@ -204,6 +183,7 @@ public class BybitClientTests
             new()
             {
                 Symbol = "BTC",
+                Name = "Bitcoin",
                 TradingPairs =
                 [
                     new()
@@ -211,16 +191,16 @@ public class BybitClientTests
                         CoinQuote = new() { Symbol = "USDT" },
                         ExchangeInfo = new()
                         {
-                            Exchange = Exchange.Bybit,
+                            Exchange = Exchange.Mexc,
                             Status = ExchangeTradingPairStatus.Available,
                         },
                     },
                     new()
                     {
-                        CoinQuote = new() { Symbol = "ETH" },
+                        CoinQuote = new() { Symbol = "ETH", Name = "Ethereum" },
                         ExchangeInfo = new()
                         {
-                            Exchange = Exchange.Bybit,
+                            Exchange = Exchange.Mexc,
                             Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
                         },
                     },
@@ -229,6 +209,7 @@ public class BybitClientTests
             new()
             {
                 Symbol = "ETH",
+                Name = "Ethereum",
                 TradingPairs =
                 [
                     new()
@@ -236,7 +217,7 @@ public class BybitClientTests
                         CoinQuote = new() { Symbol = "USDT" },
                         ExchangeInfo = new()
                         {
-                            Exchange = Exchange.Bybit,
+                            Exchange = Exchange.Mexc,
                             Status = ExchangeTradingPairStatus.Available,
                         },
                     },

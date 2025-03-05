@@ -24,13 +24,14 @@ public class ExchangesControllerTests
         _controller = new ExchangesController(_mockDataCollector.Object);
     }
 
+    #region GetKlineData Tests
     [Fact]
     public async Task GetKlineData_CallsDataCollectorWithCorrectParameters()
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
-        var expectedKlineData = _fixture.CreateMany<KlineData>(5);
-        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(expectedKlineData);
+        var expectedResponse = _fixture.Create<KlineDataRequestResponse>();
+        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(expectedResponse);
 
         // Act
         await _controller.GetKlineData(request);
@@ -44,8 +45,8 @@ public class ExchangesControllerTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
-        var expectedKlineData = _fixture.CreateMany<KlineData>(5).ToList();
-        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(expectedKlineData);
+        var expectedResponse = _fixture.Create<KlineDataRequestResponse>();
+        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _controller.GetKlineData(request);
@@ -55,17 +56,16 @@ public class ExchangesControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(expectedKlineData);
+            .BeEquivalentTo(expectedResponse);
     }
 
     [Fact]
-    public async Task GetKlineData_ReturnsEmptyListIfNoDataFound()
+    public async Task GetKlineData_ReturnsEmptyResponseWhenNoDataFound()
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
-        _mockDataCollector
-            .Setup(dc => dc.GetKlineData(request))
-            .ReturnsAsync(new List<KlineData>());
+        var emptyResponse = new KlineDataRequestResponse();
+        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(emptyResponse);
 
         // Act
         var result = await _controller.GetKlineData(request);
@@ -75,32 +75,97 @@ public class ExchangesControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(new List<KlineData>());
+            .BeEquivalentTo(emptyResponse);
     }
+    #endregion
 
+    #region GetKlineDataBatch Tests
     [Fact]
-    public async Task GetAllListedCoins_CallsDataCollector()
+    public async Task GetKlineDataBatch_CallsDataCollectorWithCorrectParameters()
     {
         // Arrange
-        var expectedCoins = _fixture.Create<ListedCoins>();
-        _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var expectedResponses = _fixture.CreateMany<KlineDataRequestResponse>(3).ToList();
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineDataBatch(request))
+            .ReturnsAsync(expectedResponses);
 
         // Act
-        await _controller.GetAllListedCoins();
+        await _controller.GetKlineDataBatch(request);
 
         // Assert
-        _mockDataCollector.Verify(dc => dc.GetAllListedCoins(), Times.Once);
+        _mockDataCollector.Verify(dc => dc.GetKlineDataBatch(request), Times.Once);
     }
 
     [Fact]
-    public async Task GetAllListedCoins_ReturnsOkResultWithExpectedData()
+    public async Task GetKlineDataBatch_ReturnsOkResultWithExpectedData()
     {
         // Arrange
-        var expectedCoins = _fixture.Create<ListedCoins>();
-        _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var expectedResponses = _fixture.CreateMany<KlineDataRequestResponse>(3).ToList();
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineDataBatch(request))
+            .ReturnsAsync(expectedResponses);
 
         // Act
-        var result = await _controller.GetAllListedCoins();
+        var result = await _controller.GetKlineDataBatch(request);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(expectedResponses);
+    }
+
+    [Fact]
+    public async Task GetKlineDataBatch_ReturnsEmptyListWhenNoDataFound()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var emptyResponses = new List<KlineDataRequestResponse>();
+        _mockDataCollector.Setup(dc => dc.GetKlineDataBatch(request)).ReturnsAsync(emptyResponses);
+
+        // Act
+        var result = await _controller.GetKlineDataBatch(request);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(emptyResponses);
+    }
+    #endregion
+
+    #region GetAllSpotCoins Tests
+    [Fact]
+    public async Task GetAllSpotCoins_CallsDataCollector()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>().ToList();
+        _mockDataCollector
+            .Setup(dc => dc.GetAllCurrentActiveSpotCoins())
+            .ReturnsAsync(expectedCoins);
+
+        // Act
+        await _controller.GetAllSpotCoins();
+
+        // Assert
+        _mockDataCollector.Verify(dc => dc.GetAllCurrentActiveSpotCoins(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_ReturnsOkResultWithExpectedData()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>().ToList();
+        _mockDataCollector
+            .Setup(dc => dc.GetAllCurrentActiveSpotCoins())
+            .ReturnsAsync(expectedCoins);
+
+        // Act
+        var result = await _controller.GetAllSpotCoins();
 
         // Assert
         result
@@ -111,20 +176,23 @@ public class ExchangesControllerTests
     }
 
     [Fact]
-    public async Task GetAllListedCoins_ReturnsOkResultWithEmptyListWhenNoCoins()
+    public async Task GetAllSpotCoins_Returns503ServiceUnavailableWhenNoCoins()
     {
         // Arrange
-        var expectedCoins = new ListedCoins();
-        _mockDataCollector.Setup(dc => dc.GetAllListedCoins()).ReturnsAsync(expectedCoins);
+        var expectedCoins = new List<Coin>();
+        _mockDataCollector
+            .Setup(dc => dc.GetAllCurrentActiveSpotCoins())
+            .ReturnsAsync(expectedCoins);
 
         // Act
-        var result = await _controller.GetAllListedCoins();
+        var result = await _controller.GetAllSpotCoins();
 
         // Assert
         result
             .Should()
-            .BeOfType<OkObjectResult>()
-            .Which.Value.Should()
-            .BeEquivalentTo(expectedCoins);
+            .BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should()
+            .Be(StatusCodes.Status503ServiceUnavailable);
     }
+    #endregion
 }

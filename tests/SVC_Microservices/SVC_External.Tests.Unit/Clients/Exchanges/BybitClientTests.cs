@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using AutoFixture;
@@ -11,28 +12,28 @@ using SVC_External.Models.Exchanges.ClientResponses;
 using SVC_External.Models.Exchanges.Input;
 using SVC_External.Models.Exchanges.Output;
 
-namespace SVC_External.Tests.Unit.Clients;
+namespace SVC_External.Tests.Unit.Clients.Exchanges;
 
-public class BinanceClientTests
+public class BybitClientTests
 {
     private readonly IFixture _fixture;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly Mock<ILogger<BinanceClient>> _loggerMock;
-    private readonly BinanceClient _client;
+    private readonly Mock<ILogger<BybitClient>> _loggerMock;
+    private readonly BybitClient _client;
 
-    public BinanceClientTests()
+    public BybitClientTests()
     {
         _fixture = new Fixture();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
-        _loggerMock = new Mock<ILogger<BinanceClient>>();
+        _loggerMock = new Mock<ILogger<BybitClient>>();
 
         var httpClient = _httpMessageHandlerMock.CreateClient();
-        httpClient.BaseAddress = new Uri("https://api.binance.com");
+        httpClient.BaseAddress = new Uri("https://api.bybit.com");
 
         var httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        httpClientFactoryMock.Setup(f => f.CreateClient("BinanceClient")).Returns(httpClient);
+        httpClientFactoryMock.Setup(f => f.CreateClient("BybitClient")).Returns(httpClient);
 
-        _client = new BinanceClient(httpClientFactoryMock.Object, _loggerMock.Object);
+        _client = new BybitClient(httpClientFactoryMock.Object, _loggerMock.Object);
     }
 
     [Fact]
@@ -42,7 +43,7 @@ public class BinanceClientTests
         _httpMessageHandlerMock
             .SetupRequest(
                 HttpMethod.Get,
-                "https://api.binance.com/api/v3/exchangeInfo?showPermissionSets=false"
+                "https://api.bybit.com/v5/market/instruments-info?category=spot"
             )
             .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
 
@@ -60,7 +61,7 @@ public class BinanceClientTests
         _httpMessageHandlerMock
             .SetupRequest(
                 HttpMethod.Get,
-                "https://api.binance.com/api/v3/exchangeInfo?showPermissionSets=false"
+                "https://api.bybit.com/v5/market/instruments-info?category=spot"
             )
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
@@ -76,15 +77,21 @@ public class BinanceClientTests
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
-        var endpoint = Mapping.ToBinanceKlineEndpoint(request);
-        var expectedResponse = new List<List<object>>
+        var endpoint = Mapping.ToBybitKlineEndpoint(request);
+        var expectedResponse = new
         {
-            new() { 123456789, "0.001", "0.002", "0.0005", "0.0015", "100", 123456799 },
+            result = new
+            {
+                list = new List<List<string>>
+                {
+                    new() { "123456789", "0.001", "0.002", "0.0005", "0.0015", "100" },
+                },
+            },
         };
         var jsonResponse = JsonSerializer.Serialize(expectedResponse);
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, $"https://api.binance.com{endpoint}")
+            .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
             .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
 
         // Act
@@ -104,7 +111,7 @@ public class BinanceClientTests
                     LowPrice = 0.0005m,
                     ClosePrice = 0.0015m,
                     Volume = 100m,
-                    CloseTime = 123456799,
+                    CloseTime = Mapping.CalculateCloseTime("123456789", request.Interval),
                 }
             );
     }
@@ -114,10 +121,10 @@ public class BinanceClientTests
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
-        var endpoint = Mapping.ToBinanceKlineEndpoint(request);
+        var endpoint = Mapping.ToBybitKlineEndpoint(request);
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, $"https://api.binance.com{endpoint}")
+            .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
@@ -127,32 +134,69 @@ public class BinanceClientTests
         result.Should().BeEmpty();
     }
 
+    private static class Mapping
+    {
+        public static string ToBybitKlineEndpoint(ExchangeKlineDataRequest request) =>
+            $"/v5/market/kline?category=spot"
+            + $"&symbol={request.CoinMainSymbol}{request.CoinQuoteSymbol}"
+            + $"&interval={ToBybitTimeFrame(request.Interval)}"
+            + $"&start={request.StartTimeUnix}"
+            + $"&end={request.EndTimeUnix}"
+            + $"&limit={request.Limit}";
+
+        public static string ToBybitTimeFrame(ExchangeKlineInterval interval) =>
+            interval switch
+            {
+                ExchangeKlineInterval.OneMinute => "1",
+                ExchangeKlineInterval.FiveMinutes => "5",
+                ExchangeKlineInterval.FifteenMinutes => "15",
+                ExchangeKlineInterval.ThirtyMinutes => "30",
+                ExchangeKlineInterval.OneHour => "60",
+                ExchangeKlineInterval.FourHours => "240",
+                ExchangeKlineInterval.OneDay => "D",
+                ExchangeKlineInterval.OneWeek => "W",
+                ExchangeKlineInterval.OneMonth => "M",
+                _ => throw new ArgumentException($"Unsupported TimeFrame: {interval}"),
+            };
+
+        public static long CalculateCloseTime(string openTimeString, ExchangeKlineInterval interval)
+        {
+            var openTime = long.Parse(openTimeString, CultureInfo.InvariantCulture);
+            var durationInMinutes = (long)interval;
+            return openTime + (durationInMinutes * 60 * 1000);
+        }
+    }
+
     private static class TestData
     {
-        public static readonly BinanceDtos.Response Response = new()
+        public static readonly BybitDtos.BybitSpotAssetsResponse Response = new()
         {
-            TradingPairs =
-            [
-                new()
-                {
-                    BaseAssetSymbol = "BTC",
-                    QuoteAssetSymbol = "USDT",
-                    Status = BinanceDtos.TradingPairStatus.TRADING,
-                },
-                new()
-                {
-                    BaseAssetSymbol = "BTC",
-                    QuoteAssetSymbol = "ETH",
-                    Status = BinanceDtos.TradingPairStatus.HALT,
-                },
-                new()
-                {
-                    BaseAssetSymbol = "ETH",
-                    QuoteAssetSymbol = "USDT",
-                    Status = BinanceDtos.TradingPairStatus.TRADING,
-                },
-            ],
+            Result = new()
+            {
+                TradingPairs =
+                [
+                    new()
+                    {
+                        BaseAssetSymbol = "BTC",
+                        QuoteAssetSymbol = "USDT",
+                        TradingStatus = BybitDtos.TradingPairStatus.Trading,
+                    },
+                    new()
+                    {
+                        BaseAssetSymbol = "BTC",
+                        QuoteAssetSymbol = "ETH",
+                        TradingStatus = BybitDtos.TradingPairStatus.PreLaunch,
+                    },
+                    new()
+                    {
+                        BaseAssetSymbol = "ETH",
+                        QuoteAssetSymbol = "USDT",
+                        TradingStatus = BybitDtos.TradingPairStatus.Trading,
+                    },
+                ],
+            },
         };
+
         public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
 
         public static readonly List<ExchangeCoin> ExpectedResult =
@@ -167,7 +211,7 @@ public class BinanceClientTests
                         CoinQuote = new() { Symbol = "USDT" },
                         ExchangeInfo = new()
                         {
-                            Exchange = Exchange.Binance,
+                            Exchange = Exchange.Bybit,
                             Status = ExchangeTradingPairStatus.Available,
                         },
                     },
@@ -176,7 +220,7 @@ public class BinanceClientTests
                         CoinQuote = new() { Symbol = "ETH" },
                         ExchangeInfo = new()
                         {
-                            Exchange = Exchange.Binance,
+                            Exchange = Exchange.Bybit,
                             Status = ExchangeTradingPairStatus.CurrentlyUnavailable,
                         },
                     },
@@ -192,37 +236,12 @@ public class BinanceClientTests
                         CoinQuote = new() { Symbol = "USDT" },
                         ExchangeInfo = new()
                         {
-                            Exchange = Exchange.Binance,
+                            Exchange = Exchange.Bybit,
                             Status = ExchangeTradingPairStatus.Available,
                         },
                     },
                 ],
             },
         ];
-    }
-
-    private static class Mapping
-    {
-        public static string ToBinanceKlineEndpoint(ExchangeKlineDataRequest request) =>
-            $"/api/v3/klines?symbol={request.CoinMain + request.CoinQuote}"
-            + $"&interval={ToBinanceTimeFrame(request.Interval)}"
-            + $"&limit={request.Limit}"
-            + $"&startTime={request.StartTimeUnix}"
-            + $"&endTime={request.EndTimeUnix}";
-
-        public static string ToBinanceTimeFrame(ExchangeKlineInterval timeFrame) =>
-            timeFrame switch
-            {
-                ExchangeKlineInterval.OneMinute => "1m",
-                ExchangeKlineInterval.FiveMinutes => "5m",
-                ExchangeKlineInterval.FifteenMinutes => "15m",
-                ExchangeKlineInterval.ThirtyMinutes => "30m",
-                ExchangeKlineInterval.OneHour => "1h",
-                ExchangeKlineInterval.FourHours => "4h",
-                ExchangeKlineInterval.OneDay => "1d",
-                ExchangeKlineInterval.OneWeek => "1w",
-                ExchangeKlineInterval.OneMonth => "1M",
-                _ => throw new ArgumentException($"Unsupported TimeFrame: {timeFrame}"),
-            };
     }
 }
