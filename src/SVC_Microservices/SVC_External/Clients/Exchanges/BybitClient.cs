@@ -18,6 +18,9 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
     private readonly ILogger<BybitClient> _logger = logger;
 
     /// <inheritdoc />
+    public Exchange CurrentExchange => Exchange.Bybit;
+
+    /// <inheritdoc />
     public async Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins()
     {
         var endpoint = "/v5/market/instruments-info?category=spot";
@@ -96,7 +99,7 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
         #region GetKlineData
         public static string ToBybitKlineEndpoint(ExchangeKlineDataRequest request) =>
             $"/v5/market/kline?category=spot"
-            + $"&symbol={request.CoinMain}{request.CoinQuote}"
+            + $"&symbol={request.CoinMainSymbol}{request.CoinQuoteSymbol}"
             + $"&interval={ToBybitTimeFrame(request.Interval)}"
             + $"&start={request.StartTimeUnix}"
             + $"&end={request.EndTimeUnix}"

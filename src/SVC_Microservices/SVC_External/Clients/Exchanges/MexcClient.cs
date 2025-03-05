@@ -20,6 +20,9 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
     private readonly ILogger<MexcClient> _logger = logger;
 
     /// <inheritdoc />
+    public Exchange CurrentExchange => Exchange.Mexc;
+
+    /// <inheritdoc />
     public async Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins()
     {
         var endpoint = "/api/v3/exchangeInfo";
@@ -116,7 +119,7 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
 
         #region GetKlineData
         public static string ToMexcKlineEndpoint(ExchangeKlineDataRequest request) =>
-            $"/api/v3/klines?symbol={request.CoinMain + request.CoinQuote}"
+            $"/api/v3/klines?symbol={request.CoinMainSymbol + request.CoinQuoteSymbol}"
             + $"&interval={ToMexcTimeFrame(request.Interval)}"
             + $"&limit={request.Limit}"
             + $"&startTime={request.StartTimeUnix}"

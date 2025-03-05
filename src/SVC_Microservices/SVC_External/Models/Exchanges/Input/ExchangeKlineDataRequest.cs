@@ -10,12 +10,12 @@ public record ExchangeKlineDataRequest
     /// <summary>
     /// The base coin in the trading pair for which Kline data is requested.
     /// </summary>
-    public required string CoinMain { get; set; }
+    public required string CoinMainSymbol { get; set; }
 
     /// <summary>
     /// The quote coin in the trading pair for which Kline data is requested.
     /// </summary>
-    public required string CoinQuote { get; set; }
+    public required string CoinQuoteSymbol { get; set; }
 
     /// <summary>
     /// The interval for each Kline. All supported intervals can be found in the TimeFrame enum.
