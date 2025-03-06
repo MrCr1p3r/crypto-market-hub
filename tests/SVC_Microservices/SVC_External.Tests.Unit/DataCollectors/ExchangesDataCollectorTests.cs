@@ -547,8 +547,131 @@ public class ExchangesDataCollectorTests
     }
     #endregion
 
-    #region Helper Methods
+    #region GetCoinGeckoAssetsInfo tests
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_ReturnsExpectedData_WhenBothApisReturnData()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum", "tether" };
+        var assetInfos = _fixture.CreateMany<AssetCoinGecko>(3).ToList();
+        assetInfos[0].Id = "bitcoin";
+        assetInfos[1].Id = "ethereum";
+        assetInfos[2].Id = "tether";
 
+        var stablecoinIds = new[] { "tether", "usdc", "dai" };
+
+        _coinGeckoClientMock
+            .Setup(client =>
+                client.GetCoinsMarkets(
+                    It.Is<IEnumerable<string>>(ids => ids.SequenceEqual(coinIds))
+                )
+            )
+            .ReturnsAsync(assetInfos);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetStablecoinsIds())
+            .ReturnsAsync(stablecoinIds);
+
+        // Act
+        var result = await _dataCollector.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result.Should().HaveCount(3);
+
+        // Verify each returned item has correct properties
+        result.Should().ContainSingle(c => c.Id == "bitcoin");
+        result.Should().ContainSingle(c => c.Id == "ethereum");
+        result.Should().ContainSingle(c => c.Id == "tether");
+
+        // Verify stablecoin flag is correctly set
+        result.Should().Contain(c => c.Id == "bitcoin" && !c.IsStablecoin);
+        result.Should().Contain(c => c.Id == "ethereum" && !c.IsStablecoin);
+        result.Should().Contain(c => c.Id == "tether" && c.IsStablecoin);
+
+        // Verify other properties are mapped correctly
+        foreach (var item in result)
+        {
+            var sourceAsset = assetInfos.First(a => a.Id == item.Id);
+            item.MarketCapUsd.Should().Be(sourceAsset.MarketCapUsd);
+            item.PriceUsd.Should().Be(sourceAsset.PriceUsd);
+            item.PriceChangePercentage24h.Should().Be(sourceAsset.PriceChangePercentage24h);
+        }
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_ReturnsEmptyCollection_WhenGetCoinsMarketsReturnsNoData()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum" };
+        var stablecoinIds = new[] { "tether", "usdc" };
+
+        _coinGeckoClientMock
+            .Setup(client =>
+                client.GetCoinsMarkets(
+                    It.Is<IEnumerable<string>>(ids => ids.SequenceEqual(coinIds))
+                )
+            )
+            .ReturnsAsync([]);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetStablecoinsIds())
+            .ReturnsAsync(stablecoinIds);
+
+        // Act
+        var result = await _dataCollector.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_ReturnsEmptyCollection_WhenGetStablecoinsIdsReturnsNoData()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum" };
+        var assetInfos = _fixture.CreateMany<AssetCoinGecko>(2).ToList();
+        assetInfos[0].Id = "bitcoin";
+        assetInfos[1].Id = "ethereum";
+
+        _coinGeckoClientMock
+            .Setup(client =>
+                client.GetCoinsMarkets(
+                    It.Is<IEnumerable<string>>(ids => ids.SequenceEqual(coinIds))
+                )
+            )
+            .ReturnsAsync(assetInfos);
+
+        _coinGeckoClientMock.Setup(client => client.GetStablecoinsIds()).ReturnsAsync([]);
+
+        // Act
+        var result = await _dataCollector.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_ReturnsEmptyCollection_WhenBothApisReturnNoData()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum" };
+
+        _coinGeckoClientMock
+            .Setup(client =>
+                client.GetCoinsMarkets(
+                    It.Is<IEnumerable<string>>(ids => ids.SequenceEqual(coinIds))
+                )
+            )
+            .ReturnsAsync([]);
+
+        _coinGeckoClientMock.Setup(client => client.GetStablecoinsIds()).ReturnsAsync([]);
+
+        // Act
+        var result = await _dataCollector.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
     #endregion
 
     private static class TestData

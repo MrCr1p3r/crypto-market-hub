@@ -103,6 +103,38 @@ public partial class CoinGeckoClient(
         return response ?? [];
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<string>> GetStablecoinsIds()
+    {
+        var stablecoinsIds = new List<string>();
+        for (var page = 1; ; page++)
+        {
+            var endpoint = $"/api/v3/coins/markets";
+            endpoint += "?vs_currency=usd";
+            endpoint += "&category=stablecoins";
+            endpoint += "&per_page=" + MaxIdsPerRequest;
+            endpoint += "&page=" + page;
+            endpoint += "&sparkline=false";
+            var httpResponse = await _httpClient.GetAsync(endpoint);
+
+            if (!httpResponse.IsSuccessStatusCode)
+            {
+                await _logger.LogUnsuccessfulHttpResponse(httpResponse);
+                return [];
+            }
+
+            var response = await httpResponse.Content.ReadFromJsonAsync<List<AssetCoinGecko>>();
+            if (response == null || response.Count == 0)
+                break;
+
+            stablecoinsIds.AddRange(response.Select(coin => coin.Id));
+
+            if (response.Count < MaxIdsPerRequest)
+                break;
+        }
+        return stablecoinsIds;
+    }
+
     private static class Mapping
     {
         public static CoinCoinGecko ToCoinCoinGecko(CoinListResponse response) =>
