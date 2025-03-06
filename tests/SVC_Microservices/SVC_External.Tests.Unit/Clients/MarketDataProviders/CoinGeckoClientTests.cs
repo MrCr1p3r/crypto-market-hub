@@ -217,6 +217,100 @@ public class CoinGeckoClientTests
         );
     }
 
+    [Fact]
+    public async Task GetStablecoinsIds_ReturnsExpectedData()
+    {
+        // Arrange
+        var endpoint1 =
+            "/api/v3/coins/markets?vs_currency=usd&category=stablecoins&per_page=250&page=1&sparkline=false";
+        var endpoint2 =
+            "/api/v3/coins/markets?vs_currency=usd&category=stablecoins&per_page=250&page=2&sparkline=false";
+
+        // Set up first page with max items
+        var page1Response = _fixture.CreateMany<AssetCoinGecko>(250).ToList();
+        foreach (var asset in page1Response)
+        {
+            asset.Id = $"stablecoin-{Guid.NewGuid()}";
+        }
+        var page1Json = JsonSerializer.Serialize(page1Response);
+
+        // Set up second page with fewer items (indicating last page)
+        var page2Response = _fixture.CreateMany<AssetCoinGecko>(50).ToList();
+        foreach (var asset in page2Response)
+        {
+            asset.Id = $"stablecoin-{Guid.NewGuid()}";
+        }
+        var page2Json = JsonSerializer.Serialize(page2Response);
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, $"https://api.coingecko.com{endpoint1}")
+            .ReturnsResponse(HttpStatusCode.OK, page1Json);
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, $"https://api.coingecko.com{endpoint2}")
+            .ReturnsResponse(HttpStatusCode.OK, page2Json);
+
+        // Act
+        var result = await _client.GetStablecoinsIds();
+
+        // Assert
+        result.Should().HaveCount(300);
+        result.Should().Contain(page1Response.Select(c => c.Id));
+        result.Should().Contain(page2Response.Select(c => c.Id));
+    }
+
+    [Fact]
+    public async Task GetStablecoinsIds_SinglePage_ReturnsExpectedData()
+    {
+        // Arrange
+        var endpoint =
+            "/api/v3/coins/markets?vs_currency=usd&category=stablecoins&per_page=250&page=1&sparkline=false";
+
+        // Create response with fewer than max items (single page)
+        var response = _fixture.CreateMany<AssetCoinGecko>(50).ToList();
+        foreach (var asset in response)
+        {
+            asset.Id = $"stablecoin-{Guid.NewGuid()}";
+        }
+        var jsonResponse = JsonSerializer.Serialize(response);
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, $"https://api.coingecko.com{endpoint}")
+            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
+
+        // Act
+        var result = await _client.GetStablecoinsIds();
+
+        // Assert
+        result.Should().HaveCount(50);
+        result.Should().BeEquivalentTo(response.Select(c => c.Id));
+
+        // Verify only one page was requested
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Get,
+            $"https://api.coingecko.com{endpoint}",
+            Times.Once()
+        );
+    }
+
+    [Fact]
+    public async Task GetStablecoinsIds_ErrorResponse_ReturnsEmptyCollection()
+    {
+        // Arrange
+        var endpoint =
+            "/api/v3/coins/markets?vs_currency=usd&category=stablecoins&per_page=250&page=1&sparkline=false";
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, $"https://api.coingecko.com{endpoint}")
+            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+
+        // Act
+        var result = await _client.GetStablecoinsIds();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
     private static class TestData
     {
         #region GetCoinsList
@@ -317,24 +411,24 @@ public class CoinGeckoClientTests
         [
             new()
             {
-                Symbol = "btc",
-                Name = "Bitcoin",
+                Id = "bitcoin",
                 PriceUsd = 68500.45m,
                 MarketCapUsd = 1350000000000,
+                PriceChangePercentage24h = 1.23m,
             },
             new()
             {
-                Symbol = "eth",
-                Name = "Ethereum",
+                Id = "ethereum",
                 PriceUsd = 3450.22m,
                 MarketCapUsd = 420000000000,
+                PriceChangePercentage24h = 1.23m,
             },
             new()
             {
-                Symbol = "sol",
-                Name = "Solana",
+                Id = "solana",
                 PriceUsd = 145.78m,
                 MarketCapUsd = 64000000000,
+                PriceChangePercentage24h = 1.23m,
             },
         ];
 

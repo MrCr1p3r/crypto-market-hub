@@ -58,7 +58,31 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     [ProducesResponseType(typeof(IEnumerable<KlineDataRequestResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetKlineDataBatch([FromBody] KlineDataBatchRequest request)
     {
-        var klineDataBatch = await _dataCollector.GetKlineDataBatch(request);
-        return Ok(klineDataBatch);
+        var response = await _dataCollector.GetKlineDataBatch(request);
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Get market data and stablecoin status for specified coin IDs from CoinGecko.
+    /// </summary>
+    /// <param name="coinGeckoIds">Array of CoinGecko coin IDs to fetch data for.</param>
+    /// <returns>Collection of coin asset information including price, market cap, and stablecoin status.</returns>
+    /// <response code="200">Returns the collection of coin asset information.</response>
+    /// <response code="400">If no CoinGecko IDs are provided.</response>
+    /// <response code="503">If something went wrong during assets info retrievement.</response>
+    [HttpGet("coins/marketInfo")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<CoinGeckoAssetInfo>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> GetCoinGeckoAssetsInfo(
+        [FromQuery] IEnumerable<string> coinGeckoIds
+    )
+    {
+        if (!coinGeckoIds.Any())
+            return BadRequest("CoinGecko IDs are required.");
+
+        var response = await _dataCollector.GetCoinGeckoAssetsInfo(coinGeckoIds);
+        return response.Any() ? Ok(response) : StatusCode(StatusCodes.Status503ServiceUnavailable);
     }
 }

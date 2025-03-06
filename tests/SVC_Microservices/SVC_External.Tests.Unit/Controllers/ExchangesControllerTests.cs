@@ -195,4 +195,109 @@ public class ExchangesControllerTests
             .Be(StatusCodes.Status503ServiceUnavailable);
     }
     #endregion
+
+    #region GetCoinGeckoAssetsInfo Tests
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_CallsDataCollectorWithCorrectParameters()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum", "tether" };
+        _mockDataCollector
+            .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([]);
+
+        // Act
+        await _controller.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        _mockDataCollector.Verify(
+            dc =>
+                dc.GetCoinGeckoAssetsInfo(
+                    It.Is<IEnumerable<string>>(ids => ids.SequenceEqual(coinIds))
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_ReturnsOkResultWithExpectedData()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum" };
+
+        var expectedAssetInfos = _fixture.CreateMany<CoinGeckoAssetInfo>(2).ToList();
+        _mockDataCollector
+            .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync(expectedAssetInfos);
+
+        // Act
+        var result = await _controller.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(expectedAssetInfos);
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_ReturnsEmptyListWhenNoDataFound()
+    {
+        // Arrange
+        var coinIds = new[] { "unknown-coin" };
+
+        _mockDataCollector
+            .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var result = await _controller.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should()
+            .Be(StatusCodes.Status503ServiceUnavailable);
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_Returns400BadRequest_WhenNoIdsProvided()
+    {
+        // Arrange
+        var emptyIds = Array.Empty<string>();
+
+        // Act
+        var result = await _controller.GetCoinGeckoAssetsInfo(emptyIds);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<BadRequestObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo("CoinGecko IDs are required.");
+    }
+
+    [Fact]
+    public async Task GetCoinGeckoAssetsInfo_Returns503ServiceUnavailable_WhenDataCollectorReturnsEmpty()
+    {
+        // Arrange
+        var coinIds = new[] { "bitcoin", "ethereum" };
+
+        _mockDataCollector
+            .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var result = await _controller.GetCoinGeckoAssetsInfo(coinIds);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<StatusCodeResult>()
+            .Which.StatusCode.Should()
+            .Be(StatusCodes.Status503ServiceUnavailable);
+    }
+    #endregion
 }

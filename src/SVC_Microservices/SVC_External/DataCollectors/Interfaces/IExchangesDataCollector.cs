@@ -29,4 +29,12 @@ public interface IExchangesDataCollector
     /// <returns>Collection of coins, listen on all of the available exchanges.
     /// If the request fails, an empty collection is returned.</returns>
     Task<IEnumerable<Coin>> GetAllCurrentActiveSpotCoins();
+
+    /// <summary>
+    /// Fetches coingecko asset information for the provided ids.
+    /// </summary>
+    /// <param name="ids">Collection of CoinGecko IDs.</param>
+    /// <returns>Collection of coingecko asset information objects.
+    /// If the request fails, an empty collection is returned.</returns>
+    Task<IEnumerable<CoinGeckoAssetInfo>> GetCoinGeckoAssetsInfo(IEnumerable<string> ids);
 }

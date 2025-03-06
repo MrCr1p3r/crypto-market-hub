@@ -32,4 +32,11 @@ public interface ICoinGeckoClient
     /// <returns>Collection of assets from CoinGecko.
     /// If the request fails, an empty collection is returned.</returns>
     Task<IEnumerable<AssetCoinGecko>> GetCoinsMarkets(IEnumerable<string> ids);
+
+    /// <summary>
+    /// Gets all stablecoin IDs from CoinGecko.
+    /// </summary>
+    /// <returns>Collection of stablecoin IDs.
+    /// If the request fails, an empty collection is returned.</returns>
+    Task<IEnumerable<string>> GetStablecoinsIds();
 }

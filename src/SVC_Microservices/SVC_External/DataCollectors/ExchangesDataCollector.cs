@@ -354,6 +354,21 @@ public class ExchangesDataCollector(
     }
     #endregion
 
+    public async Task<IEnumerable<CoinGeckoAssetInfo>> GetCoinGeckoAssetsInfo(
+        IEnumerable<string> ids
+    )
+    {
+        var stablecoinInfosTask = _coinGeckoClient.GetCoinsMarkets(ids);
+        var stablecoinIdsTask = _coinGeckoClient.GetStablecoinsIds();
+        await Task.WhenAll(stablecoinInfosTask, stablecoinIdsTask);
+
+        var stablecoinInfos = await stablecoinInfosTask;
+        var stablecoinIds = await stablecoinIdsTask;
+        return stablecoinInfos.Any() && stablecoinIds.Any()
+            ? stablecoinInfos.Select(info => Mapping.ToCoinGeckoAssetInfo(info, stablecoinIds))
+            : [];
+    }
+
     private static class Mapping
     {
         #region GetAllCurrentActiveSpotCoins
@@ -438,6 +453,21 @@ public class ExchangesDataCollector(
                 ClosePrice = klineData.ClosePrice,
                 Volume = klineData.Volume,
                 CloseTime = klineData.CloseTime,
+            };
+        #endregion
+
+        #region GetCoinGeckoAssetsInfo
+        public static CoinGeckoAssetInfo ToCoinGeckoAssetInfo(
+            AssetCoinGecko coinGeckoAssetInfo,
+            IEnumerable<string> stablecoinIds
+        ) =>
+            new()
+            {
+                Id = coinGeckoAssetInfo.Id,
+                MarketCapUsd = coinGeckoAssetInfo.MarketCapUsd,
+                PriceUsd = coinGeckoAssetInfo.PriceUsd,
+                PriceChangePercentage24h = coinGeckoAssetInfo.PriceChangePercentage24h,
+                IsStablecoin = stablecoinIds.Contains(coinGeckoAssetInfo.Id),
             };
         #endregion
     }
