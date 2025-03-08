@@ -2,6 +2,7 @@ using System.Net.Mime;
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -39,9 +40,9 @@ public class GlobalExceptionHandler(
             _ => StatusCodes.Status500InternalServerError,
         };
 
-        var problemDetails = new
+        var problemDetails = new ProblemDetails
         {
-            type = statusCode switch
+            Type = statusCode switch
             {
                 StatusCodes.Status400BadRequest =>
                     "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.1",
@@ -53,13 +54,16 @@ public class GlobalExceptionHandler(
                     "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1",
                 _ => "https://datatracker.ietf.org/doc/html/rfc9110",
             },
-            title = exception.GetType().FullName,
-            status = statusCode,
-            detail = exception.Message,
-            instance = httpContext.Request.Path.Value,
-            innerExceptionMessage = exception.InnerException?.Message,
-            stackTrace = _environment.IsDevelopment() ? exception.StackTrace : null,
-            timestamp = DateTime.UtcNow,
+            Title = exception.GetType().FullName,
+            Status = statusCode,
+            Detail = exception.Message,
+            Instance = httpContext.Request.Path.Value,
+            Extensions =
+            {
+                ["InnerExceptionMessage"] = exception.InnerException?.Message,
+                ["StackTrace"] = _environment.IsDevelopment() ? exception.StackTrace : null,
+                ["Timestamp"] = DateTime.UtcNow,
+            },
         };
 
         httpContext.Response.ContentType = MediaTypeNames.Application.Json;
