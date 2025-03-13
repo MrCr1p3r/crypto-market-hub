@@ -52,6 +52,26 @@ public static class MoqHybridCacheExtensions
             >(async (_, state, factory, _, _, ct) => await factory(state, ct));
     }
 
+    public static IReturnsResult<HybridCache> SetupGetOrCreateAsyncToThrow<TState, TResult>(
+        this Mock<HybridCache> mockCache,
+        string key,
+        Exception exception
+    )
+    {
+        return mockCache
+            .Setup(m =>
+                m.GetOrCreateAsync(
+                    It.Is<string>(s => s == key),
+                    It.IsAny<TState>(),
+                    It.IsAny<Func<TState, CancellationToken, ValueTask<TResult>>>(),
+                    It.IsAny<HybridCacheEntryOptions>(),
+                    It.IsAny<IEnumerable<string>>(),
+                    It.IsAny<CancellationToken>()
+                )
+            )
+            .ThrowsAsync(exception);
+    }
+
     public static void VerifyGetOrCreateAsyncCalled<TState, T>(
         this Mock<HybridCache> mockCache,
         string key,

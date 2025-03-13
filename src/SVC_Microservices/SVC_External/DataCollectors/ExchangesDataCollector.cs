@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using FluentResults;
 using ISO._4217;
 using Microsoft.Extensions.Caching.Hybrid;
 using SharedLibrary.Enums;
@@ -11,6 +12,7 @@ using SVC_External.Models.Exchanges.Output;
 using SVC_External.Models.Input;
 using SVC_External.Models.MarketDataProviders.Output;
 using SVC_External.Models.Output;
+using static SharedLibrary.Errors.GenericErrors;
 
 namespace SVC_External.DataCollectors;
 
@@ -31,46 +33,75 @@ public class ExchangesDataCollector(
 
     #region GetAllCurrentActiveSpotCoins
     /// <inheritdoc />
-    public async Task<IEnumerable<Coin>> GetAllCurrentActiveSpotCoins()
+    public async Task<Result<IEnumerable<Coin>>> GetAllCurrentActiveSpotCoins()
     {
+        // I use try-catch to prevent caching a failed result. This is not optimal, but it's the simplest workaround as of now.
         var cacheKey = "all_current_active_spot_coins";
-        return await _hybridCache.GetOrCreateAsync(
-            cacheKey,
-            async _ => await GetAllActiveSpotCoins()
-        );
+        try
+        {
+            var result = await _hybridCache.GetOrCreateAsync(
+                cacheKey,
+                async _ =>
+                {
+                    var coinsResult = await GetAllActiveSpotCoins();
+                    return coinsResult.IsSuccess
+                        ? coinsResult
+                        : throw new InvalidOperationException(coinsResult.Errors[0].Message);
+                }
+            );
+            return result;
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(new Error(ex.Message));
+        }
     }
 
-    private async Task<IEnumerable<Coin>> GetAllActiveSpotCoins()
+    private async Task<Result<IEnumerable<Coin>>> GetAllActiveSpotCoins()
     {
         var coinsLists = await Task.WhenAll(
             _exchangeClients.Select(client => client.GetAllSpotCoins())
         );
-        if (coinsLists.Any(list => !list.Any()))
-            return [];
+        if (coinsLists.Any(list => list.IsFailed))
+            return Result.Fail(
+                new InternalError(
+                    $"No coins found for one or more exchanges: {string.Join(", ", coinsLists.Where(list => list.IsFailed).Select(list => list.Errors[0].Message))}"
+                )
+            );
 
-        var convertedCoinsLists = coinsLists.Select(coinsList => coinsList.Select(Mapping.ToCoin));
+        var convertedCoinsLists = coinsLists.Select(coinsList =>
+            coinsList.Value.Select(Mapping.ToCoin)
+        );
         var activeCoinsLists = ExcludeInactiveCoins(convertedCoinsLists);
 
-        var geckoCoins = await _coinGeckoClient.GetCoinsList();
-        if (!geckoCoins.Any())
-            return [];
+        var geckoCoinsResult = await _coinGeckoClient.GetCoinsList();
+        if (geckoCoinsResult.IsFailed)
+            return Result.Fail(
+                new InternalError(
+                    $"Failed to retrieve a coins list from CoinGecko: {geckoCoinsResult.Errors[0].Message}"
+                )
+            );
 
         var processExchangeCoinsResults = await Task.WhenAll(
             activeCoinsLists.Select(async exchangeCoins =>
                 (
                     Coins: exchangeCoins,
-                    Processed: await ProcessExchangeCoins(exchangeCoins, geckoCoins)
+                    Processed: await ProcessExchangeCoins(exchangeCoins, geckoCoinsResult.Value)
                 )
             )
         );
-        if (processExchangeCoinsResults.Any(result => !result.Processed))
-            return [];
+        if (processExchangeCoinsResults.Any(result => result.Processed.IsFailed))
+            return Result.Fail(
+                new Error(
+                    $"Failed to process exchange coins: {string.Join(", ", processExchangeCoinsResults.Where(result => result.Processed.IsFailed).Select(result => result.Processed.Errors[0].Message))}"
+                )
+            );
 
         var processedCoinsLists = processExchangeCoinsResults
-            .Where(result => result.Processed)
+            .Where(result => result.Processed.IsSuccess)
             .Select(result => result.Coins);
 
-        return GroupCoinsBySymbol(processedCoinsLists.SelectMany(coins => coins));
+        return Result.Ok(GroupCoinsBySymbol(processedCoinsLists.SelectMany(coins => coins)));
     }
 
     private static List<List<Coin>> ExcludeInactiveCoins(
@@ -102,24 +133,24 @@ public class ExchangesDataCollector(
             ),
         ];
 
-    private async Task<bool> ProcessExchangeCoins(
+    private async Task<Result> ProcessExchangeCoins(
         List<Coin> exchangeCoins,
         IEnumerable<CoinCoinGecko> geckoCoins
     )
     {
         string idExchange = GetIdExchange(exchangeCoins);
         var symbolToIdMap = await _coinGeckoClient.GetSymbolToIdMapForExchange(idExchange);
-        if (symbolToIdMap.Count == 0)
-            return false;
+        if (symbolToIdMap.IsFailed)
+            return Result.Fail(symbolToIdMap.Errors[0]);
 
         var quoteCoins = exchangeCoins
             .SelectMany(coin => coin.TradingPairs)
             .Select(tp => tp.CoinQuote)
             .ToList();
 
-        UpdateCoins(exchangeCoins, symbolToIdMap, geckoCoins, idExchange);
-        UpdateCoins(quoteCoins, symbolToIdMap, geckoCoins, idExchange);
-        return true;
+        UpdateCoins(exchangeCoins, symbolToIdMap.Value, geckoCoins, idExchange);
+        UpdateCoins(quoteCoins, symbolToIdMap.Value, geckoCoins, idExchange);
+        return Result.Ok();
     }
 
     private static string GetIdExchange(IEnumerable<Coin> exchangeCoins) =>
@@ -272,9 +303,11 @@ public class ExchangesDataCollector(
     }
     #endregion
 
-    #region GetKlineData
+    #region GetKlineDataForTradingPair
     /// <inheritdoc />
-    public async Task<KlineDataRequestResponse> GetKlineData(KlineDataRequest request)
+    public async Task<Result<KlineDataRequestResponse>> GetKlineDataForTradingPair(
+        KlineDataRequest request
+    )
     {
         var suitableClients = PickExchangesClientsForTradingPair(request.TradingPair);
         var formattedRequest = Mapping.ToFormattedRequest(request);
@@ -286,9 +319,28 @@ public class ExchangesDataCollector(
                 request.CoinMain.Symbol,
                 request.CoinMain.Name
             );
-            return new KlineDataRequestResponse();
+            return Result.Fail(
+                new Error($"No kline data found for trading pair with ID: {request.TradingPair.Id}")
+            );
         }
-        return Mapping.ToOutputKlineDataRequestResponse(request.TradingPair.Id, klineData);
+        var output = Mapping.ToOutputKlineDataRequestResponse(request.TradingPair.Id, klineData);
+        return Result.Ok(output);
+    }
+
+    private static async Task<IEnumerable<ExchangeKlineData>> GetKlineDataForTradingPair(
+        IEnumerable<IExchangesClient> suitableClients,
+        ExchangeKlineDataRequest formattedRequest
+    )
+    {
+        foreach (var client in suitableClients)
+        {
+            var result = await client.GetKlineData(formattedRequest);
+            if (result.IsSuccess && result.Value.Any())
+            {
+                return result.Value;
+            }
+        }
+        return [];
     }
 
     private IEnumerable<IExchangesClient> PickExchangesClientsForTradingPair(
@@ -300,9 +352,9 @@ public class ExchangesDataCollector(
         });
     #endregion
 
-    #region GetKlineDataBatch
+    #region GetFirstSuccessfulKlineDataPerCoin
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineDataRequestResponse>> GetKlineDataBatch(
+    public async Task<IEnumerable<KlineDataRequestResponse>> GetFirstSuccessfulKlineDataPerCoin(
         KlineDataBatchRequest request
     )
     {
@@ -310,11 +362,13 @@ public class ExchangesDataCollector(
             ProcessKlineDataRequest(request, mainCoin)
         );
         var results = await Task.WhenAll(coinTasks);
-
-        return results.Where(response => response != null).Cast<KlineDataRequestResponse>();
+        var successfulResults = results
+            .Where(response => response.IsSuccess)
+            .Select(response => response.Value);
+        return successfulResults;
     }
 
-    private async Task<KlineDataRequestResponse?> ProcessKlineDataRequest(
+    private async Task<Result<KlineDataRequestResponse>> ProcessKlineDataRequest(
         KlineDataBatchRequest request,
         KlineDataRequestCoinMain mainCoin
     )
@@ -334,39 +388,31 @@ public class ExchangesDataCollector(
             }
         }
         _logger.LogNoKlineDataFoundForCoin(mainCoin.Id, mainCoin.Symbol, mainCoin.Name);
-        return null;
-    }
-
-    private static async Task<IEnumerable<ExchangeKlineData>> GetKlineDataForTradingPair(
-        IEnumerable<IExchangesClient> suitableClients,
-        ExchangeKlineDataRequest formattedRequest
-    )
-    {
-        foreach (var client in suitableClients)
-        {
-            var result = await client.GetKlineData(formattedRequest);
-            if (result.Any())
-            {
-                return result;
-            }
-        }
-        return [];
+        return Result.Fail(new Error($"No kline data found for coin with ID: {mainCoin.Id}"));
     }
     #endregion
 
-    public async Task<IEnumerable<CoinGeckoAssetInfo>> GetCoinGeckoAssetsInfo(
+    /// <inheritdoc />
+    public async Task<Result<IEnumerable<CoinGeckoAssetInfo>>> GetCoinGeckoAssetsInfo(
         IEnumerable<string> ids
     )
     {
-        var stablecoinInfosTask = _coinGeckoClient.GetCoinsMarkets(ids);
+        var stablecoinInfosTask = _coinGeckoClient.GetMarketDataForCoins(ids);
         var stablecoinIdsTask = _coinGeckoClient.GetStablecoinsIds();
         await Task.WhenAll(stablecoinInfosTask, stablecoinIdsTask);
 
         var stablecoinInfos = await stablecoinInfosTask;
+        if (stablecoinInfos.IsFailed)
+            return Result.Fail(stablecoinInfos.Errors[0]);
+
         var stablecoinIds = await stablecoinIdsTask;
-        return stablecoinInfos.Any() && stablecoinIds.Any()
-            ? stablecoinInfos.Select(info => Mapping.ToCoinGeckoAssetInfo(info, stablecoinIds))
-            : [];
+        return stablecoinIds.IsFailed
+            ? Result.Fail(stablecoinIds.Errors[0])
+            : Result.Ok(
+                stablecoinInfos.Value.Select(info =>
+                    Mapping.ToCoinGeckoAssetInfo(info, stablecoinIds.Value)
+                )
+            );
     }
 
     private static class Mapping

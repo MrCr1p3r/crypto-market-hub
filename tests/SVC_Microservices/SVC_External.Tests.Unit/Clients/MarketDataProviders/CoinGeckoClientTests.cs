@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using AutoFixture;
 using FluentAssertions;
+using FluentResults.Extensions.FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
@@ -35,7 +36,7 @@ public class CoinGeckoClientTests
     }
 
     [Fact]
-    public async Task GetCoinsList_ReturnsExpectedData()
+    public async Task GetCoinsList_ReturnsSuccessfulResultWithExpectedDataInside()
     {
         // Arrange
         _httpMessageHandlerMock
@@ -46,11 +47,15 @@ public class CoinGeckoClientTests
         var result = await _client.GetCoinsList();
 
         // Assert
-        result.Should().BeEquivalentTo(TestData.ExpectedCoinsList);
+        result
+            .Should()
+            .BeSuccess()
+            .Which.Value.Should()
+            .BeEquivalentTo(TestData.ExpectedCoinsList);
     }
 
     [Fact]
-    public async Task GetCoinsList_ErrorResponse_ReturnsEmptyCollection()
+    public async Task GetCoinsList_ErrorResponse_ReturnsFailedResult()
     {
         // Arrange
         _httpMessageHandlerMock
@@ -61,7 +66,7 @@ public class CoinGeckoClientTests
         var result = await _client.GetCoinsList();
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     [Fact]
@@ -80,11 +85,15 @@ public class CoinGeckoClientTests
         var result = await _client.GetSymbolToIdMapForExchange(exchangeId);
 
         // Assert
-        result.Should().BeEquivalentTo(TestData.ExpectedSymbolToIdMap);
+        result
+            .Should()
+            .BeSuccess()
+            .Which.Value.Should()
+            .BeEquivalentTo(TestData.ExpectedSymbolToIdMap);
     }
 
     [Fact]
-    public async Task GetSymbolToIdMapForExchange_ErrorResponseOnFirstPage_ReturnsEmptyDictionary()
+    public async Task GetSymbolToIdMapForExchange_ErrorResponseOnFirstPage_ReturnsFailedResult()
     {
         // Arrange
         var exchangeId = "binance";
@@ -99,7 +108,7 @@ public class CoinGeckoClientTests
         var result = await _client.GetSymbolToIdMapForExchange(exchangeId);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     [Fact]
@@ -119,11 +128,11 @@ public class CoinGeckoClientTests
         var result = await _client.GetSymbolToIdMapForExchange(exchangeId);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeSuccess().Which.Value.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task GetCoinsMarkets_ReturnsExpectedData()
+    public async Task GetMarketDataForCoins_ReturnsExpectedData()
     {
         // Arrange
         var ids = new[] { "bitcoin", "ethereum", "solana" };
@@ -135,14 +144,18 @@ public class CoinGeckoClientTests
             .ReturnsResponse(HttpStatusCode.OK, TestData.CoinsMarketsJsonResponse);
 
         // Act
-        var result = await _client.GetCoinsMarkets(ids);
+        var result = await _client.GetMarketDataForCoins(ids);
 
         // Assert
-        result.Should().BeEquivalentTo(TestData.ExpectedCoinsMarkets);
+        result
+            .Should()
+            .BeSuccess()
+            .Which.Value.Should()
+            .BeEquivalentTo(TestData.ExpectedCoinsMarkets);
     }
 
     [Fact]
-    public async Task GetCoinsMarkets_ErrorResponse_ReturnsEmptyCollection()
+    public async Task GetMarketDataForCoins_ErrorResponse_ReturnsFailedResult()
     {
         // Arrange
         var ids = new[] { "bitcoin", "ethereum" };
@@ -153,27 +166,27 @@ public class CoinGeckoClientTests
             .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
 
         // Act
-        var result = await _client.GetCoinsMarkets(ids);
+        var result = await _client.GetMarketDataForCoins(ids);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task GetCoinsMarkets_EmptyIds_ReturnsEmptyCollection()
+    public async Task GetMarketDataForCoins_EmptyIds_ReturnsFailedResult()
     {
         // Arrange
         var ids = Array.Empty<string>();
 
         // Act
-        var result = await _client.GetCoinsMarkets(ids);
+        var result = await _client.GetMarketDataForCoins(ids);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task GetCoinsMarkets_MoreThanMaxIdsPerRequest_MakesMultipleRequests()
+    public async Task GetMarketDataForCoins_MoreThanMaxIdsPerRequest_MakesMultipleRequests()
     {
         // Arrange
         var largeIds = Enumerable.Range(1, 300).Select(i => $"coin{i}").ToArray();
@@ -201,9 +214,10 @@ public class CoinGeckoClientTests
             .ReturnsResponse(HttpStatusCode.OK, "[]");
 
         // Act
-        await _client.GetCoinsMarkets(largeIds);
+        var result = await _client.GetMarketDataForCoins(largeIds);
 
         // Assert
+        result.Should().BeSuccess();
         _httpMessageHandlerMock.VerifyRequest(
             HttpMethod.Get,
             $"https://api.coingecko.com{firstEndpoint}",
@@ -254,9 +268,10 @@ public class CoinGeckoClientTests
         var result = await _client.GetStablecoinsIds();
 
         // Assert
-        result.Should().HaveCount(300);
-        result.Should().Contain(page1Response.Select(c => c.Id));
-        result.Should().Contain(page2Response.Select(c => c.Id));
+        result.Should().BeSuccess();
+        result.Value.Should().HaveCount(300);
+        result.Value.Should().Contain(page1Response.Select(c => c.Id));
+        result.Value.Should().Contain(page2Response.Select(c => c.Id));
     }
 
     [Fact]
@@ -282,8 +297,9 @@ public class CoinGeckoClientTests
         var result = await _client.GetStablecoinsIds();
 
         // Assert
-        result.Should().HaveCount(50);
-        result.Should().BeEquivalentTo(response.Select(c => c.Id));
+        result.Should().BeSuccess();
+        result.Value.Should().HaveCount(50);
+        result.Value.Should().BeEquivalentTo(response.Select(c => c.Id));
 
         // Verify only one page was requested
         _httpMessageHandlerMock.VerifyRequest(
@@ -294,7 +310,7 @@ public class CoinGeckoClientTests
     }
 
     [Fact]
-    public async Task GetStablecoinsIds_ErrorResponse_ReturnsEmptyCollection()
+    public async Task GetStablecoinsIds_ErrorResponse_ReturnsFailedResult()
     {
         // Arrange
         var endpoint =
@@ -308,7 +324,7 @@ public class CoinGeckoClientTests
         var result = await _client.GetStablecoinsIds();
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     private static class TestData

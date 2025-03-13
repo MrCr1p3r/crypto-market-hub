@@ -17,17 +17,17 @@ public class AssetCoinGecko
     /// The market capitalization in USD.
     /// </summary>
     [JsonPropertyName("market_cap")]
-    public decimal MarketCapUsd { get; set; }
+    public decimal? MarketCapUsd { get; set; }
 
     /// <summary>
     /// The current price in USD.
     /// </summary>
     [JsonPropertyName("current_price")]
-    public decimal PriceUsd { get; set; }
+    public decimal? PriceUsd { get; set; }
 
     /// <summary>
     /// The price change in percentage over the last 24 hours.
     /// </summary>
     [JsonPropertyName("price_change_percentage_24h")]
-    public decimal PriceChangePercentage24h { get; set; }
+    public decimal? PriceChangePercentage24h { get; set; }
 }

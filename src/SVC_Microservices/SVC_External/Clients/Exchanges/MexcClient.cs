@@ -1,6 +1,7 @@
 using System.Collections.Frozen;
 using System.Globalization;
 using System.Text.Json;
+using FluentResults;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions;
 using SVC_External.Clients.Exchanges.Interfaces;
@@ -23,34 +24,35 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
     public Exchange CurrentExchange => Exchange.Mexc;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins()
+    public async Task<Result<IEnumerable<ExchangeCoin>>> GetAllSpotCoins()
     {
         var endpoint = "/api/v3/exchangeInfo";
-        var httpResponse = await _httpClient.GetAsync(endpoint);
+        var response = await _httpClient.GetFromJsonSafeAsync<MexcDtos.Response>(
+            endpoint,
+            _logger,
+            "Failed to retrieve spot coins from Mexc"
+        );
 
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
-
-        var mexcResponse = await httpResponse.Content.ReadFromJsonAsync<MexcDtos.Response>();
-        return Mapping.ToOutputCoins(mexcResponse!.TradingPairs);
+        return response.IsSuccess
+            ? Result.Ok(Mapping.ToOutputCoins(response.Value.TradingPairs))
+            : Result.Fail(response.Errors);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExchangeKlineData>> GetKlineData(ExchangeKlineDataRequest request)
+    public async Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(
+        ExchangeKlineDataRequest request
+    )
     {
         var endpoint = Mapping.ToMexcKlineEndpoint(request);
-        var httpResponse = await _httpClient.GetAsync(endpoint);
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
+        var response = await _httpClient.GetFromJsonSafeAsync<List<List<JsonElement>>>(
+            endpoint,
+            _logger,
+            "Failed to retrieve kline data from Mexc"
+        );
 
-        var rawData = await httpResponse.Content.ReadFromJsonAsync<List<List<JsonElement>>>();
-        return rawData!.Select(Mapping.ToKlineData);
+        return response.IsSuccess
+            ? Result.Ok(response.Value.Select(Mapping.ToKlineData))
+            : Result.Fail(response.Errors);
     }
 
     private static class Mapping

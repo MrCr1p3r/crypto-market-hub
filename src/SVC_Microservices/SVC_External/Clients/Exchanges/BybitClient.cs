@@ -1,4 +1,5 @@
 using System.Globalization;
+using FluentResults;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions;
 using SVC_External.Clients.Exchanges.Interfaces;
@@ -21,36 +22,37 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
     public Exchange CurrentExchange => Exchange.Bybit;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins()
+    public async Task<Result<IEnumerable<ExchangeCoin>>> GetAllSpotCoins()
     {
         var endpoint = "/v5/market/instruments-info?category=spot";
-        var httpResponse = await _httpClient.GetAsync(endpoint);
+        var response = await _httpClient.GetFromJsonSafeAsync<BybitDtos.BybitSpotAssetsResponse>(
+            endpoint,
+            _logger,
+            "Failed to retrieve spot coins from Bybit"
+        );
 
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
-
-        var bybitResponse =
-            await httpResponse.Content.ReadFromJsonAsync<BybitDtos.BybitSpotAssetsResponse>();
-        return Mapping.ToOutputCoins(bybitResponse!.Result.TradingPairs);
+        return response.IsSuccess
+            ? Result.Ok(Mapping.ToOutputCoins(response.Value.Result.TradingPairs))
+            : Result.Fail(response.Errors);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExchangeKlineData>> GetKlineData(ExchangeKlineDataRequest request)
+    public async Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(
+        ExchangeKlineDataRequest request
+    )
     {
         var endpoint = Mapping.ToBybitKlineEndpoint(request);
-        var httpResponse = await _httpClient.GetAsync(endpoint);
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
+        var response = await _httpClient.GetFromJsonSafeAsync<BybitDtos.BybitKlineResponse>(
+            endpoint,
+            _logger,
+            "Failed to retrieve kline data from Bybit"
+        );
 
-        var klineResponse =
-            await httpResponse.Content.ReadFromJsonAsync<BybitDtos.BybitKlineResponse>();
-        return klineResponse!.Result.List.Select(data => Mapping.ToKlineData(request, data));
+        return response.IsSuccess
+            ? Result.Ok(
+                response.Value.Result.List.Select(data => Mapping.ToKlineData(request, data))
+            )
+            : Result.Fail(response.Errors);
     }
 
     private static class Mapping

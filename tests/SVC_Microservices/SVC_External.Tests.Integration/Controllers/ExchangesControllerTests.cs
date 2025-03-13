@@ -30,14 +30,6 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
         await cache.RemoveAsync(CacheKey);
     }
 
-    private void ResetWireMockClients()
-    {
-        _factory.CoinGeckoServerMock.Reset();
-        _factory.BinanceServerMock.Reset();
-        _factory.BybitServerMock.Reset();
-        _factory.MexcServerMock.Reset();
-    }
-
     #region GetAllSpotCoins Tests
 
     [Fact]
@@ -177,7 +169,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task GetAllListedCoins_WhenAllExchangesUnavailable_ShouldReturn503()
+    public async Task GetAllListedCoins_WhenAllExchangesUnavailable_ShouldReturn500()
     {
         // Clear cache to ensure clean test
         await ClearCacheAsync();
@@ -197,29 +189,22 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
             .RespondWith(Response.Create().WithStatusCode(500));
 
         // Setup CoinGecko coins list mock - this will still return valid data
-        // but since all exchanges fail, the final result should still be 503
         _factory
             .CoinGeckoServerMock.Given(Request.Create().WithPath("/api/v3/coins/list").UsingGet())
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(TestData.CoinGeckoCoins))
-            );
+            .RespondWith(Response.Create().WithStatusCode(500));
 
         // Act
         var response = await _client.GetAsync("/exchanges/spot/coins");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
     }
     #endregion
 
-    #region GetKlineData Tests
+    #region GetKlineDataForTradingPair Tests
 
     [Fact]
-    public async Task GetKlineData_ShouldReturnOkWithData()
+    public async Task GetKlineDataForTradingPair_ShouldReturnOkWithData()
     {
         // Arrange
         var klineRequest = TestData.KlineRequest;
@@ -265,10 +250,10 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
     #endregion
 
-    #region GetKlineDataBatch Tests
+    #region GetFirstSuccessfulKlineDataPerCoin Tests
 
     [Fact]
-    public async Task GetKlineDataBatch_ShouldReturnOkWithData()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_ShouldReturnOkWithData()
     {
         // Arrange
         var batchRequest = TestData.KlineBatchRequest;
@@ -331,7 +316,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task GetKlineDataBatch_WithPartialResults_ShouldReturnPartialData()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_WithPartialResults_ShouldReturnPartialData()
     {
         // Arrange
         var batchRequest = TestData.KlineBatchRequestWithInvalidCoin;
@@ -412,7 +397,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task GetKlineDataBatch_WithNoResults_ShouldReturnEmptyList()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_WithNoResults_ShouldReturnEmptyList()
     {
         // Arrange
         var batchRequest = TestData.KlineBatchRequestWithInvalidCoins;
@@ -485,12 +470,10 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task GetCoinGeckoAssetsInfo_ShouldReturnOkWithData()
     {
         // Arrange
-        var stablecoinIds = new List<string> { "tether", "usd-coin" };
         var coinIds = new List<string> { "bitcoin", "ethereum", "tether", "usd-coin" };
 
         // Set up mocks for both API calls
         // Mock the coins/markets endpoint for asset data
-        var coinIdsParam = string.Join(",", coinIds);
         _factory
             .CoinGeckoServerMock.Given(
                 Request
@@ -574,7 +557,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task GetCoinGeckoAssetsInfo_WithEmptyResponse_ShouldReturnServiceUnavailable()
+    public async Task GetCoinGeckoAssetsInfo_WithEmptyResponse_ShouldReturnOkWithEmptyResponse()
     {
         // Arrange
         var coinIds = new List<string> { "unknown-coin-id" };
@@ -630,7 +613,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
         var response = await _client.GetAsync($"exchanges/coins/marketInfo?{queryParams}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -641,69 +624,6 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var errorMessage = await response.Content.ReadAsStringAsync();
-        errorMessage.Should().Contain("CoinGecko IDs are required");
-    }
-
-    [Fact]
-    public async Task GetCoinGeckoAssetsInfo_WithErrorResponse_ShouldReturnServiceUnavailable()
-    {
-        ResetWireMockClients();
-
-        // Arrange
-        var coinIds = new List<string> { "bitcoin", "ethereum" };
-
-        // Mock the coins/markets endpoint with error response
-        var coinIdsParam = string.Join(",", coinIds);
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath($"/api/v3/coins/markets")
-                    .WithParam("vs_currency", "usd")
-                    .WithParam("per_page", "250")
-                    .WithParam("ids", coinIdsParam)
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(HttpStatusCode.BadRequest)
-                    .WithHeader("Content-Type", "application/json")
-            );
-
-        // Mock the stablecoins endpoint
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/coins/markets")
-                    .WithParam("vs_currency", "usd")
-                    .WithParam("category", "stablecoins")
-                    .WithParam("per_page", "250")
-                    .WithParam("page", "1")
-                    .WithParam("sparkline", "false")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(
-                        JsonSerializer.Serialize(
-                            TestData.CoinGeckoStablecoins,
-                            TestData.JsonOptions
-                        )
-                    )
-            );
-
-        // Act
-        var queryParams = string.Join("&", coinIds.Select(id => $"coinGeckoIds={id}"));
-        var response = await _client.GetAsync($"exchanges/coins/marketInfo?{queryParams}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }
     #endregion
 

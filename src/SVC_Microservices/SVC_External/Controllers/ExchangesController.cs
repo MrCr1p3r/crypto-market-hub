@@ -1,4 +1,7 @@
+using FluentResults;
 using Microsoft.AspNetCore.Mvc;
+using SharedLibrary.Errors;
+using SharedLibrary.Extensions;
 using SVC_External.DataCollectors.Interfaces;
 using SVC_External.Models.Input;
 using SVC_External.Models.Output;
@@ -19,15 +22,15 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// </summary>
     /// <returns>Collection of coins, listen on all of the available exchanges.</returns>
     /// <response code="200">Returns the list of coins.</response>
-    /// <response code="503">If any external client is currently unavailable.</response>
+    /// <response code="500">If something went wrong during coins retrieval.</response>
     [HttpGet("spot/coins")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetAllSpotCoins()
     {
         var coins = await _dataCollector.GetAllCurrentActiveSpotCoins();
-        return coins.Any() ? Ok(coins) : StatusCode(StatusCodes.Status503ServiceUnavailable);
+        return coins.ToActionResult(this);
     }
 
     /// <summary>
@@ -36,14 +39,16 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// <param name="request">The request parameters for fetching Kline data.</param>
     /// <returns>A Kline data response containing trading pair ID and kline data.</returns>
     /// <response code="200">Returns the Kline data response.</response>
+    /// <response code="500">If something went wrong during Kline data retrieval.</response>
     [HttpPost("klineData/query")]
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(KlineDataRequestResponse), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetKlineData([FromBody] KlineDataRequest request)
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetKlineDataForTradingPair([FromBody] KlineDataRequest request)
     {
-        var klineData = await _dataCollector.GetKlineData(request);
-        return Ok(klineData);
+        var klineData = await _dataCollector.GetKlineDataForTradingPair(request);
+        return klineData.ToActionResult(this);
     }
 
     /// <summary>
@@ -52,13 +57,17 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// <param name="request">The batch request parameters for fetching Kline data.</param>
     /// <returns>A collection of Kline data responses, each containing trading pair ID and kline data.</returns>
     /// <response code="200">Returns the collection of Kline data responses.</response>
+    /// <response code="500">If something went wrong during Kline data retrieval.</response>
     [HttpPost("klineData/batchQuery")]
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<KlineDataRequestResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetKlineDataBatch([FromBody] KlineDataBatchRequest request)
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetFirstSuccessfulKlineDataPerCoin(
+        [FromBody] KlineDataBatchRequest request
+    )
     {
-        var response = await _dataCollector.GetKlineDataBatch(request);
+        var response = await _dataCollector.GetFirstSuccessfulKlineDataPerCoin(request);
         return Ok(response);
     }
 
@@ -69,20 +78,19 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// <returns>Collection of coin asset information including price, market cap, and stablecoin status.</returns>
     /// <response code="200">Returns the collection of coin asset information.</response>
     /// <response code="400">If no CoinGecko IDs are provided.</response>
-    /// <response code="503">If something went wrong during assets info retrievement.</response>
+    /// <response code="500">If something went wrong during assets info retrievement.</response>
     [HttpGet("coins/marketInfo")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<CoinGeckoAssetInfo>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetCoinGeckoAssetsInfo(
         [FromQuery] IEnumerable<string> coinGeckoIds
     )
     {
-        if (!coinGeckoIds.Any())
-            return BadRequest("CoinGecko IDs are required.");
-
-        var response = await _dataCollector.GetCoinGeckoAssetsInfo(coinGeckoIds);
-        return response.Any() ? Ok(response) : StatusCode(StatusCodes.Status503ServiceUnavailable);
+        var response = coinGeckoIds.Any()
+            ? await _dataCollector.GetCoinGeckoAssetsInfo(coinGeckoIds)
+            : Result.Fail(new GenericErrors.BadRequestError("CoinGecko IDs must be provided."));
+        return response.ToActionResult(this);
     }
 }

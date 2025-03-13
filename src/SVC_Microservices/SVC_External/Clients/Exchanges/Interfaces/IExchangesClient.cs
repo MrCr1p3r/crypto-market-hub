@@ -1,3 +1,4 @@
+using FluentResults;
 using SharedLibrary.Enums;
 using SVC_External.Models.Exchanges.Input;
 using SVC_External.Models.Exchanges.Output;
@@ -17,13 +18,19 @@ public interface IExchangesClient
     /// <summary>
     /// Fetches all listed coins from the exchange.
     /// </summary>
-    /// <returns>Collection of coins, listed on spot market of this exchange.</returns>
-    Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins();
+    /// <returns>
+    /// Success: Result containing a collection of all listed coins from the exchange. <br/>
+    /// Failure: Result with an error object describing the failure inside.
+    /// </returns>
+    Task<Result<IEnumerable<ExchangeCoin>>> GetAllSpotCoins();
 
     /// <summary>
     /// Fetches Kline (candlestick) data from the exchange.
     /// </summary>
-    /// <param name="request">The request parameters for fetchi ng Kline data.</param>
-    /// <returns>A collection of retrieved Kline data objects.</returns>
-    Task<IEnumerable<ExchangeKlineData>> GetKlineData(ExchangeKlineDataRequest request);
+    /// <param name="request">The request parameters for fetching Kline data.</param>
+    /// <returns>
+    /// Success: Result containing a collection of retrieved Kline data objects. <br/>
+    /// Failure: Result with an error object describing the failure inside.
+    /// </returns>
+    Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(ExchangeKlineDataRequest request);
 }

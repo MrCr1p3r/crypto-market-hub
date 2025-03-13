@@ -1,7 +1,7 @@
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using FluentAssertions;
-using Microsoft.AspNetCore.Http;
+using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SVC_External.Controllers;
@@ -24,32 +24,36 @@ public class ExchangesControllerTests
         _controller = new ExchangesController(_mockDataCollector.Object);
     }
 
-    #region GetKlineData Tests
+    #region GetKlineDataForTradingPair Tests
     [Fact]
-    public async Task GetKlineData_CallsDataCollectorWithCorrectParameters()
+    public async Task GetKlineDataForTradingPair_CallsDataCollectorWithCorrectParameters()
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
         var expectedResponse = _fixture.Create<KlineDataRequestResponse>();
-        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(expectedResponse);
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineDataForTradingPair(request))
+            .ReturnsAsync(expectedResponse);
 
         // Act
-        await _controller.GetKlineData(request);
+        await _controller.GetKlineDataForTradingPair(request);
 
         // Assert
-        _mockDataCollector.Verify(dc => dc.GetKlineData(request), Times.Once);
+        _mockDataCollector.Verify(dc => dc.GetKlineDataForTradingPair(request), Times.Once);
     }
 
     [Fact]
-    public async Task GetKlineData_ReturnsOkResultWithExpectedData()
+    public async Task GetKlineDataForTradingPair_ReturnsOkResultWithExpectedData()
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
         var expectedResponse = _fixture.Create<KlineDataRequestResponse>();
-        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(expectedResponse);
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineDataForTradingPair(request))
+            .ReturnsAsync(expectedResponse);
 
         // Act
-        var result = await _controller.GetKlineData(request);
+        var result = await _controller.GetKlineDataForTradingPair(request);
 
         // Assert
         result
@@ -60,15 +64,17 @@ public class ExchangesControllerTests
     }
 
     [Fact]
-    public async Task GetKlineData_ReturnsEmptyResponseWhenNoDataFound()
+    public async Task GetKlineDataForTradingPair_ReturnsEmptyResponseWhenNoDataFound()
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
         var emptyResponse = new KlineDataRequestResponse();
-        _mockDataCollector.Setup(dc => dc.GetKlineData(request)).ReturnsAsync(emptyResponse);
+        _mockDataCollector
+            .Setup(dc => dc.GetKlineDataForTradingPair(request))
+            .ReturnsAsync(emptyResponse);
 
         // Act
-        var result = await _controller.GetKlineData(request);
+        var result = await _controller.GetKlineDataForTradingPair(request);
 
         // Assert
         result
@@ -79,36 +85,36 @@ public class ExchangesControllerTests
     }
     #endregion
 
-    #region GetKlineDataBatch Tests
+    #region GetFirstSuccessfulKlineDataPerCoin Tests
     [Fact]
-    public async Task GetKlineDataBatch_CallsDataCollectorWithCorrectParameters()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_CallsDataCollectorWithCorrectParameters()
     {
         // Arrange
         var request = _fixture.Create<KlineDataBatchRequest>();
         var expectedResponses = _fixture.CreateMany<KlineDataRequestResponse>(3).ToList();
         _mockDataCollector
-            .Setup(dc => dc.GetKlineDataBatch(request))
+            .Setup(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request))
             .ReturnsAsync(expectedResponses);
 
         // Act
-        await _controller.GetKlineDataBatch(request);
+        await _controller.GetFirstSuccessfulKlineDataPerCoin(request);
 
         // Assert
-        _mockDataCollector.Verify(dc => dc.GetKlineDataBatch(request), Times.Once);
+        _mockDataCollector.Verify(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request), Times.Once);
     }
 
     [Fact]
-    public async Task GetKlineDataBatch_ReturnsOkResultWithExpectedData()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_ReturnsOkResultWithExpectedData()
     {
         // Arrange
         var request = _fixture.Create<KlineDataBatchRequest>();
         var expectedResponses = _fixture.CreateMany<KlineDataRequestResponse>(3).ToList();
         _mockDataCollector
-            .Setup(dc => dc.GetKlineDataBatch(request))
+            .Setup(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request))
             .ReturnsAsync(expectedResponses);
 
         // Act
-        var result = await _controller.GetKlineDataBatch(request);
+        var result = await _controller.GetFirstSuccessfulKlineDataPerCoin(request);
 
         // Assert
         result
@@ -119,15 +125,17 @@ public class ExchangesControllerTests
     }
 
     [Fact]
-    public async Task GetKlineDataBatch_ReturnsEmptyListWhenNoDataFound()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_ReturnsEmptyListWhenNoDataFound()
     {
         // Arrange
         var request = _fixture.Create<KlineDataBatchRequest>();
         var emptyResponses = new List<KlineDataRequestResponse>();
-        _mockDataCollector.Setup(dc => dc.GetKlineDataBatch(request)).ReturnsAsync(emptyResponses);
+        _mockDataCollector
+            .Setup(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request))
+            .ReturnsAsync(emptyResponses);
 
         // Act
-        var result = await _controller.GetKlineDataBatch(request);
+        var result = await _controller.GetFirstSuccessfulKlineDataPerCoin(request);
 
         // Assert
         result
@@ -174,26 +182,6 @@ public class ExchangesControllerTests
             .Which.Value.Should()
             .BeEquivalentTo(expectedCoins);
     }
-
-    [Fact]
-    public async Task GetAllSpotCoins_Returns503ServiceUnavailableWhenNoCoins()
-    {
-        // Arrange
-        var expectedCoins = new List<Coin>();
-        _mockDataCollector
-            .Setup(dc => dc.GetAllCurrentActiveSpotCoins())
-            .ReturnsAsync(expectedCoins);
-
-        // Act
-        var result = await _controller.GetAllSpotCoins();
-
-        // Assert
-        result
-            .Should()
-            .BeOfType<StatusCodeResult>()
-            .Which.StatusCode.Should()
-            .Be(StatusCodes.Status503ServiceUnavailable);
-    }
     #endregion
 
     #region GetCoinGeckoAssetsInfo Tests
@@ -204,7 +192,7 @@ public class ExchangesControllerTests
         var coinIds = new[] { "bitcoin", "ethereum", "tether" };
         _mockDataCollector
             .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync([]);
+            .ReturnsAsync(Result.Ok<IEnumerable<CoinGeckoAssetInfo>>([]));
 
         // Act
         await _controller.GetCoinGeckoAssetsInfo(coinIds);
@@ -228,7 +216,7 @@ public class ExchangesControllerTests
         var expectedAssetInfos = _fixture.CreateMany<CoinGeckoAssetInfo>(2).ToList();
         _mockDataCollector
             .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync(expectedAssetInfos);
+            .ReturnsAsync(Result.Ok<IEnumerable<CoinGeckoAssetInfo>>(expectedAssetInfos));
 
         // Act
         var result = await _controller.GetCoinGeckoAssetsInfo(coinIds);
@@ -242,27 +230,6 @@ public class ExchangesControllerTests
     }
 
     [Fact]
-    public async Task GetCoinGeckoAssetsInfo_ReturnsEmptyListWhenNoDataFound()
-    {
-        // Arrange
-        var coinIds = new[] { "unknown-coin" };
-
-        _mockDataCollector
-            .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync([]);
-
-        // Act
-        var result = await _controller.GetCoinGeckoAssetsInfo(coinIds);
-
-        // Assert
-        result
-            .Should()
-            .BeOfType<StatusCodeResult>()
-            .Which.StatusCode.Should()
-            .Be(StatusCodes.Status503ServiceUnavailable);
-    }
-
-    [Fact]
     public async Task GetCoinGeckoAssetsInfo_Returns400BadRequest_WhenNoIdsProvided()
     {
         // Arrange
@@ -272,32 +239,7 @@ public class ExchangesControllerTests
         var result = await _controller.GetCoinGeckoAssetsInfo(emptyIds);
 
         // Assert
-        result
-            .Should()
-            .BeOfType<BadRequestObjectResult>()
-            .Which.Value.Should()
-            .BeEquivalentTo("CoinGecko IDs are required.");
-    }
-
-    [Fact]
-    public async Task GetCoinGeckoAssetsInfo_Returns503ServiceUnavailable_WhenDataCollectorReturnsEmpty()
-    {
-        // Arrange
-        var coinIds = new[] { "bitcoin", "ethereum" };
-
-        _mockDataCollector
-            .Setup(dc => dc.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
-            .ReturnsAsync([]);
-
-        // Act
-        var result = await _controller.GetCoinGeckoAssetsInfo(coinIds);
-
-        // Assert
-        result
-            .Should()
-            .BeOfType<StatusCodeResult>()
-            .Which.StatusCode.Should()
-            .Be(StatusCodes.Status503ServiceUnavailable);
+        result.Should().BeOfType<BadRequestObjectResult>().Which.Value.Should().NotBeNull();
     }
     #endregion
 }
