@@ -13,17 +13,17 @@ public class CoinGeckoAssetInfo
     /// <summary>
     /// The market capitalization in USD.
     /// </summary>
-    public decimal MarketCapUsd { get; set; }
+    public decimal? MarketCapUsd { get; set; }
 
     /// <summary>
     /// The current price in USD.
     /// </summary>
-    public decimal PriceUsd { get; set; }
+    public decimal? PriceUsd { get; set; }
 
     /// <summary>
     /// The price change in percentage over the last 24 hours.
     /// </summary>
-    public decimal PriceChangePercentage24h { get; set; }
+    public decimal? PriceChangePercentage24h { get; set; }
 
     /// <summary>
     /// Indicates if the asset is a stablecoin.

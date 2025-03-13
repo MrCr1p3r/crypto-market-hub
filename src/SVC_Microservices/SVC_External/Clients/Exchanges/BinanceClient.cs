@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using FluentResults;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions;
 using SVC_External.Clients.Exchanges.Interfaces;
@@ -22,35 +23,36 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
     public Exchange CurrentExchange => Exchange.Binance;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExchangeCoin>> GetAllSpotCoins()
+    public async Task<Result<IEnumerable<ExchangeCoin>>> GetAllSpotCoins()
     {
         var endpoint = "/api/v3/exchangeInfo";
         endpoint += "?showPermissionSets=false"; // Disabled to reduce fetch time and response size.
-        var httpResponse = await _httpClient.GetAsync(endpoint);
+        var response = await _httpClient.GetFromJsonSafeAsync<BinanceDtos.Response>(
+            endpoint,
+            _logger,
+            "Failed to retrieve spot coins from Binance"
+        );
 
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
-
-        var binanceResponse = await httpResponse.Content.ReadFromJsonAsync<BinanceDtos.Response>();
-        return Mapping.ToOutputCoins(binanceResponse!.TradingPairs);
+        return response.IsSuccess
+            ? Result.Ok(Mapping.ToOutputCoins(response.Value.TradingPairs))
+            : Result.Fail(response.Errors);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<ExchangeKlineData>> GetKlineData(ExchangeKlineDataRequest request)
+    public async Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(
+        ExchangeKlineDataRequest request
+    )
     {
         var endpoint = Mapping.ToBinanceKlineEndpoint(request);
-        var httpResponse = await _httpClient.GetAsync(endpoint);
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
+        var response = await _httpClient.GetFromJsonSafeAsync<List<List<JsonElement>>>(
+            endpoint,
+            _logger,
+            "Failed to retrieve kline data from Binance"
+        );
 
-        var rawData = await httpResponse.Content.ReadFromJsonAsync<List<List<JsonElement>>>();
-        return rawData!.Select(Mapping.ToKlineData);
+        return response.IsSuccess
+            ? Result.Ok(response.Value.Select(Mapping.ToKlineData))
+            : Result.Fail(response.Errors);
     }
 
     private static class Mapping

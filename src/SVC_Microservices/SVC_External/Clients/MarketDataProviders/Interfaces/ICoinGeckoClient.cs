@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using FluentResults;
 using SVC_External.Models.MarketDataProviders.Output;
 
 namespace SVC_External.Clients.MarketDataProviders.Interfaces;
@@ -9,34 +10,42 @@ namespace SVC_External.Clients.MarketDataProviders.Interfaces;
 public interface ICoinGeckoClient
 {
     /// <summary>
-    /// Gets all available coins list from CoinGecko.
+    /// Retrieves all active available coins from CoinGecko.
     /// </summary>
-    /// <returns>Collection of coins from CoinGecko.
-    /// If the request fails, an empty collection is returned.</returns>
-    Task<IEnumerable<CoinCoinGecko>> GetCoinsList();
+    /// <returns>
+    /// Success: Result containing a collection of CoinGecko coins. <br/>
+    /// Failure: Result with an error object describing the failure inside.
+    /// </returns>
+    Task<Result<IEnumerable<CoinCoinGecko>>> GetCoinsList();
 
     /// <summary>
     /// Retrieves all available on CoinGecko coins for a specific exchange and creates
     /// a map of symbols to their corresponding CoinGecko IDs out of them.
     /// </summary>
     /// <param name="idExchange">The CoinGecko ID of the exchange.</param>
-    /// <returns>Dictionary mapping symbols to their corresponding CoinGecko IDs.
-    /// Null value means that no CoinGecko data for the given symbol on the given exchange was found.
-    /// If the request fails, an empty dictionary is returned.</returns>
-    Task<FrozenDictionary<string, string?>> GetSymbolToIdMapForExchange(string idExchange);
+    /// <returns>
+    /// Success: Result containing a frozen dictionary mapping symbols to their CoinGecko IDs.
+    /// A null value in the dictionary means no CoinGecko data was found for that symbol. <br/>
+    /// Failure: Result with an error object describing the failure inside.
+    /// </returns>
+    Task<Result<FrozenDictionary<string, string?>>> GetSymbolToIdMapForExchange(string idExchange);
 
     /// <summary>
-    /// Gets market data for specified coin IDs.
+    /// Fetches market data for specified CoinGecko IDs.
     /// </summary>
     /// <param name="ids">Collection of CoinGecko coin IDs</param>
-    /// <returns>Collection of assets from CoinGecko.
-    /// If the request fails, an empty collection is returned.</returns>
-    Task<IEnumerable<AssetCoinGecko>> GetCoinsMarkets(IEnumerable<string> ids);
+    /// <returns>
+    /// Success: Result containing a collection of CoinGecko assets with market data. <br/>
+    /// Failure: Result with an error object describing the failure inside.
+    /// </returns>
+    Task<Result<IEnumerable<AssetCoinGecko>>> GetMarketDataForCoins(IEnumerable<string> ids);
 
     /// <summary>
-    /// Gets all stablecoin IDs from CoinGecko.
+    /// Retrieves all stablecoin IDs from CoinGecko.
     /// </summary>
-    /// <returns>Collection of stablecoin IDs.
-    /// If the request fails, an empty collection is returned.</returns>
-    Task<IEnumerable<string>> GetStablecoinsIds();
+    /// <returns>
+    /// Success: Result containing a collection of stablecoin IDs. <br/>
+    /// Failure: Result with an error object describing the failure inside.
+    /// </returns>
+    Task<Result<IEnumerable<string>>> GetStablecoinsIds();
 }

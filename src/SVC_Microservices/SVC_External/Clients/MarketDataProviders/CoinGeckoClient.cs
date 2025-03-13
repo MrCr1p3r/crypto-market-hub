@@ -1,7 +1,9 @@
 using System.Collections.Frozen;
+using FluentResults;
 using SharedLibrary.Extensions;
 using SVC_External.Clients.MarketDataProviders.Interfaces;
 using SVC_External.Models.MarketDataProviders.Output;
+using static SharedLibrary.Errors.GenericErrors;
 using static SVC_External.Models.MarketDataProviders.ClientResponses.CoinGeckoDtos;
 
 namespace SVC_External.Clients.MarketDataProviders;
@@ -20,94 +22,97 @@ public partial class CoinGeckoClient(
     private readonly ILogger<CoinGeckoClient> _logger = logger;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CoinCoinGecko>> GetCoinsList()
+    public async Task<Result<IEnumerable<CoinCoinGecko>>> GetCoinsList()
     {
         var endpoint = "/api/v3/coins/list";
-        var httpResponse = await _httpClient.GetAsync(endpoint);
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
+        var response = await _httpClient.GetFromJsonSafeAsync<IEnumerable<CoinListResponse>>(
+            endpoint,
+            _logger,
+            "Failed to retrieve coins list from CoinGecko"
+        );
 
-        var response = await httpResponse.Content.ReadFromJsonAsync<
-            IEnumerable<CoinListResponse>
-        >();
-        return response!.Select(Mapping.ToCoinCoinGecko);
+        return response.IsSuccess
+            ? Result.Ok(response.Value.Select(Mapping.ToCoinCoinGecko))
+            : Result.Fail(response.Errors);
     }
 
     /// <inheritdoc />
-    public async Task<FrozenDictionary<string, string?>> GetSymbolToIdMapForExchange(
+    public async Task<Result<FrozenDictionary<string, string?>>> GetSymbolToIdMapForExchange(
         string idExchange
     )
     {
         var allTickers = new List<TickerData>();
-        for (var page = 1; ; page++)
+        var page = 1;
+        while (true)
         {
             var endpoint =
                 $"/api/v3/exchanges/{idExchange}/tickers?depth=false&order=volume_desc&page={page}";
-            var httpResponse = await _httpClient.GetAsync(endpoint);
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-                return FrozenDictionary<string, string?>.Empty;
-            }
+            var response = await _httpClient.GetFromJsonSafeAsync<ExchangeTickersResponse>(
+                endpoint,
+                _logger,
+                $"Failed to retrieve exchange tickers from CoinGecko for exchange: {idExchange}, page: {page}"
+            );
+            if (response.IsFailed)
+                return Result.Fail(response.Errors);
 
-            var response = await httpResponse.Content.ReadFromJsonAsync<ExchangeTickersResponse>();
-            if (!response!.Tickers.Any())
+            var tickers = response.Value.Tickers;
+            if (tickers == null || !tickers.Any())
                 break;
-            allTickers.AddRange(response.Tickers);
 
-            if (response.Tickers.Count() < MaxTickersPerRequest)
+            allTickers.AddRange(tickers);
+
+            if (tickers.Count() < MaxTickersPerRequest)
                 break;
+
+            page++;
         }
 
-        return Mapping.ToSymbolToIdMap(allTickers).ToFrozenDictionary();
+        return Result.Ok(Mapping.ToSymbolToIdMap(allTickers).ToFrozenDictionary());
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<AssetCoinGecko>> GetCoinsMarkets(IEnumerable<string> ids)
+    public async Task<Result<IEnumerable<AssetCoinGecko>>> GetMarketDataForCoins(
+        IEnumerable<string> ids
+    )
     {
         var idsArray = ids.ToArray();
         if (idsArray.Length == 0)
-            return [];
+            return Result.Fail(new BadRequestError("No CoinGecko IDs provided"));
 
         var chunks = idsArray.Chunk(MaxIdsPerRequest).Select(chunk => chunk.ToArray()).ToArray();
         var allResults = new List<AssetCoinGecko>();
 
         foreach (var chunk in chunks)
         {
-            var chunkResult = await FetchMarketsForIds(chunk);
-            if (chunk.Length != 0 && !chunkResult.Any())
-                return [];
-            allResults.AddRange(chunkResult);
+            var chunkResult = await FetchMarketDataForIds(chunk);
+            if (chunkResult.IsFailed)
+                return chunkResult;
+            allResults.AddRange(chunkResult.Value);
         }
 
         return allResults;
     }
 
-    private async Task<IEnumerable<AssetCoinGecko>> FetchMarketsForIds(string[] ids)
+    private async Task<Result<IEnumerable<AssetCoinGecko>>> FetchMarketDataForIds(string[] ids)
     {
         var endpoint = "/api/v3/coins/markets";
         endpoint += "?vs_currency=usd&per_page=" + MaxIdsPerRequest;
         endpoint += $"&ids={string.Join(",", ids)}";
+        var response = await _httpClient.GetFromJsonSafeAsync<IEnumerable<AssetCoinGecko>>(
+            endpoint,
+            _logger,
+            $"Failed to fetch market data for following CoinGecko IDs: {string.Join(", ", ids)}"
+        );
 
-        var httpResponse = await _httpClient.GetAsync(endpoint);
-        if (!httpResponse.IsSuccessStatusCode)
-        {
-            await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-            return [];
-        }
-
-        var response = await httpResponse.Content.ReadFromJsonAsync<List<AssetCoinGecko>>();
-        return response ?? [];
+        return response.IsSuccess ? Result.Ok(response.Value) : Result.Fail(response.Errors);
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<string>> GetStablecoinsIds()
+    public async Task<Result<IEnumerable<string>>> GetStablecoinsIds()
     {
         var stablecoinsIds = new List<string>();
-        for (var page = 1; ; page++)
+        var page = 1;
+        while (true)
         {
             var endpoint = $"/api/v3/coins/markets";
             endpoint += "?vs_currency=usd";
@@ -115,24 +120,26 @@ public partial class CoinGeckoClient(
             endpoint += "&per_page=" + MaxIdsPerRequest;
             endpoint += "&page=" + page;
             endpoint += "&sparkline=false";
-            var httpResponse = await _httpClient.GetAsync(endpoint);
+            var response = await _httpClient.GetFromJsonSafeAsync<List<AssetCoinGecko>>(
+                endpoint,
+                _logger,
+                "Failed to fetch stablecoins from CoinGecko"
+            );
+            if (response.IsFailed)
+                return Result.Fail(response.Errors);
 
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                await _logger.LogUnsuccessfulHttpResponse(httpResponse);
-                return [];
-            }
-
-            var response = await httpResponse.Content.ReadFromJsonAsync<List<AssetCoinGecko>>();
-            if (response == null || response.Count == 0)
+            var coins = response.Value;
+            if (coins == null || coins.Count == 0)
                 break;
 
-            stablecoinsIds.AddRange(response.Select(coin => coin.Id));
+            stablecoinsIds.AddRange(coins.Select(coin => coin.Id));
 
-            if (response.Count < MaxIdsPerRequest)
+            if (coins.Count < MaxIdsPerRequest)
                 break;
+
+            page++;
         }
-        return stablecoinsIds;
+        return Result.Ok<IEnumerable<string>>(stablecoinsIds);
     }
 
     private static class Mapping

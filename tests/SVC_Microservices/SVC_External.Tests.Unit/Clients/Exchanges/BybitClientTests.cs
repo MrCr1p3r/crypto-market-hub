@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using AutoFixture;
 using FluentAssertions;
+using FluentResults.Extensions.FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Contrib.HttpClient;
@@ -37,7 +38,7 @@ public class BybitClientTests
     }
 
     [Fact]
-    public async Task GetAllSpotCoins_ReturnsExpectedData()
+    public async Task GetAllSpotCoins_ReturnsSuccessfulResultWithExpectedDataInside()
     {
         // Arrange
         _httpMessageHandlerMock
@@ -51,11 +52,11 @@ public class BybitClientTests
         var result = await _client.GetAllSpotCoins();
 
         // Assert
-        result.Should().BeEquivalentTo(TestData.ExpectedResult);
+        result.Should().BeSuccess().Which.Value.Should().BeEquivalentTo(TestData.ExpectedResult);
     }
 
     [Fact]
-    public async Task GetAllSpotCoins_ErrorResponse_ReturnsEmptyCollection()
+    public async Task GetAllSpotCoins_ErrorResponse_ReturnsFailedResult()
     {
         // Arrange
         _httpMessageHandlerMock
@@ -69,7 +70,7 @@ public class BybitClientTests
         var result = await _client.GetAllSpotCoins();
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     [Fact]
@@ -98,9 +99,9 @@ public class BybitClientTests
         var result = await _client.GetKlineData(request);
 
         // Assert
-        result.Should().HaveCount(1);
+        result.Should().BeSuccess().Which.Value.Should().HaveCount(1);
         result
-            .First()
+            .Value.First()
             .Should()
             .BeEquivalentTo(
                 new
@@ -117,7 +118,7 @@ public class BybitClientTests
     }
 
     [Fact]
-    public async Task GetKlineData_ErrorResponse_ReturnsEmptyCollection()
+    public async Task GetKlineData_ErrorResponse_ReturnsFailedResult()
     {
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
@@ -131,7 +132,7 @@ public class BybitClientTests
         var result = await _client.GetKlineData(request);
 
         // Assert
-        result.Should().BeEmpty();
+        result.Should().BeFailure().Which.Errors.Should().HaveCount(1);
     }
 
     private static class Mapping

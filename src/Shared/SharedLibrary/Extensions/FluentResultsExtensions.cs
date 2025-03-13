@@ -77,7 +77,7 @@ public static class FluentResultsExtensions
             Title = error.GetType().FullName,
             Status = statusCode,
             Detail = error.Message,
-            Instance = controller.HttpContext.Request.Path.Value,
+            Instance = controller.HttpContext?.Request.Path.Value ?? "context-unavailable",
         };
 
         return error switch
