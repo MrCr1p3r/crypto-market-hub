@@ -34,9 +34,10 @@ public interface IExchangesDataCollector
     /// Also includes parameters for kline data retrieval.
     /// </param>
     /// <returns>
-    /// A collection of Kline data, one per coin (if available),
+    /// A dictionary where the key is the ID of the trading pair and the value is the collection of kline data for that trading pair.
+    /// Each coin will have at most one entry in the dictionary (for its first successful trading pair).
     /// </returns>
-    Task<IEnumerable<KlineDataRequestResponse>> GetFirstSuccessfulKlineDataPerCoin(
+    Task<Dictionary<int, IEnumerable<KlineData>>> GetFirstSuccessfulKlineDataPerCoin(
         KlineDataBatchRequest request
     );
 

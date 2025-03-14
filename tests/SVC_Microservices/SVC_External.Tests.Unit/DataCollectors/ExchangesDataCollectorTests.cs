@@ -476,7 +476,7 @@ public class ExchangesDataCollectorTests
 
         // Assert
         result.Should().HaveCount(request.MainCoins.Count());
-        result.All(r => r.KlineData.Any()).Should().BeTrue();
+        result.All(kvp => kvp.Value.Any()).Should().BeTrue();
     }
 
     [Fact]
@@ -518,8 +518,9 @@ public class ExchangesDataCollectorTests
 
         // Assert
         result.Should().HaveCount(1);
-        result.First().KlineData.Should().HaveCount(exchangeKlineData.Count());
-        result.First().KlineData.Should().BeEquivalentTo(exchangeKlineData);
+        var tradingPairId = request.MainCoins.First().TradingPairs.First().Id;
+        result.Should().ContainKey(tradingPairId);
+        result[tradingPairId].Should().HaveCount(exchangeKlineData.Count());
     }
 
     [Fact]
@@ -543,7 +544,7 @@ public class ExchangesDataCollectorTests
     }
 
     [Fact]
-    public async Task GetFirstSuccessfulKlineDataPerCoin_ReturnsEmptyCollection_WhenNoCoinsHaveData()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_ReturnsEmptyDictionary_WhenNoCoinsHaveData()
     {
         // Arrange
         var request = TestData.CreateKlineDataBatchRequest(2);
@@ -597,7 +598,8 @@ public class ExchangesDataCollectorTests
 
         // Assert
         result.Should().HaveCount(1);
-        result.First().IdTradingPair.Should().Be(request.MainCoins.First().TradingPairs.Last().Id);
+        var expectedTradingPairId = request.MainCoins.First().TradingPairs.Last().Id;
+        result.Should().ContainKey(expectedTradingPairId);
     }
 
     [Fact]
