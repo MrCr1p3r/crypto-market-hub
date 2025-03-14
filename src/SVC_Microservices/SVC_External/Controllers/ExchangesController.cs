@@ -55,13 +55,13 @@ public class ExchangesController(IExchangesDataCollector dataCollector) : Contro
     /// Fetches Kline (candlestick) data for multiple coins and trading pairs from available exchanges.
     /// </summary>
     /// <param name="request">The batch request parameters for fetching Kline data.</param>
-    /// <returns>A collection of Kline data responses, each containing trading pair ID and kline data.</returns>
-    /// <response code="200">Returns the collection of Kline data responses.</response>
+    /// <returns>A dictionary where the key is the trading pair ID and the value is the collection of kline data for that trading pair.</returns>
+    /// <response code="200">Returns a dictionary of trading pair IDs to kline data collections.</response>
     /// <response code="500">If something went wrong during Kline data retrieval.</response>
     [HttpPost("klineData/batchQuery")]
     [Consumes("application/json")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(IEnumerable<KlineDataRequestResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Dictionary<int, IEnumerable<KlineData>>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetFirstSuccessfulKlineDataPerCoin(
         [FromBody] KlineDataBatchRequest request

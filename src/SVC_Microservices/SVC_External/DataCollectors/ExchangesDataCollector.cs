@@ -354,7 +354,7 @@ public class ExchangesDataCollector(
 
     #region GetFirstSuccessfulKlineDataPerCoin
     /// <inheritdoc />
-    public async Task<IEnumerable<KlineDataRequestResponse>> GetFirstSuccessfulKlineDataPerCoin(
+    public async Task<Dictionary<int, IEnumerable<KlineData>>> GetFirstSuccessfulKlineDataPerCoin(
         KlineDataBatchRequest request
     )
     {
@@ -362,13 +362,17 @@ public class ExchangesDataCollector(
             ProcessKlineDataRequest(request, mainCoin)
         );
         var results = await Task.WhenAll(coinTasks);
-        var successfulResults = results
-            .Where(response => response.IsSuccess)
-            .Select(response => response.Value);
-        return successfulResults;
+
+        var dictionary = new Dictionary<int, IEnumerable<KlineData>>();
+        foreach (var result in results.Where(r => r.IsSuccess))
+        {
+            dictionary.Add(result.Value.Key, result.Value.Value);
+        }
+
+        return dictionary;
     }
 
-    private async Task<Result<KlineDataRequestResponse>> ProcessKlineDataRequest(
+    private async Task<Result<KeyValuePair<int, IEnumerable<KlineData>>>> ProcessKlineDataRequest(
         KlineDataBatchRequest request,
         KlineDataRequestCoinMain mainCoin
     )
@@ -384,7 +388,12 @@ public class ExchangesDataCollector(
             var klineData = await GetKlineDataForTradingPair(suitableClients, formattedRequest);
             if (klineData.Any())
             {
-                return Mapping.ToOutputKlineDataRequestResponse(tradingPair.Id, klineData);
+                var klineDataOutput = klineData.Select(Mapping.ToOutputKlineData);
+                var kvp = new KeyValuePair<int, IEnumerable<KlineData>>(
+                    tradingPair.Id,
+                    klineDataOutput
+                );
+                return Result.Ok(kvp);
             }
         }
         _logger.LogNoKlineDataFoundForCoin(mainCoin.Id, mainCoin.Symbol, mainCoin.Name);
@@ -489,7 +498,7 @@ public class ExchangesDataCollector(
                 KlineData = klineData.Select(ToOutputKlineData),
             };
 
-        private static KlineData ToOutputKlineData(ExchangeKlineData klineData) =>
+        public static KlineData ToOutputKlineData(ExchangeKlineData klineData) =>
             new()
             {
                 OpenTime = klineData.OpenTime,

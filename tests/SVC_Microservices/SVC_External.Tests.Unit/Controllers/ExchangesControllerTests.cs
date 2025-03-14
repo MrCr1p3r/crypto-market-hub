@@ -91,10 +91,16 @@ public class ExchangesControllerTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataBatchRequest>();
-        var expectedResponses = _fixture.CreateMany<KlineDataRequestResponse>(3).ToList();
+        var expectedResponse = new Dictionary<int, IEnumerable<KlineData>>
+        {
+            { 1, _fixture.CreateMany<KlineData>() },
+            { 2, _fixture.CreateMany<KlineData>() },
+            { 3, _fixture.CreateMany<KlineData>() },
+        };
+
         _mockDataCollector
             .Setup(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request))
-            .ReturnsAsync(expectedResponses);
+            .ReturnsAsync(expectedResponse);
 
         // Act
         await _controller.GetFirstSuccessfulKlineDataPerCoin(request);
@@ -108,10 +114,16 @@ public class ExchangesControllerTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataBatchRequest>();
-        var expectedResponses = _fixture.CreateMany<KlineDataRequestResponse>(3).ToList();
+        var expectedResponse = new Dictionary<int, IEnumerable<KlineData>>
+        {
+            { 1, _fixture.CreateMany<KlineData>() },
+            { 2, _fixture.CreateMany<KlineData>() },
+            { 3, _fixture.CreateMany<KlineData>() },
+        };
+
         _mockDataCollector
             .Setup(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request))
-            .ReturnsAsync(expectedResponses);
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _controller.GetFirstSuccessfulKlineDataPerCoin(request);
@@ -121,18 +133,19 @@ public class ExchangesControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(expectedResponses);
+            .BeEquivalentTo(expectedResponse);
     }
 
     [Fact]
-    public async Task GetFirstSuccessfulKlineDataPerCoin_ReturnsEmptyListWhenNoDataFound()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_ReturnsEmptyDictionaryWhenNoDataFound()
     {
         // Arrange
         var request = _fixture.Create<KlineDataBatchRequest>();
-        var emptyResponses = new List<KlineDataRequestResponse>();
+        var emptyResponse = new Dictionary<int, IEnumerable<KlineData>>();
+
         _mockDataCollector
             .Setup(dc => dc.GetFirstSuccessfulKlineDataPerCoin(request))
-            .ReturnsAsync(emptyResponses);
+            .ReturnsAsync(emptyResponse);
 
         // Act
         var result = await _controller.GetFirstSuccessfulKlineDataPerCoin(request);
@@ -142,7 +155,7 @@ public class ExchangesControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(emptyResponses);
+            .BeEquivalentTo(emptyResponse);
     }
     #endregion
 

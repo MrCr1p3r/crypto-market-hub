@@ -306,13 +306,15 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<List<KlineDataRequestResponse>>(
+        var result = JsonSerializer.Deserialize<Dictionary<int, IEnumerable<KlineData>>>(
             content,
             TestData.JsonOptions
         );
 
         result.Should().NotBeNull();
         result.Should().HaveCount(2);
+        result.Should().ContainKey(1); // Trading pair ID for BTC/USDT
+        result.Should().ContainKey(2); // Trading pair ID for ETH/USDT
     }
 
     [Fact]
@@ -387,17 +389,19 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<List<KlineDataRequestResponse>>(
+        var result = JsonSerializer.Deserialize<Dictionary<int, IEnumerable<KlineData>>>(
             content,
             TestData.JsonOptions
         );
 
         result.Should().NotBeNull();
         result.Should().HaveCount(2);
+        result.Should().ContainKey(1); // Trading pair ID for BTC/USDT
+        result.Should().ContainKey(2); // Trading pair ID for ETH/USDT
     }
 
     [Fact]
-    public async Task GetFirstSuccessfulKlineDataPerCoin_WithNoResults_ShouldReturnEmptyList()
+    public async Task GetFirstSuccessfulKlineDataPerCoin_WithNoResults_ShouldReturnEmptyDictionary()
     {
         // Arrange
         var batchRequest = TestData.KlineBatchRequestWithInvalidCoins;
@@ -454,7 +458,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<List<KlineDataRequestResponse>>(
+        var result = JsonSerializer.Deserialize<Dictionary<int, IEnumerable<KlineData>>>(
             content,
             TestData.JsonOptions
         );
