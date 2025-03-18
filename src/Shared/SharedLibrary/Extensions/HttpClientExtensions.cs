@@ -1,7 +1,4 @@
-using System;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using FluentResults;
 using Microsoft.Extensions.Logging;
 
@@ -36,7 +33,7 @@ public static class HttpClientExtensions
         }
 
         var data = await response.Content.ReadFromJsonAsync<T>();
-        if (data == null)
+        if (data is null || data.Equals(default(T)))
         {
             var message =
                 $"Response content from {requestUri} was null or could not be deserialized.";
