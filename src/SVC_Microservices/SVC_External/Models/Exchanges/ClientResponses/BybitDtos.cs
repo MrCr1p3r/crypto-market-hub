@@ -4,7 +4,17 @@ namespace SVC_External.Models.Exchanges.ClientResponses;
 
 public static class BybitDtos
 {
-    public class BybitKlineResponse
+    public class BybitResponseBase
+    {
+        [JsonPropertyName("retCode")]
+        public int ResponseCode { get; set; }
+
+        [JsonPropertyName("retMsg")]
+        public string ResponseMessage { get; set; } = string.Empty;
+    }
+
+    #region Kline
+    public class BybitKlineResponse : BybitResponseBase
     {
         [JsonPropertyName("result")]
         public BybitKlineResult Result { get; set; } = new();
@@ -15,8 +25,10 @@ public static class BybitDtos
         [JsonPropertyName("list")]
         public List<List<string>> List { get; set; } = [];
     }
+    #endregion
 
-    public class BybitSpotAssetsResponse
+    #region SpotAssets
+    public class BybitSpotAssetsResponse : BybitResponseBase
     {
         [JsonPropertyName("result")]
         public BybitSpotAssetsResult Result { get; set; } = new();
@@ -49,4 +61,5 @@ public static class BybitDtos
         Delivering,
         Closed,
     }
+    #endregion
 }

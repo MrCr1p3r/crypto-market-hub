@@ -96,7 +96,9 @@ public partial class CoinGeckoClient(
     private async Task<Result<IEnumerable<AssetCoinGecko>>> FetchMarketDataForIds(string[] ids)
     {
         var endpoint = "/api/v3/coins/markets";
-        endpoint += "?vs_currency=usd&per_page=" + MaxIdsPerRequest;
+        endpoint += "?vs_currency=usd";
+        endpoint += "&per_page=" + MaxIdsPerRequest;
+        endpoint += "&sparkline=false";
         endpoint += $"&ids={string.Join(",", ids)}";
         var response = await _httpClient.GetFromJsonSafeAsync<IEnumerable<AssetCoinGecko>>(
             endpoint,

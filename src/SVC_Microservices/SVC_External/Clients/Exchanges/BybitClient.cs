@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using FluentResults;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions;
@@ -25,15 +26,21 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
     public async Task<Result<IEnumerable<ExchangeCoin>>> GetAllSpotCoins()
     {
         var endpoint = "/v5/market/instruments-info?category=spot";
-        var response = await _httpClient.GetFromJsonSafeAsync<BybitDtos.BybitSpotAssetsResponse>(
-            endpoint,
-            _logger,
-            "Failed to retrieve spot coins from Bybit"
+        var response = await _httpClient.GetFromJsonAsync<BybitDtos.BybitSpotAssetsResponse>(
+            endpoint
         );
 
-        return response.IsSuccess
-            ? Result.Ok(Mapping.ToOutputCoins(response.Value.Result.TradingPairs))
-            : Result.Fail(response.Errors);
+        if (response!.ResponseCode != 0)
+        {
+            _logger.LogUnsuccessfulHttpResponse(
+                (int)HttpStatusCode.InternalServerError,
+                response.ResponseMessage,
+                endpoint
+            );
+            return Result.Fail(response.ResponseMessage);
+        }
+
+        return Result.Ok(Mapping.ToOutputCoins(response.Result.TradingPairs));
     }
 
     /// <inheritdoc />
@@ -42,17 +49,19 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
     )
     {
         var endpoint = Mapping.ToBybitKlineEndpoint(request);
-        var response = await _httpClient.GetFromJsonSafeAsync<BybitDtos.BybitKlineResponse>(
-            endpoint,
-            _logger,
-            "Failed to retrieve kline data from Bybit"
-        );
+        var response = await _httpClient.GetFromJsonAsync<BybitDtos.BybitKlineResponse>(endpoint);
 
-        return response.IsSuccess
-            ? Result.Ok(
-                response.Value.Result.List.Select(data => Mapping.ToKlineData(request, data))
-            )
-            : Result.Fail(response.Errors);
+        if (response!.ResponseCode != 0)
+        {
+            _logger.LogUnsuccessfulHttpResponse(
+                (int)HttpStatusCode.InternalServerError,
+                response.ResponseMessage,
+                endpoint
+            );
+            return Result.Fail(response.ResponseMessage);
+        }
+
+        return Result.Ok(response.Result.List.Select(data => Mapping.ToKlineData(request, data)));
     }
 
     private static class Mapping
