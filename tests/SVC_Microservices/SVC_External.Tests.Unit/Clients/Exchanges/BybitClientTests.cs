@@ -46,7 +46,7 @@ public class BybitClientTests
                 HttpMethod.Get,
                 "https://api.bybit.com/v5/market/instruments-info?category=spot"
             )
-            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonResponse);
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonSpotAssetsResponse);
 
         // Act
         var result = await _client.GetAllSpotCoins();
@@ -64,7 +64,7 @@ public class BybitClientTests
                 HttpMethod.Get,
                 "https://api.bybit.com/v5/market/instruments-info?category=spot"
             )
-            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonSpotAssetsErrorResponse);
 
         // Act
         var result = await _client.GetAllSpotCoins();
@@ -79,21 +79,10 @@ public class BybitClientTests
         // Arrange
         var request = _fixture.Create<ExchangeKlineDataRequest>();
         var endpoint = Mapping.ToBybitKlineEndpoint(request);
-        var expectedResponse = new
-        {
-            result = new
-            {
-                list = new List<List<string>>
-                {
-                    new() { "123456789", "0.001", "0.002", "0.0005", "0.0015", "100" },
-                },
-            },
-        };
-        var jsonResponse = JsonSerializer.Serialize(expectedResponse);
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
-            .ReturnsResponse(HttpStatusCode.OK, jsonResponse);
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonKlineResponse);
 
         // Act
         var result = await _client.GetKlineData(request);
@@ -126,7 +115,7 @@ public class BybitClientTests
 
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, $"https://api.bybit.com{endpoint}")
-            .ReturnsResponse(HttpStatusCode.BadRequest, "Bad Request");
+            .ReturnsResponse(HttpStatusCode.OK, TestData.JsonKlineErrorResponse);
 
         // Act
         var result = await _client.GetKlineData(request);
@@ -170,8 +159,9 @@ public class BybitClientTests
 
     private static class TestData
     {
-        public static readonly BybitDtos.BybitSpotAssetsResponse Response = new()
+        private static readonly BybitDtos.BybitSpotAssetsResponse SpotAssetsResponse = new()
         {
+            ResponseCode = 0,
             Result = new()
             {
                 TradingPairs =
@@ -197,9 +187,9 @@ public class BybitClientTests
                 ],
             },
         };
-
-        public static readonly string JsonResponse = JsonSerializer.Serialize(Response);
-
+        public static readonly string JsonSpotAssetsResponse = JsonSerializer.Serialize(
+            SpotAssetsResponse
+        );
         public static readonly List<ExchangeCoin> ExpectedResult =
         [
             new()
@@ -244,5 +234,39 @@ public class BybitClientTests
                 ],
             },
         ];
+
+        private static readonly BybitDtos.BybitSpotAssetsResponse SpotAssetsErrorResponse = new()
+        {
+            ResponseCode = 10001,
+            ResponseMessage = "params error: Symbol Is Invalid",
+            Result = new(),
+        };
+        public static readonly string JsonSpotAssetsErrorResponse = JsonSerializer.Serialize(
+            SpotAssetsErrorResponse
+        );
+
+        private static readonly BybitDtos.BybitKlineResponse KlineResponse = new()
+        {
+            ResponseCode = 0,
+            ResponseMessage = "success",
+            Result = new()
+            {
+                List =
+                [
+                    ["123456789", "0.001", "0.002", "0.0005", "0.0015", "100"],
+                ],
+            },
+        };
+        public static readonly string JsonKlineResponse = JsonSerializer.Serialize(KlineResponse);
+
+        private static readonly BybitDtos.BybitKlineResponse KlineErrorResponse = new()
+        {
+            ResponseCode = 10001,
+            ResponseMessage = "params error: Symbol Is Invalid",
+            Result = new(),
+        };
+        public static readonly string JsonKlineErrorResponse = JsonSerializer.Serialize(
+            KlineErrorResponse
+        );
     }
 }

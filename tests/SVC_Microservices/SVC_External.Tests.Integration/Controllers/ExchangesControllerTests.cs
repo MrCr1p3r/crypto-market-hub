@@ -1,30 +1,28 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using SharedLibrary.Enums;
+using SharedLibrary.Extensions.Testing;
 using SVC_External.Models.Input;
 using SVC_External.Models.Output;
 using SVC_External.Tests.Integration.Factories;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
+using WireMock.Admin.Mappings;
 
 namespace SVC_External.Tests.Integration.Controllers;
 
-public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory factory)
-    : IClassFixture<CustomWebApplicationFactory>
+public class ExchangesControllerTests(CustomWebApplicationFactory factory)
+    : BaseIntegrationTest(factory),
+        IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient _client = factory.CreateClient();
-    private readonly CustomWebApplicationFactory _factory = factory;
     private const string CacheKey = "all_current_active_spot_coins";
 
     // Setup method to clear specific cache keys before each test
     private async Task ClearCacheAsync()
     {
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var cache =
             scope.ServiceProvider.GetRequiredService<ZiggyCreatures.Caching.Fusion.IFusionCache>();
         await cache.RemoveAsync(CacheKey);
@@ -39,124 +37,24 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
         await ClearCacheAsync();
 
         // Arrange
-        // Setup Binance mock
-        _factory
-            .BinanceServerMock.Given(Request.Create().WithPath("/api/v3/exchangeInfo").UsingGet())
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(new { symbols = TestData.BinanceCoins }))
-            );
-
-        // Setup Bybit mock
-        _factory
-            .BybitServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/v5/market/instruments-info")
-                    .WithParam("category", "spot")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(
-                        JsonSerializer.Serialize(
-                            new { result = new { list = TestData.BybitCoins } }
-                        )
-                    )
-            );
-
-        // Setup MEXC mock
-        _factory
-            .MexcServerMock.Given(Request.Create().WithPath("/api/v3/exchangeInfo").UsingGet())
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(new { symbols = TestData.MexcCoins }))
-            );
-
-        // Setup CoinGecko coins list mock
-        _factory
-            .CoinGeckoServerMock.Given(Request.Create().WithPath("/api/v3/coins/list").UsingGet())
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(TestData.CoinGeckoCoins))
-            );
-
-        // Setup CoinGecko symbol-to-id map for Binance
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/exchanges/binance/tickers")
-                    .WithParam("depth", "false")
-                    .WithParam("order", "volume_desc")
-                    .WithParam("page", "1")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(TestData.BinanceTickers))
-            );
-
-        // Setup CoinGecko symbol-to-id map for Bybit
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/exchanges/bybit_spot/tickers")
-                    .WithParam("depth", "false")
-                    .WithParam("order", "volume_desc")
-                    .WithParam("page", "1")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(TestData.BybitTickers))
-            );
-
-        // Setup CoinGecko symbol-to-id map for MEXC
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/exchanges/mxc/tickers")
-                    .WithParam("depth", "false")
-                    .WithParam("order", "volume_desc")
-                    .WithParam("page", "1")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(TestData.MexcTickers))
-            );
+        var binanceTask = Factory.BinanceServerMock.PostMappingAsync(
+            WireMockMappings.Binance.ExchangeInfo
+        );
+        var bybitTask = Factory.BybitServerMock.PostMappingAsync(
+            WireMockMappings.Bybit.InstrumentsInfo
+        );
+        var mexcTask = Factory.MexcServerMock.PostMappingAsync(WireMockMappings.Mexc.ExchangeInfo);
+        var coinGeckoTask = Factory.CoinGeckoServerMock.PostMappingsAsync(
+            WireMockMappings.CoinGecko.AllMappings
+        );
+        await Task.WhenAll(binanceTask, bybitTask, mexcTask, coinGeckoTask);
 
         // Act
-        var response = await _client.GetAsync("/exchanges/spot/coins");
+        var response = await Client.GetAsync("/exchanges/spot/coins");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<List<Coin>>(content, TestData.JsonOptions);
+        var result = await response.Content.ReadFromJsonAsync<List<Coin>>();
 
         result.Should().NotBeNull();
         result.Should().HaveCountGreaterThanOrEqualTo(4); // At least 4 unique coins from the 3 exchanges
@@ -169,32 +67,13 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task GetAllListedCoins_WhenAllExchangesUnavailable_ShouldReturn500()
+    public async Task GetAllListedCoins_ExchangesUnavailable_ShouldReturnError()
     {
         // Clear cache to ensure clean test
         await ClearCacheAsync();
 
-        // Arrange
-        // Set up all exchange mocks to return errors
-        _factory
-            .BinanceServerMock.Given(Request.Create().WithPath("/api/v3/exchangeInfo").UsingGet())
-            .RespondWith(Response.Create().WithStatusCode(500));
-
-        _factory
-            .BybitServerMock.Given(Request.Create().WithPath("/v5/market/tickers").UsingGet())
-            .RespondWith(Response.Create().WithStatusCode(500));
-
-        _factory
-            .MexcServerMock.Given(Request.Create().WithPath("/api/v3/exchangeInfo").UsingGet())
-            .RespondWith(Response.Create().WithStatusCode(500));
-
-        // Setup CoinGecko coins list mock - this will still return valid data
-        _factory
-            .CoinGeckoServerMock.Given(Request.Create().WithPath("/api/v3/coins/list").UsingGet())
-            .RespondWith(Response.Create().WithStatusCode(500));
-
         // Act
-        var response = await _client.GetAsync("/exchanges/spot/coins");
+        var response = await Client.GetAsync("/exchanges/spot/coins");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -207,42 +86,17 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task GetKlineDataForTradingPair_ShouldReturnOkWithData()
     {
         // Arrange
-        var klineRequest = TestData.KlineRequest;
-        var klineResponseData = TestData.BtcKlineResponseData;
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "BTCUSDT")
-                    .WithParam("interval", "1d")
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(klineResponseData))
-            );
+        await Factory.BinanceServerMock.PostMappingAsync(WireMockMappings.Binance.BtcKlines);
 
         // Act
-        var requestContent = new StringContent(
-            JsonSerializer.Serialize(klineRequest),
-            Encoding.UTF8,
-            "application/json"
+        var response = await Client.PostAsJsonAsync(
+            "/exchanges/klineData/query",
+            TestData.KlineRequest
         );
-
-        var response = await _client.PostAsync("/exchanges/klineData/query", requestContent);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<KlineDataRequestResponse>(
-            content,
-            TestData.JsonOptions
-        );
+        var result = await response.Content.ReadFromJsonAsync<KlineDataRequestResponse>();
 
         result.Should().NotBeNull();
         result!.KlineData.Should().NotBeNull();
@@ -250,69 +104,30 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
     #endregion
 
-    #region GetFirstSuccessfulKlineDataPerCoin Tests
+    #region GetFirstSuccessfulKlineDataPerCoin
 
     [Fact]
     public async Task GetFirstSuccessfulKlineDataPerCoin_ShouldReturnOkWithData()
     {
         // Arrange
-        var batchRequest = TestData.KlineBatchRequest;
-        var btcKlineData = TestData.BtcKlineResponseData;
-        var ethKlineData = TestData.EthKlineResponseData;
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "BTCUSDT")
-                    .WithParam("interval", "1d")
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(btcKlineData))
-            );
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "ETHUSDT")
-                    .WithParam("interval", "1d")
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(ethKlineData))
-            );
-
-        // Act
-        var requestContent = new StringContent(
-            JsonSerializer.Serialize(batchRequest),
-            Encoding.UTF8,
-            "application/json"
+        await Factory.BinanceServerMock.PostMappingsAsync(
+            [WireMockMappings.Binance.BtcKlines, WireMockMappings.Binance.EthKlines]
         );
 
-        var response = await _client.PostAsync("/exchanges/klineData/batchQuery", requestContent);
+        // Act
+        var response = await Client.PostAsJsonAsync(
+            "/exchanges/klineData/batchQuery",
+            TestData.KlineBatchRequest
+        );
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<Dictionary<int, IEnumerable<KlineData>>>(
-            content,
-            TestData.JsonOptions
-        );
+        var result = await response.Content.ReadFromJsonAsync<
+            Dictionary<int, IEnumerable<KlineData>>
+        >();
 
         result.Should().NotBeNull();
-        result.Should().HaveCount(2);
+        result!.Should().HaveCount(2);
         result.Should().ContainKey(1); // Trading pair ID for BTC/USDT
         result.Should().ContainKey(2); // Trading pair ID for ETH/USDT
     }
@@ -321,152 +136,49 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     public async Task GetFirstSuccessfulKlineDataPerCoin_WithPartialResults_ShouldReturnPartialData()
     {
         // Arrange
-        var batchRequest = TestData.KlineBatchRequestWithInvalidCoin;
-        var btcKlineData = TestData.BtcKlineDataShort;
-        var ethKlineData = TestData.EthKlineDataShort;
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "BTCUSDT")
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(btcKlineData))
-            );
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "ETHUSDT")
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(ethKlineData))
-            );
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "UNKNOWNUSDT")
-            )
-            .RespondWith(Response.Create().WithStatusCode(400).WithBody("Invalid symbol"));
-
-        _factory
-            .BybitServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/v5/market/kline")
-                    .UsingGet()
-                    .WithParam("symbol", "UNKNOWNUSDT")
-            )
-            .RespondWith(Response.Create().WithStatusCode(400).WithBody("Invalid symbol"));
+        var binanceTask = Factory.BinanceServerMock.PostMappingsAsync(
+            [WireMockMappings.Binance.BtcKlines, WireMockMappings.Binance.KlinesUnknownSymbol]
+        );
+        var bybitTask = Factory.BybitServerMock.PostMappingAsync(
+            WireMockMappings.Bybit.KlinesUnknownSymbol
+        );
+        await Task.WhenAll(binanceTask, bybitTask);
 
         // Act
-        var requestContent = new StringContent(
-            JsonSerializer.Serialize(batchRequest),
-            Encoding.UTF8,
-            "application/json"
+        var response = await Client.PostAsJsonAsync(
+            "/exchanges/klineData/batchQuery",
+            TestData.KlineBatchRequestWithInvalidCoin
         );
-
-        var response = await _client.PostAsync("/exchanges/klineData/batchQuery", requestContent);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<Dictionary<int, IEnumerable<KlineData>>>(
-            content,
-            TestData.JsonOptions
-        );
+        var result = await response.Content.ReadFromJsonAsync<
+            Dictionary<int, IEnumerable<KlineData>>
+        >();
 
         result.Should().NotBeNull();
-        result.Should().HaveCount(2);
+        result!.Should().HaveCount(1);
         result.Should().ContainKey(1); // Trading pair ID for BTC/USDT
-        result.Should().ContainKey(2); // Trading pair ID for ETH/USDT
     }
 
     [Fact]
     public async Task GetFirstSuccessfulKlineDataPerCoin_WithNoResults_ShouldReturnEmptyDictionary()
     {
-        // Arrange
-        var batchRequest = TestData.KlineBatchRequestWithInvalidCoins;
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "INVALID1USDT")
-            )
-            .RespondWith(Response.Create().WithStatusCode(400).WithBody("Invalid symbol"));
-
-        _factory
-            .BinanceServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/klines")
-                    .UsingGet()
-                    .WithParam("symbol", "INVALID2USDT")
-            )
-            .RespondWith(Response.Create().WithStatusCode(400).WithBody("Invalid symbol"));
-
-        _factory
-            .BybitServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/v5/market/kline")
-                    .UsingGet()
-                    .WithParam("symbol", "INVALID1USDT")
-            )
-            .RespondWith(Response.Create().WithStatusCode(400).WithBody("Invalid symbol"));
-
-        _factory
-            .BybitServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/v5/market/kline")
-                    .UsingGet()
-                    .WithParam("symbol", "INVALID2USDT")
-            )
-            .RespondWith(Response.Create().WithStatusCode(400).WithBody("Invalid symbol"));
-
         // Act
-        var requestContent = new StringContent(
-            JsonSerializer.Serialize(batchRequest),
-            Encoding.UTF8,
-            "application/json"
+        var response = await Client.PostAsJsonAsync(
+            "/exchanges/klineData/batchQuery",
+            TestData.KlineBatchRequestWithInvalidCoins
         );
-
-        var response = await _client.PostAsync("/exchanges/klineData/batchQuery", requestContent);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<Dictionary<int, IEnumerable<KlineData>>>(
-            content,
-            TestData.JsonOptions
-        );
+        var result = await response.Content.ReadFromJsonAsync<
+            Dictionary<int, IEnumerable<KlineData>>
+        >();
 
         result.Should().NotBeNull();
         result.Should().BeEmpty();
     }
-
     #endregion
 
     #region GetCoinGeckoAssetsInfo Tests
@@ -475,79 +187,33 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     {
         // Arrange
         var coinIds = new List<string> { "bitcoin", "ethereum", "tether", "usd-coin" };
-
-        // Set up mocks for both API calls
-        // Mock the coins/markets endpoint for asset data
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath($"/api/v3/coins/markets")
-                    .WithParam("vs_currency", "usd")
-                    .WithParam("per_page", "250")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(
-                        JsonSerializer.Serialize(TestData.CoinGeckoMarketData, TestData.JsonOptions)
-                    )
-            );
-
-        // Mock the stablecoins endpoint
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/coins/markets")
-                    .WithParam("vs_currency", "usd")
-                    .WithParam("category", "stablecoins")
-                    .WithParam("per_page", "250")
-                    .WithParam("page", "1")
-                    .WithParam("sparkline", "false")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(
-                        JsonSerializer.Serialize(
-                            TestData.CoinGeckoStablecoins,
-                            TestData.JsonOptions
-                        )
-                    )
-            );
+        await Factory.CoinGeckoServerMock.PostMappingsAsync(
+            [WireMockMappings.CoinGecko.Markets, WireMockMappings.CoinGecko.MarketsStablecoins]
+        );
 
         // Act
-        // Build a URL with multiple coinGeckoIds parameters
         var queryParams = string.Join("&", coinIds.Select(id => $"coinGeckoIds={id}"));
-        var response = await _client.GetAsync($"exchanges/coins/marketInfo?{queryParams}");
+        var response = await Client.GetAsync($"exchanges/coins/marketInfo?{queryParams}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<List<CoinGeckoAssetInfo>>();
+        var result = await response.Content.ReadFromJsonAsync<List<CoinGeckoAssetInfo>>();
 
-        responseData.Should().NotBeNull();
-        responseData!.Should().HaveCount(4);
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(4);
 
         // Check each coin is present
-        responseData.Should().Contain(c => c.Id == "bitcoin");
-        responseData.Should().Contain(c => c.Id == "ethereum");
-        responseData.Should().Contain(c => c.Id == "tether");
-        responseData.Should().Contain(c => c.Id == "usd-coin");
+        result.Should().Contain(c => c.Id == "bitcoin");
+        result.Should().Contain(c => c.Id == "ethereum");
+        result.Should().Contain(c => c.Id == "tether");
+        result.Should().Contain(c => c.Id == "usd-coin");
 
         // Verify stablecoin flags
-        responseData.Should().NotBeNull();
 
-        var btcAsset = responseData!.FirstOrDefault(c => c.Id == "bitcoin");
-        var ethAsset = responseData!.FirstOrDefault(c => c.Id == "ethereum");
-        var tetherAsset = responseData!.FirstOrDefault(c => c.Id == "tether");
-        var usdcAsset = responseData!.FirstOrDefault(c => c.Id == "usd-coin");
+        var btcAsset = result!.FirstOrDefault(c => c.Id == "bitcoin");
+        var ethAsset = result!.FirstOrDefault(c => c.Id == "ethereum");
+        var tetherAsset = result!.FirstOrDefault(c => c.Id == "tether");
+        var usdcAsset = result!.FirstOrDefault(c => c.Id == "usd-coin");
 
         btcAsset.Should().NotBeNull();
         ethAsset.Should().NotBeNull();
@@ -561,84 +227,336 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
     }
 
     [Fact]
-    public async Task GetCoinGeckoAssetsInfo_WithEmptyResponse_ShouldReturnOkWithEmptyResponse()
+    public async Task GetCoinGeckoAssetsInfo_CoinGeckoReturnsError_ShouldReturnErrorResponse()
     {
         // Arrange
-        var coinIds = new List<string> { "unknown-coin-id" };
+        await Factory.CoinGeckoServerMock.PostMappingAsync(
+            WireMockMappings.CoinGecko.MarketsStatus503
+        );
 
-        // Mock the coins/markets endpoint with empty response
-        var coinIdsParam = string.Join(",", coinIds);
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath($"/api/v3/coins/markets")
-                    .WithParam("vs_currency", "usd")
-                    .WithParam("per_page", "250")
-                    .WithParam("ids", coinIdsParam)
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody("[]")
-            );
-
-        // Mock the stablecoins endpoint
-        _factory
-            .CoinGeckoServerMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/api/v3/coins/markets")
-                    .WithParam("vs_currency", "usd")
-                    .WithParam("category", "stablecoins")
-                    .WithParam("per_page", "250")
-                    .WithParam("page", "1")
-                    .WithParam("sparkline", "false")
-                    .UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(HttpStatusCode.OK)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(
-                        JsonSerializer.Serialize(
-                            TestData.CoinGeckoStablecoins,
-                            TestData.JsonOptions
-                        )
-                    )
-            );
+        var ids = new List<string> { "unknown-coin-id", "unknown-coin-id-2" };
+        var idsQueryParam = string.Join("&", ids.Select(id => $"coinGeckoIds={id}"));
 
         // Act
-        var queryParams = string.Join("&", coinIds.Select(id => $"coinGeckoIds={id}"));
-        var response = await _client.GetAsync($"exchanges/coins/marketInfo?{queryParams}");
+        var response = await Client.GetAsync($"exchanges/coins/marketInfo?{idsQueryParam}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
     }
 
     [Fact]
     public async Task GetCoinGeckoAssetsInfo_WithNoIds_ShouldReturnBadRequest()
     {
         // Act
-        var response = await _client.GetAsync("exchanges/coins/marketInfo");
+        var response = await Client.GetAsync("exchanges/coins/marketInfo");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
     #endregion
 
+    private static class WireMockMappings
+    {
+        public static class Binance
+        {
+            public static MappingModel ExchangeInfo =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/api/v3/exchangeInfo" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Body = JsonSerializer.Serialize(new { symbols = TestData.BinanceCoins }),
+                    },
+                };
+
+            public static MappingModel BtcKlines =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/klines",
+                        Params =
+                        [
+                            WireMockParamBuilder.WithExactMatch("symbol", "BTCUSDT"),
+                            WireMockParamBuilder.WithExactMatch("interval", "1d"),
+                        ],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.BtcKlineResponseData),
+                    },
+                };
+
+            public static MappingModel EthKlines =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/klines",
+                        Params =
+                        [
+                            WireMockParamBuilder.WithExactMatch("symbol", "ETHUSDT"),
+                            WireMockParamBuilder.WithExactMatch("interval", "1d"),
+                        ],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.EthKlineResponseData),
+                    },
+                };
+
+            public static MappingModel KlinesUnknownSymbol =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/klines",
+                        Params =
+                        [
+                            WireMockParamBuilder.WithExactMatch("symbol", "UNKNOWNUSDT"),
+                            WireMockParamBuilder.WithExactMatch("interval", "1d"),
+                        ],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 400,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                    },
+                };
+        }
+
+        public static class Bybit
+        {
+            public static MappingModel InstrumentsInfo =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/v5/market/instruments-info",
+                        Params = [WireMockParamBuilder.WithExactMatch("category", "spot")],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        BodyAsJson = new { result = new { list = TestData.BybitCoins } },
+                    },
+                };
+
+            public static MappingModel KlinesUnknownSymbol =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/v5/market/kline",
+                        Params =
+                        [
+                            WireMockParamBuilder.WithExactMatch("symbol", "UNKNOWNUSDT"),
+                            WireMockParamBuilder.WithExactMatch("interval", "D"),
+                        ],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(
+                            new
+                            {
+                                retCode = 10001,
+                                retMsg = "params error: Symbol Is Invalid",
+                                result = new { },
+                            }
+                        ),
+                    },
+                };
+        }
+
+        public static class Mexc
+        {
+            public static MappingModel ExchangeInfo =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/api/v3/exchangeInfo" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        BodyAsJson = new { symbols = TestData.MexcCoins },
+                    },
+                };
+        }
+
+        public static class CoinGecko
+        {
+            public static MappingModel[] AllMappings =>
+                [CoinsList, BinanceTickers, BybitTickers, MexcTickers];
+
+            public static MappingModel CoinsList =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/api/v3/coins/list" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        BodyAsJson = TestData.CoinGeckoCoins,
+                    },
+                };
+
+            public static MappingModel BinanceTickers =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/exchanges/binance/tickers",
+                        Params = CreateTickerParams(),
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        BodyAsJson = TestData.BinanceTickers,
+                    },
+                };
+
+            public static MappingModel BybitTickers =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/exchanges/bybit_spot/tickers",
+                        Params = CreateTickerParams(),
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        BodyAsJson = TestData.BybitTickers,
+                    },
+                };
+
+            public static MappingModel MexcTickers =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/exchanges/mxc/tickers",
+                        Params = CreateTickerParams(),
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        BodyAsJson = TestData.MexcTickers,
+                    },
+                };
+
+            public static MappingModel Markets =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/coins/markets",
+                        Params = [WireMockParamBuilder.WithNotNullOrEmptyMatch("ids")],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.CoinGeckoMarketData),
+                    },
+                };
+
+            public static MappingModel MarketsStablecoins =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/coins/markets",
+                        Params = [WireMockParamBuilder.WithExactMatch("category", "stablecoins")],
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.CoinGeckoStablecoins),
+                    },
+                };
+
+            public static MappingModel MarketsStatus503 =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/api/v3/coins/markets",
+                    },
+                    Response = new ResponseModel { StatusCode = 503 },
+                };
+
+            // Helper method moved inside CoinGecko class
+            private static ParamModel[] CreateTickerParams() =>
+                [
+                    WireMockParamBuilder.WithExactMatch("depth", "false"),
+                    WireMockParamBuilder.WithExactMatch("order", "volume_desc"),
+                    WireMockParamBuilder.WithExactMatch("page", "1"),
+                ];
+        }
+    }
+
     private static class TestData
     {
-        // JSON options for serialization/deserialization
-        public static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true,
-        };
-
         #region Exchange Coins
         public static readonly List<object> BinanceCoins =
         [
@@ -898,26 +816,6 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
                 },
                 new()
                 {
-                    Id = 3,
-                    Symbol = "ETH",
-                    Name = "Ethereum",
-                    TradingPairs =
-                    [
-                        new()
-                        {
-                            Id = 2,
-                            CoinQuote = new KlineDataRequestCoinQuote
-                            {
-                                Id = 2,
-                                Symbol = "USDT",
-                                Name = "Tether",
-                            },
-                            Exchanges = [Exchange.Binance],
-                        },
-                    ],
-                },
-                new()
-                {
                     Id = 999,
                     Symbol = "UNKNOWN",
                     Name = "Unknown",
@@ -962,7 +860,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
                                 Symbol = "USDT",
                                 Name = "Tether",
                             },
-                            Exchanges = [Exchange.Binance, Exchange.Bybit],
+                            Exchanges = [Exchange.Binance],
                         },
                     ],
                 },
@@ -982,7 +880,7 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
                                 Symbol = "USDT",
                                 Name = "Tether",
                             },
-                            Exchanges = [Exchange.Binance, Exchange.Bybit],
+                            Exchanges = [Exchange.Binance],
                         },
                     ],
                 },
@@ -1054,42 +952,6 @@ public class ExchangesControllerIntegrationTests(CustomWebApplicationFactory fac
                 6000,
                 "3000.0",
                 "2280000.0",
-                "0.0",
-            ],
-        ];
-
-        public static readonly List<object[]> BtcKlineDataShort =
-        [
-            [
-                1609459200000,
-                "28000.0",
-                "29000.0",
-                "27000.0",
-                "28500.0",
-                "1000.0",
-                1609545600000,
-                "28500000.0",
-                1000,
-                "500.0",
-                "14250000.0",
-                "0.0",
-            ],
-        ];
-
-        public static readonly List<object[]> EthKlineDataShort =
-        [
-            [
-                1609459200000,
-                "700.0",
-                "750.0",
-                "680.0",
-                "720.0",
-                "5000.0",
-                1609545600000,
-                "3600000.0",
-                5000,
-                "2500.0",
-                "1800000.0",
                 "0.0",
             ],
         ];

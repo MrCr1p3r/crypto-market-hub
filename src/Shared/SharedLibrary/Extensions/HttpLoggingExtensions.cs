@@ -6,7 +6,7 @@ namespace SharedLibrary.Extensions;
 /// Provides extension methods for logging HTTP response details,
 /// particularly for unsuccessful HTTP responses.
 /// </summary>
-public static class HttpLoggingExtensions
+public static class HttpLoggingExtensions //TODO: Source Generator Logging
 {
     /// <summary>
     /// Logs details of an unsuccessful HTTP response, including the request URI,
@@ -31,6 +31,23 @@ public static class HttpLoggingExtensions
             response.StatusCode,
             response.ReasonPhrase,
             errorContent
+        );
+    }
+
+    public static void LogUnsuccessfulHttpResponse(
+        this ILogger logger,
+        int errorCode,
+        string reasonPhrase,
+        string requestUri
+    )
+    {
+        var errorMessage = $"Request to '{requestUri}' failed.";
+
+        logger.LogWarning(
+            "{ErrorMessage} Status Code: {StatusCode}, Reason: {ReasonPhrase}",
+            errorMessage,
+            errorCode,
+            reasonPhrase
         );
     }
 }
