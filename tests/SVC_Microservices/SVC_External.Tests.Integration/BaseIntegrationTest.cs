@@ -4,9 +4,9 @@ namespace SVC_External.Tests.Integration;
 
 public abstract class BaseIntegrationTest(CustomWebApplicationFactory factory) : IAsyncLifetime
 {
-    protected CustomWebApplicationFactory Factory { get; } = factory;
+    private protected CustomWebApplicationFactory Factory { get; } = factory;
 
-    protected HttpClient Client { get; } = factory.CreateClient();
+    private protected HttpClient Client { get; } = factory.CreateClient();
 
     public virtual Task InitializeAsync() => Task.CompletedTask;
 

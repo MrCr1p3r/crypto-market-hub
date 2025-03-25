@@ -10,17 +10,23 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 {
     private readonly WireMockContainer _binanceWireMockContainer =
         new WireMockContainerBuilder().Build();
+
     private readonly WireMockContainer _bybitWireMockContainer =
         new WireMockContainerBuilder().Build();
+
     private readonly WireMockContainer _mexcWireMockContainer =
         new WireMockContainerBuilder().Build();
+
     private readonly WireMockContainer _coinGeckoWireMockContainer =
         new WireMockContainerBuilder().Build();
 
     // Expose mock servers for tests
     public IWireMockAdminApi BinanceServerMock { get; private set; } = null!;
+
     public IWireMockAdminApi BybitServerMock { get; private set; } = null!;
+
     public IWireMockAdminApi MexcServerMock { get; private set; } = null!;
+
     public IWireMockAdminApi CoinGeckoServerMock { get; private set; } = null!;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
