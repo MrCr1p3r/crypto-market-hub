@@ -209,7 +209,6 @@ public class ExchangesControllerTests(CustomWebApplicationFactory factory)
         result.Should().Contain(c => c.Id == "usd-coin");
 
         // Verify stablecoin flags
-
         var btcAsset = result!.FirstOrDefault(c => c.Id == "bitcoin");
         var ethAsset = result!.FirstOrDefault(c => c.Id == "ethereum");
         var tetherAsset = result!.FirstOrDefault(c => c.Id == "tether");
