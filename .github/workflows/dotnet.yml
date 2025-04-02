@@ -5,7 +5,7 @@ name: .NET
 
 on:
   push:
-    branches: [ "main", "svc_external-optimization" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
