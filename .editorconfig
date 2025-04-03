@@ -10,7 +10,7 @@ end_of_line = crlf
 charset = utf-8
 max_line_length = 100
 
-[*.{cs,vb}]
+[*.cs]
 # Analyzer severity levels: none, silent, suggestion, warning, error
 dotnet_analyzer_diagnostic.severity = warning
 dotnet_diagnostic.CA1707.severity = none  # Remove the underscores from member name 
@@ -29,10 +29,6 @@ dotnet_diagnostic.S1118.severity = none
 dotnet_diagnostic.SA1009.severity = none
 # SA1111: Closing parenthesis should be on line of last parameter
 dotnet_diagnostic.SA1111.severity = none
-# SA1519: Braces should not be omitted from multi-line child statement
-dotnet_diagnostic.SA1519.severity = none
-# SA1503: Braces should not be omitted
-dotnet_diagnostic.SA1503.severity = none
 # SA1200: Using directives should be placed correctly
 dotnet_diagnostic.SA1200.severity = none
 # SA1309: Field names should not begin with underscore
