@@ -1,6 +1,5 @@
-using FluentResults;
-using SVC_Coins.Models.Input;
-using SVC_Coins.Models.Output;
+using SVC_Coins.Domain.Entities;
+using SVC_Coins.Domain.ValueObjects;
 
 namespace SVC_Coins.Repositories.Interfaces;
 
@@ -10,56 +9,49 @@ namespace SVC_Coins.Repositories.Interfaces;
 public interface ICoinsRepository
 {
     /// <summary>
-    /// Inserts a new Coin entry into the database.
-    /// </summary>
-    /// <param name="coin">The Coin object to insert.</param>
-    /// <returns>A result representing the outcome of the operation.</returns>
-    Task<Result> InsertCoin(CoinNew coin);
-
-    /// <summary>
-    /// Inserts multiple new Coin entries into the database.
-    /// </summary>
-    /// <param name="coins">The collection of Coin objects to insert.</param>
-    /// <returns>A result representing the outcome of the operation.</returns>
-    Task<Result> InsertCoins(IEnumerable<CoinNew> coins);
-
-    /// <summary>
     /// Retrieves all coins from the database.
     /// </summary>
-    /// <returns>A collection of coin objects.</returns>
-    Task<IEnumerable<Coin>> GetAllCoins();
-
-    /// <summary>
-    /// Deletes a coin from the database.
-    /// </summary>
-    /// <param name="idCoin">The ID of the coin to delete.</param>
-    /// <returns>A result representing the outcome of the operation.</returns>
-    Task<Result> DeleteCoin(int idCoin);
-
-    /// <summary>
-    /// Inserts a new trading pair entry into the database.
-    /// </summary>
-    /// <param name="tradingPair">The trading pair object to insert.</param>
-    /// <returns>A result representing the outcome of the operation.
-    /// If operation was successful, returns the ID of the inserted trading pair.</returns>
-    Task<Result<int>> InsertTradingPair(TradingPairNew tradingPair);
-
-    /// <summary>
-    /// Retrieves a collection of quote coins sorted by priority from database.
-    /// </summary>
-    /// <returns>A collection of quote coins sorted by priority.</returns>
-    Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized();
+    /// <returns>A collection of coin entities.</returns>
+    Task<IEnumerable<CoinsEntity>> GetAllCoins();
 
     /// <summary>
     /// Retrieves a collection of coins by their IDs.
     /// </summary>
     /// <param name="ids">The IDs of the coins to retrieve.</param>
-    /// <returns>A collection of coins.</returns>
-    Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids);
+    /// <returns>A collection of found coin entities.</returns>
+    Task<IEnumerable<CoinsEntity>> GetCoinsByIds(IEnumerable<int> ids);
 
     /// <summary>
-    /// Clears all data from the Coins, TradingPairs and KlineData tables in the database.
+    /// Retrieves a collection of coins that match the specified symbol-name pairs.
+    /// </summary>
+    /// <param name="pairs">The collection of symbol-name pairs to match.</param>
+    /// <returns>A collection of found coin entities.</returns>
+    Task<IEnumerable<CoinsEntity>> GetCoinsBySymbolNamePairs(IEnumerable<CoinSymbolNamePair> pairs);
+
+    /// <summary>
+    /// Inserts multiple new Coin entities into the database.
+    /// </summary>
+    /// <param name="coins">The collection of Coin entities to insert.</param>
+    /// <returns>A collection of inserted Coin entities.</returns>
+    Task<IEnumerable<CoinsEntity>> InsertCoins(IEnumerable<CoinsEntity> coins);
+
+    /// <summary>
+    /// Updates the data of multiple coins.
+    /// </summary>
+    /// <param name="coins">The collection of coins with updated data.</param>
+    /// <returns>A collection of coins with updated data.</returns>
+    Task<IEnumerable<CoinsEntity>> UpdateCoins(IEnumerable<CoinsEntity> coins);
+
+    /// <summary>
+    /// Deletes a coin from the database.
+    /// </summary>
+    /// <param name="coin">The coin to delete.</param>
+    /// <returns>A task, that deletes the coin.</returns>
+    Task DeleteCoin(CoinsEntity coin);
+
+    /// <summary>
+    /// Clears all data from the Coins and TradingPairs tables in the database.
     /// </summary>
     /// <returns>Task, that clears the database.</returns>
-    Task ResetDatabase();
+    Task DeleteAllCoinsWithRelatedData();
 }

@@ -1,8 +1,7 @@
-using FluentResults;
 using Microsoft.EntityFrameworkCore;
-using SVC_Coins.Models.Entities;
-using SVC_Coins.Models.Input;
-using SVC_Coins.Models.Output;
+using SVC_Coins.Domain.Entities;
+using SVC_Coins.Domain.ValueObjects;
+using SVC_Coins.Infrastructure;
 using SVC_Coins.Repositories.Interfaces;
 
 namespace SVC_Coins.Repositories;
@@ -16,173 +15,70 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     private readonly CoinsDbContext _context = context;
 
     /// <inheritdoc />
-    public async Task<Result> InsertCoin(CoinNew coin)
-    {
-        var coinEntity = Mapping.ToCoinEntity(coin);
-        if (await CheckCoinExists(coinEntity))
-            return Result.Fail("Coin already exists in the database.");
-
-        await _context.Coins.AddAsync(coinEntity);
-        await _context.SaveChangesAsync();
-        return Result.Ok();
-    }
-
-    /// <inheritdoc />
-    public async Task<Result> InsertCoins(IEnumerable<CoinNew> coins)
-    {
-        var coinEntities = coins.Select(Mapping.ToCoinEntity).ToList();
-        var existingCoins = await CheckCoinsExist(coinEntities);
-
-        if (existingCoins.Any())
-        {
-            var duplicateCoins = string.Join(
-                ", ",
-                existingCoins.Select(c => $"{c.Name} ({c.Symbol})")
-            );
-            return Result.Fail(
-                $"The following coins already exist in the database: {duplicateCoins}"
-            );
-        }
-
-        await _context.Coins.AddRangeAsync(coinEntities);
-        await _context.SaveChangesAsync();
-        return Result.Ok();
-    }
-
-    private async Task<IEnumerable<CoinsEntity>> CheckCoinsExist(IEnumerable<CoinsEntity> newCoins)
-    {
-        var allCoins = await _context.Coins.ToListAsync();
-        var existingCoins = allCoins.Where(coin =>
-            newCoins.Any(newCoin => newCoin.Name == coin.Name && newCoin.Symbol == coin.Symbol)
-        );
-        return existingCoins;
-    }
-
-    private async Task<bool> CheckCoinExists(CoinsEntity coin) =>
-        await _context.Coins.AnyAsync(c => c.Name == coin.Name && c.Symbol == coin.Symbol);
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<Coin>> GetAllCoins()
-    {
-        var coinsWithTradingPairs = await _context.Coins.Include(c => c.TradingPairs).ToListAsync();
-
-        return coinsWithTradingPairs.Select(Mapping.ToCoin);
-    }
-
-    /// <inheritdoc />
-    public async Task<Result> DeleteCoin(int idCoin)
-    {
-        var coinToDelete = _context.Coins.Where(coin => coin.Id == idCoin);
-        if (!coinToDelete.Any())
-            return Result.Fail($"Coin with ID {idCoin} not found.");
-
-        var tradingPairsToDelete = _context.TradingPairs.Where(tp =>
-            tp.IdCoinMain == idCoin || tp.IdCoinQuote == idCoin
-        );
-        _context.TradingPairs.RemoveRange(tradingPairsToDelete);
-
-        _context.Coins.RemoveRange(coinToDelete);
-
-        await _context.SaveChangesAsync();
-        return Result.Ok();
-    }
-
-    /// <inheritdoc />
-    public async Task<Result<int>> InsertTradingPair(TradingPairNew tradingPair)
-    {
-        var tradingPairEntity = Mapping.ToTradingPairEntity(tradingPair);
-
-        if (!await CheckCoinsExist(tradingPairEntity))
-            return Result.Fail("One or both coins do not exist in the Coins table.");
-
-        if (await CheckTradingPairExists(tradingPairEntity))
-            return Result.Fail("This trading pair already exists.");
-
-        await _context.TradingPairs.AddAsync(tradingPairEntity);
-        await _context.SaveChangesAsync();
-
-        return Result.Ok(tradingPairEntity.Id);
-    }
-
-    private async Task<bool> CheckCoinsExist(TradingPairsEntity tradingPairEntity) =>
-        await _context.Coins.AnyAsync(coin => coin.Id == tradingPairEntity.IdCoinMain)
-        && await _context.Coins.AnyAsync(coin => coin.Id == tradingPairEntity.IdCoinQuote);
-
-    private async Task<bool> CheckTradingPairExists(TradingPairsEntity tradingPairEntity) =>
-        await _context.TradingPairs.AnyAsync(tp =>
-            tp.IdCoinMain == tradingPairEntity.IdCoinMain
-            && tp.IdCoinQuote == tradingPairEntity.IdCoinQuote
-        );
-
-    /// <inheritdoc />
-    public async Task<IEnumerable<Coin>> GetQuoteCoinsPrioritized()
-    {
-        var prioritizedCoins = await _context
-            .Coins.Where(c => c.QuoteCoinPriority != null)
-            .OrderBy(c => c.QuoteCoinPriority)
+    public async Task<IEnumerable<CoinsEntity>> GetAllCoins() =>
+        await _context
+            .Coins.Include(c => c.TradingPairs)
+            .ThenInclude(tp => tp.Exchanges)
             .ToListAsync();
 
-        return prioritizedCoins.Select(Mapping.ToCoin);
-    }
-
     /// <inheritdoc />
-    public async Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids)
-    {
-        var coins = await _context
+    public async Task<IEnumerable<CoinsEntity>> GetCoinsByIds(IEnumerable<int> ids) =>
+        await _context
             .Coins.Where(coin => ids.Contains(coin.Id))
             .Include(c => c.TradingPairs)
             .ThenInclude(tp => tp.CoinQuote)
+            .Include(c => c.TradingPairs)
+            .ThenInclude(tp => tp.Exchanges)
+            .AsSplitQuery()
             .ToListAsync();
 
-        return coins.Select(Mapping.ToCoin);
+    /// <inheritdoc />
+    public async Task<IEnumerable<CoinsEntity>> GetCoinsBySymbolNamePairs(
+        IEnumerable<CoinSymbolNamePair> pairs
+    )
+    {
+        var pairStrings = pairs.Select(p => p.Symbol + "-" + p.Name).ToHashSet();
+
+        var coins = await _context
+            .Coins.Where(coin => pairStrings.Contains(coin.Symbol + "-" + coin.Name))
+            .Include(c => c.TradingPairs)
+            .ThenInclude(tp => tp.CoinQuote)
+            .Include(c => c.TradingPairs)
+            .ThenInclude(tp => tp.Exchanges)
+            .AsSplitQuery()
+            .ToListAsync();
+
+        return coins;
     }
 
     /// <inheritdoc />
-    public async Task ResetDatabase()
+    public async Task<IEnumerable<CoinsEntity>> InsertCoins(IEnumerable<CoinsEntity> coins)
+    {
+        await _context.Coins.AddRangeAsync(coins);
+        await _context.SaveChangesAsync();
+        return coins;
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<CoinsEntity>> UpdateCoins(IEnumerable<CoinsEntity> coins)
+    {
+        _context.Coins.UpdateRange(coins);
+        await _context.SaveChangesAsync();
+        return coins;
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteCoin(CoinsEntity coin)
+    {
+        _context.Coins.Remove(coin);
+        await _context.SaveChangesAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteAllCoinsWithRelatedData()
     {
         _context.TradingPairs.RemoveRange(_context.TradingPairs);
         _context.Coins.RemoveRange(_context.Coins);
         await _context.SaveChangesAsync();
-    }
-
-    private static class Mapping
-    {
-        public static CoinsEntity ToCoinEntity(CoinNew coinNew) =>
-            new()
-            {
-                Name = coinNew.Name,
-                Symbol = coinNew.Symbol,
-                QuoteCoinPriority = coinNew.QuoteCoinPriority,
-                IsStablecoin = coinNew.IsStablecoin,
-            };
-
-        public static Coin ToCoin(CoinsEntity coinEntity) =>
-            new()
-            {
-                Id = coinEntity.Id,
-                Name = coinEntity.Name,
-                Symbol = coinEntity.Symbol,
-                QuoteCoinPriority = coinEntity.QuoteCoinPriority,
-                IsStablecoin = coinEntity.IsStablecoin,
-                TradingPairs = coinEntity.TradingPairs.Select(ToTradingPair),
-            };
-
-        public static TradingPair ToTradingPair(TradingPairsEntity tradingPairEntity) =>
-            new()
-            {
-                Id = tradingPairEntity.Id,
-                CoinQuote = ToTradingPairCoinQuote(tradingPairEntity.CoinQuote),
-            };
-
-        public static TradingPairCoinQuote ToTradingPairCoinQuote(CoinsEntity coinEntity) =>
-            new()
-            {
-                Id = coinEntity.Id,
-                Name = coinEntity.Name,
-                Symbol = coinEntity.Symbol,
-            };
-
-        public static TradingPairsEntity ToTradingPairEntity(TradingPairNew tradingPair) =>
-            new() { IdCoinMain = tradingPair.IdCoinMain, IdCoinQuote = tradingPair.IdCoinQuote };
     }
 }

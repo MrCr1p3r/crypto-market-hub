@@ -1,21 +1,23 @@
 using AutoFixture;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using SVC_Coins.Models.Entities;
-using SVC_Coins.Models.Input;
+using SVC_Coins.Domain.Entities;
+using SVC_Coins.Domain.ValueObjects;
+using SVC_Coins.Infrastructure;
 using SVC_Coins.Repositories;
 
 namespace SVC_Coins.Tests.Unit.Repositories;
 
-public class CoinsRepositoryTests
+public class CoinsRepositoryTests : IDisposable
 {
     private readonly CoinsDbContext _context;
-    private readonly CoinsRepository _repository;
+    private readonly CoinsRepository _testedRepository;
     private readonly Fixture _fixture;
 
     public CoinsRepositoryTests()
     {
         _fixture = new Fixture();
+        _fixture.Behaviors.Add(new OmitOnRecursionBehavior(1));
 
         var options = new DbContextOptionsBuilder<CoinsDbContext>()
             .UseSqlite("DataSource=:memory:")
@@ -25,554 +27,477 @@ public class CoinsRepositoryTests
         _context.Database.OpenConnection();
         _context.Database.EnsureCreated();
 
-        _repository = new CoinsRepository(_context);
+        _testedRepository = new CoinsRepository(_context);
     }
 
     [Fact]
-    public async Task InsertCoin_AddsEntityToTheDatabase()
+    public async Task GetAllCoins_ReturnsAllCoinsWithTradingPairs()
     {
         // Arrange
-        var coinNew = _fixture.Build<CoinNew>().With(c => c.Symbol, "BTC").Create();
-        var coinEntity = new CoinsEntity
-        {
-            Name = coinNew.Name,
-            Symbol = coinNew.Symbol,
-            IsStablecoin = coinNew.IsStablecoin,
-            QuoteCoinPriority = coinNew.QuoteCoinPriority,
-        };
-
-        // Act
-        var result = await _repository.InsertCoin(coinNew);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        var insertedCoin = await _context.Coins.FirstOrDefaultAsync(e =>
-            e.Symbol == coinNew.Symbol && e.Name == coinNew.Name
-        );
-        insertedCoin.Should().BeEquivalentTo(coinEntity, options => options.Excluding(c => c.Id));
-    }
-
-    [Fact]
-    public async Task InsertCoin_ShouldReturnFail_IfCoinAlreadyExists()
-    {
-        // Arrange
-        var coinNew = _fixture.Build<CoinNew>().With(c => c.Symbol, "BTC").Create();
-        await _repository.InsertCoin(coinNew);
-
-        // Act
-        var result = await _repository.InsertCoin(coinNew);
-
-        // Assert
-        result.IsFailed.Should().BeTrue();
-        result.Errors.First().Message.Should().Be("Coin already exists in the database.");
-    }
-
-    [Fact]
-    public async Task InsertCoins_ShouldAddMultipleCoinsToDatabase_WhenAllAreNew()
-    {
-        // Arrange
-        var coinsNew = new List<CoinNew>
-        {
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Bitcoin")
-                .With(c => c.Symbol, "BTC")
-                .Create(),
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Ethereum")
-                .With(c => c.Symbol, "ETH")
-                .Create(),
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Tether")
-                .With(c => c.Symbol, "USDT")
-                .Create(),
-        };
-
-        // Act
-        var result = await _repository.InsertCoins(coinsNew);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        var insertedCoins = await _context.Coins.ToListAsync();
-        insertedCoins.Should().HaveCount(3);
-        insertedCoins.Should().Contain(c => c.Symbol == "BTC" && c.Name == "Bitcoin");
-        insertedCoins.Should().Contain(c => c.Symbol == "ETH" && c.Name == "Ethereum");
-        insertedCoins.Should().Contain(c => c.Symbol == "USDT" && c.Name == "Tether");
-    }
-
-    [Fact]
-    public async Task InsertCoins_ShouldReturnFail_WhenAnyCoinsExist()
-    {
-        // Arrange
-        var existingCoin = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
-        await _context.Coins.AddAsync(existingCoin);
-        await _context.SaveChangesAsync();
-
-        var coinsNew = new List<CoinNew>
-        {
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Bitcoin")
-                .With(c => c.Symbol, "BTC")
-                .Create(),
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Ethereum")
-                .With(c => c.Symbol, "ETH")
-                .Create(),
-        };
-
-        // Act
-        var result = await _repository.InsertCoins(coinsNew);
-
-        // Assert
-        result.IsFailed.Should().BeTrue();
-        result
-            .Errors.First()
-            .Message.Should()
-            .Be("The following coins already exist in the database: Bitcoin (BTC)");
-        var coinsInDb = await _context.Coins.ToListAsync();
-        coinsInDb.Should().HaveCount(1);
-    }
-
-    [Fact]
-    public async Task InsertCoins_ShouldReturnFail_WhenMultipleCoinsExist()
-    {
-        // Arrange
-        var existingCoins = new List<CoinsEntity>
-        {
-            new() { Name = "Bitcoin", Symbol = "BTC" },
-            new() { Name = "Ethereum", Symbol = "ETH" },
-        };
-        await _context.Coins.AddRangeAsync(existingCoins);
-        await _context.SaveChangesAsync();
-
-        var coinsNew = new List<CoinNew>
-        {
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Bitcoin")
-                .With(c => c.Symbol, "BTC")
-                .Create(),
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Ethereum")
-                .With(c => c.Symbol, "ETH")
-                .Create(),
-            _fixture
-                .Build<CoinNew>()
-                .With(c => c.Name, "Tether")
-                .With(c => c.Symbol, "USDT")
-                .Create(),
-        };
-
-        // Act
-        var result = await _repository.InsertCoins(coinsNew);
-
-        // Assert
-        result.IsFailed.Should().BeTrue();
-        result
-            .Errors.First()
-            .Message.Should()
-            .Be("The following coins already exist in the database: Bitcoin (BTC), Ethereum (ETH)");
-        var coinsInDb = await _context.Coins.ToListAsync();
-        coinsInDb.Should().HaveCount(2); // Only the original coins should exist
-    }
-
-    [Fact]
-    public async Task GetCoins_ShouldReturnAllCoinsWithTradingPairs()
-    {
-        // Arrange
-        var coin1 = new CoinsEntity
-        {
-            Id = 1,
-            Name = "Bitcoin",
-            Symbol = "BTC",
-            TradingPairs = [],
-        };
-        var coin2 = new CoinsEntity
-        {
-            Id = 2,
-            Name = "Ethereum",
-            Symbol = "ETH",
-            TradingPairs = [],
-        };
-        var coin3 = new CoinsEntity
-        {
-            Id = 3,
-            Name = "Tether",
-            Symbol = "USDT",
-            TradingPairs = [],
-        };
-
-        await _context.Coins.AddRangeAsync([coin1, coin2, coin3]);
-        await _context.SaveChangesAsync();
-
-        var tradingPair1 = new TradingPairsEntity
-        {
-            Id = 1,
-            IdCoinMain = coin1.Id,
-            IdCoinQuote = coin3.Id,
-            CoinMain = coin1,
-            CoinQuote = coin3,
-        };
-        var tradingPair2 = new TradingPairsEntity
-        {
-            Id = 2,
-            IdCoinMain = coin2.Id,
-            IdCoinQuote = coin1.Id,
-            CoinMain = coin2,
-            CoinQuote = coin1,
-        };
-
-        coin1.TradingPairs.Add(tradingPair1);
-        coin2.TradingPairs.Add(tradingPair2);
-
-        await _context.TradingPairs.AddRangeAsync([tradingPair1, tradingPair2]);
+        await _context.Coins.AddRangeAsync(TestData.Coins);
+        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
+        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _repository.GetAllCoins();
+        var result = await _testedRepository.GetAllCoins();
 
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(3);
 
-        var firstCoin = result.First(c => c.Id == coin1.Id);
+        // Verify all coins exist with correct IDs
+        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(0).Id);
+        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(2).Id);
+
+        // Verify important properties for first coin
+        var firstCoin = result.First(c => c.Id == TestData.Coins.First().Id);
+        firstCoin.Symbol.Should().Be("BTC");
+        firstCoin.Name.Should().Be("Bitcoin");
         firstCoin.TradingPairs.Should().HaveCount(1);
 
-        var tradingPairCoinIds = firstCoin.TradingPairs.Select(tp => tp.CoinQuote.Id);
-        tradingPairCoinIds.Should().Contain([coin3.Id]);
+        // Verify trading pair details for first coin
+        var tradingPair = firstCoin.TradingPairs.First();
+        tradingPair.CoinQuote.Id.Should().Be(TestData.Coins.Last().Id);
+        tradingPair.Exchanges.Should().HaveCount(1);
+        tradingPair.Exchanges.First().Name.Should().Be(TestData.Exchanges.First().Name);
+
+        // Verify second coin's trading pairs
+        var secondCoin = result.First(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        secondCoin.TradingPairs.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task DeleteCoin_ShouldRemoveCoinAndAssociatedTradingPairsFromDatabase()
+    public async Task GetCoinsByIds_ReturnsCorrectCoinsWithTradingPairs()
     {
         // Arrange
-        var coin1 = new CoinsEntity
-        {
-            Id = 1,
-            Name = "Bitcoin",
-            Symbol = "BTC",
-        };
-        var coin2 = new CoinsEntity
-        {
-            Id = 2,
-            Name = "Ethereum",
-            Symbol = "ETH",
-        };
-        var coin3 = new CoinsEntity
-        {
-            Id = 3,
-            Name = "Tether",
-            Symbol = "USDT",
-        };
-
-        await _context.Coins.AddRangeAsync(coin1, coin2, coin3);
+        await _context.Coins.AddRangeAsync(TestData.Coins);
+        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
+        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
         await _context.SaveChangesAsync();
 
-        var coinToDeleteId = coin2.Id;
-
-        var tradingPair1 = new TradingPairsEntity
-        {
-            Id = 1,
-            IdCoinMain = coin2.Id,
-            IdCoinQuote = coin1.Id,
-            CoinMain = coin2,
-            CoinQuote = coin1,
-        };
-        var tradingPair2 = new TradingPairsEntity
-        {
-            Id = 2,
-            IdCoinMain = coin3.Id,
-            IdCoinQuote = coin2.Id,
-            CoinMain = coin3,
-            CoinQuote = coin2,
-        };
-        var tradingPair3 = new TradingPairsEntity
-        {
-            Id = 3,
-            IdCoinMain = coin1.Id,
-            IdCoinQuote = coin3.Id,
-            CoinMain = coin1,
-            CoinQuote = coin3,
-        };
-
-        await _context.TradingPairs.AddRangeAsync(tradingPair1, tradingPair2, tradingPair3);
-        await _context.SaveChangesAsync();
+        var coinIds = TestData.Coins.Select(c => c.Id);
 
         // Act
-        var result = await _repository.DeleteCoin(coinToDeleteId);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-
-        var deletedCoin = await _context.Coins.FirstOrDefaultAsync(c => c.Id == coinToDeleteId);
-        deletedCoin.Should().BeNull();
-
-        var remainingCoins = await _context.Coins.ToListAsync();
-        remainingCoins.Should().HaveCount(2);
-        remainingCoins.Should().NotContain(c => c.Id == coinToDeleteId);
-
-        var remainingTradingPairs = await _context.TradingPairs.ToListAsync();
-        remainingTradingPairs.Should().HaveCount(1);
-        remainingTradingPairs
-            .Should()
-            .NotContain(tp => tp.IdCoinMain == coinToDeleteId || tp.IdCoinQuote == coinToDeleteId);
-    }
-
-    [Fact]
-    public async Task DeleteCoin_ShouldReturnFail_IfCoinNotFound()
-    {
-        // Arrange
-        var nonExistentId = 999;
-
-        // Act
-        var result = await _repository.DeleteCoin(nonExistentId);
-
-        // Assert
-        result.IsFailed.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task InsertTradingPair_ShouldAddTradingPairToDatabase_IfValid()
-    {
-        // Arrange
-        var coinMain = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
-        var coinQuote = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
-        await _context.Coins.AddRangeAsync(coinMain, coinQuote);
-        await _context.SaveChangesAsync();
-
-        var tradingPairNew = new TradingPairNew
-        {
-            IdCoinMain = coinMain.Id,
-            IdCoinQuote = coinQuote.Id,
-        };
-
-        // Act
-        var result = await _repository.InsertTradingPair(tradingPairNew);
-
-        // Assert
-        result.IsSuccess.Should().BeTrue();
-        var insertedId = result.Value;
-
-        var exists = await _context.TradingPairs.AnyAsync(entity =>
-            entity.IdCoinMain == tradingPairNew.IdCoinMain
-            && entity.IdCoinQuote == tradingPairNew.IdCoinQuote
-        );
-        exists.Should().BeTrue();
-
-        var insertedEntity = await _context.TradingPairs.FindAsync(insertedId);
-        insertedEntity.Should().NotBeNull();
-        insertedEntity!.Id.Should().Be(insertedId);
-        insertedEntity.IdCoinMain.Should().Be(tradingPairNew.IdCoinMain);
-        insertedEntity.IdCoinQuote.Should().Be(tradingPairNew.IdCoinQuote);
-    }
-
-    [Fact]
-    public async Task InsertTradingPair_ShouldFail_IfCoinsDoNotExist()
-    {
-        // Arrange
-        var tradingPairNew = new TradingPairNew
-        {
-            IdCoinMain = 999, // Non-existent
-            IdCoinQuote = 1000, // Non-existent
-        };
-
-        // Act
-        var result = await _repository.InsertTradingPair(tradingPairNew);
-
-        // Assert
-        result.IsFailed.Should().BeTrue();
-        result
-            .Errors.First()
-            .Message.Should()
-            .Be("One or both coins do not exist in the Coins table.");
-    }
-
-    [Fact]
-    public async Task InsertTradingPair_ShouldFail_IfTradingPairAlreadyExists()
-    {
-        // Arrange
-        var coinMain = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
-        var coinQuote = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
-        await _context.Coins.AddRangeAsync(coinMain, coinQuote);
-        await _context.SaveChangesAsync();
-
-        var tradingPair = new TradingPairsEntity
-        {
-            IdCoinMain = coinMain.Id,
-            IdCoinQuote = coinQuote.Id,
-        };
-
-        await _context.TradingPairs.AddAsync(tradingPair);
-        await _context.SaveChangesAsync();
-
-        var tradingPairNew = new TradingPairNew
-        {
-            IdCoinMain = coinMain.Id,
-            IdCoinQuote = coinQuote.Id,
-        };
-
-        // Act
-        var result = await _repository.InsertTradingPair(tradingPairNew);
-
-        // Assert
-        result.IsFailed.Should().BeTrue();
-        result.Errors.First().Message.Should().Be("This trading pair already exists.");
-    }
-
-    [Fact]
-    public async Task GetQuoteCoinsPrioritized_ShouldReturnCoinsSortedByPriority()
-    {
-        // Arrange
-        var coin1 = new CoinsEntity
-        {
-            Id = 1,
-            Name = "Bitcoin",
-            Symbol = "BTC",
-            QuoteCoinPriority = 2,
-        };
-        var coin2 = new CoinsEntity
-        {
-            Id = 2,
-            Name = "Ethereum",
-            Symbol = "ETH",
-            QuoteCoinPriority = 1,
-        };
-        var coin3 = new CoinsEntity
-        {
-            Id = 3,
-            Name = "Tether",
-            Symbol = "USDT",
-            QuoteCoinPriority = null,
-        };
-
-        await _context.Coins.AddRangeAsync(coin1, coin2, coin3);
-        await _context.SaveChangesAsync();
-
-        // Act
-        var result = await _repository.GetQuoteCoinsPrioritized();
+        var result = await _testedRepository.GetCoinsByIds(coinIds);
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().HaveCount(2);
+        result.Should().HaveCount(3);
 
-        var orderedCoins = result.ToList();
-        orderedCoins[0].Id.Should().Be(coin2.Id);
-        orderedCoins[1].Id.Should().Be(coin1.Id);
+        // Verify all coins exist with correct IDs
+        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(0).Id);
+        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(2).Id);
+
+        // Verify important properties for first coin
+        var firstCoin = result.First(c => c.Id == TestData.Coins.First().Id);
+        firstCoin.Symbol.Should().Be("BTC");
+        firstCoin.Name.Should().Be("Bitcoin");
+        firstCoin.TradingPairs.Should().HaveCount(1);
+
+        // Verify trading pair details for first coin
+        var tradingPair = firstCoin.TradingPairs.First();
+        tradingPair.CoinQuote.Id.Should().Be(TestData.Coins.Last().Id);
+        tradingPair.Exchanges.Should().HaveCount(1);
+        tradingPair.Exchanges.First().Name.Should().Be(TestData.Exchanges.First().Name);
+
+        // Verify second coin's trading pairs
+        var secondCoin = result.First(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        secondCoin.TradingPairs.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task GetQuoteCoinsPrioritized_ShouldReturnEmptyIfNoCoinsExist()
+    public async Task GetCoinsByIds_WhenNoCoinsExist_ReturnsEmpty()
     {
         // Act
-        var result = await _repository.GetQuoteCoinsPrioritized();
+        var result = await _testedRepository.GetCoinsByIds([1, 2]);
 
         // Assert
         result.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task GetCoinsByIds_ShouldReturnCorrectCoins()
-    {
-        // Arrange: Use a new context for setup
-        var options = new DbContextOptionsBuilder<CoinsDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase")
-            .Options;
-
-        using var setupContext = new CoinsDbContext(options);
-        var coin1 = new CoinsEntity
-        {
-            Id = 1,
-            Name = "Bitcoin",
-            Symbol = "BTC",
-            TradingPairs =
-            [
-                new TradingPairsEntity
-                {
-                    Id = 1,
-                    IdCoinMain = 1,
-                    IdCoinQuote = 2,
-                },
-            ],
-        };
-        var coin2 = new CoinsEntity
-        {
-            Id = 2,
-            Name = "Ethereum",
-            Symbol = "ETH",
-            TradingPairs = [],
-        };
-        await setupContext.Coins.AddRangeAsync(coin1, coin2);
-        await setupContext.SaveChangesAsync();
-
-        // Act: Use a separate context for the test
-        using var testContext = new CoinsDbContext(options);
-        var repository = new CoinsRepository(testContext);
-        var result = await repository.GetCoinsByIds([1]);
-
-        // Assert: Validate results using the test context
-        result.Should().HaveCount(1);
-        result.Should().Contain(c => c.Id == 1 && c.Name == "Bitcoin");
-        result.First().TradingPairs.Should().HaveCount(1);
-        result.First().TradingPairs.First().CoinQuote.Id.Should().Be(2);
-    }
-
-    [Fact]
-    public async Task GetCoinsByIds_ShouldReturnEmpty_IfNoCoinsExist()
-    {
-        // Act
-        var result = await _repository.GetCoinsByIds([1, 2]);
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task ResetDatabase_ShouldRemoveAllCoinsAndTradingPairs()
+    public async Task GetCoinsBySymbolNamePairs_WhenPairsExist_ReturnsMatchingCoins()
     {
         // Arrange
-        var coin1 = new CoinsEntity { Name = "Bitcoin", Symbol = "BTC" };
-        var coin2 = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
-        var coin3 = new CoinsEntity { Name = "Tether", Symbol = "USDT" };
-
-        await _context.Coins.AddRangeAsync([coin1, coin2, coin3]);
+        await _context.Coins.AddRangeAsync(TestData.Coins);
+        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
+        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
         await _context.SaveChangesAsync();
 
-        var tradingPair1 = new TradingPairsEntity
+        var pairs = TestData.Coins.Select(c => new CoinSymbolNamePair
         {
-            IdCoinMain = coin1.Id,
-            IdCoinQuote = coin2.Id,
-            CoinMain = coin1,
-            CoinQuote = coin2,
-        };
-        var tradingPair2 = new TradingPairsEntity
-        {
-            IdCoinMain = coin2.Id,
-            IdCoinQuote = coin3.Id,
-            CoinMain = coin2,
-            CoinQuote = coin3,
-        };
-
-        await _context.TradingPairs.AddRangeAsync([tradingPair1, tradingPair2]);
-        await _context.SaveChangesAsync();
-
-        // Verify initial state
-        (await _context.Coins.CountAsync())
-            .Should()
-            .Be(3);
-        (await _context.TradingPairs.CountAsync()).Should().Be(2);
+            Symbol = c.Symbol,
+            Name = c.Name,
+        });
 
         // Act
-        await _repository.ResetDatabase();
+        var result = await _testedRepository.GetCoinsBySymbolNamePairs(pairs);
 
         // Assert
-        (await _context.Coins.CountAsync())
-            .Should()
-            .Be(0);
-        (await _context.TradingPairs.CountAsync()).Should().Be(0);
+        result.Should().NotBeNull();
+        result.Should().HaveCount(3);
+
+        // Verify all coins exist with correct Symbols
+        result.Should().Contain(c => c.Symbol == TestData.Coins.ElementAt(0).Symbol);
+        result.Should().Contain(c => c.Symbol == TestData.Coins.ElementAt(1).Symbol);
+        result.Should().Contain(c => c.Symbol == TestData.Coins.ElementAt(2).Symbol);
+
+        // Verify important properties for first coin
+        var firstCoin = result.First(c => c.Id == TestData.Coins.First().Id);
+        firstCoin.Symbol.Should().Be("BTC");
+        firstCoin.Name.Should().Be("Bitcoin");
+        firstCoin.TradingPairs.Should().HaveCount(1);
+
+        // Verify trading pair details for first coin
+        var tradingPair = firstCoin.TradingPairs.First();
+        tradingPair.CoinQuote.Id.Should().Be(TestData.Coins.Last().Id);
+        tradingPair.Exchanges.Should().HaveCount(1);
+        tradingPair.Exchanges.First().Name.Should().Be(TestData.Exchanges.First().Name);
+
+        // Verify second coin's trading pairs
+        var secondCoin = result.First(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        secondCoin.TradingPairs.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetCoinsBySymbolNamePairs_WhenNoPairsMatch_ReturnsEmpty()
+    {
+        // Arrange
+        var pairs = new List<CoinSymbolNamePair>
+        {
+            new() { Symbol = "ETH", Name = "Ethereum" },
+            new() { Symbol = "USDT", Name = "Tether" },
+        };
+
+        // Act
+        var result = await _testedRepository.GetCoinsBySymbolNamePairs(pairs);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task InsertCoins_AddsEntitiesToDatabase()
+    {
+        // Arrange
+        var coinsToInsert = TestData.CoinsForInsertion;
+
+        // Act
+        await _testedRepository.InsertCoins(coinsToInsert);
+
+        // Assert
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(coinsToInsert.Count());
+        coinsInDb[0].Symbol.Should().Be(TestData.CoinsForInsertion.First().Symbol);
+        coinsInDb[1].Symbol.Should().Be(TestData.CoinsForInsertion.Last().Symbol);
+    }
+
+    [Fact]
+    public async Task InsertCoins_ReturnsInsertedCoins()
+    {
+        // Act
+        var result = await _testedRepository.InsertCoins(TestData.CoinsForInsertion);
+
+        // Assert
+        result.Should().BeEquivalentTo(TestData.InsertedCoins);
+    }
+
+    [Fact]
+    public async Task InsertCoins_WhenCollectionIsEmpty_ShouldDoNothing()
+    {
+        // Act
+        var result = await _testedRepository.InsertCoins([]);
+
+        // Assert
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(0);
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateCoins_UpdatesCoinsDataInDatabase()
+    {
+        // Arrange
+        await _context.Coins.AddRangeAsync(TestData.CoinsToUpdate);
+        await _context.SaveChangesAsync();
+
+        var coinsWithUpdates = TestData.CoinsToUpdate.ToList();
+        foreach (var coin in coinsWithUpdates)
+        {
+            if (coin.Id == 1)
+            {
+                coin.MarketCapUsd = int.MaxValue;
+                coin.PriceUsd = "100000";
+                coin.PriceChangePercentage24h = 100;
+            }
+            else if (coin.Id == 2)
+            {
+                coin.MarketCapUsd = int.MaxValue;
+                coin.PriceUsd = "1";
+                coin.PriceChangePercentage24h = 100;
+            }
+        }
+
+        // Act
+        await _testedRepository.UpdateCoins(coinsWithUpdates);
+
+        // Assert
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb[0].MarketCapUsd.Should().Be(int.MaxValue);
+        coinsInDb[0].PriceUsd.Should().Be("100000");
+        coinsInDb[0].PriceChangePercentage24h.Should().Be(100);
+        coinsInDb[1].MarketCapUsd.Should().Be(int.MaxValue);
+        coinsInDb[1].PriceUsd.Should().Be("1");
+        coinsInDb[1].PriceChangePercentage24h.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task UpdateCoins_ReturnsUpdatedCoins()
+    {
+        // Arrange
+        await _context.Coins.AddRangeAsync(TestData.CoinsToUpdate);
+        await _context.SaveChangesAsync();
+
+        var coinsWithUpdates = TestData.CoinsToUpdate.ToList();
+        foreach (var coin in coinsWithUpdates)
+        {
+            if (coin.Id == 1)
+            {
+                coin.MarketCapUsd = int.MaxValue;
+                coin.PriceUsd = "100000";
+                coin.PriceChangePercentage24h = 100;
+            }
+            else if (coin.Id == 2)
+            {
+                coin.MarketCapUsd = int.MaxValue;
+                coin.PriceUsd = "1";
+                coin.PriceChangePercentage24h = 100;
+            }
+        }
+
+        // Act
+        var result = await _testedRepository.UpdateCoins(coinsWithUpdates);
+
+        // Assert
+        result.Should().BeEquivalentTo(TestData.UpdatedCoins);
+    }
+
+    [Fact]
+    public async Task UpdateCoins_WhenCollectionIsEmpty_ShouldDoNothing()
+    {
+        // Act
+        var result = await _testedRepository.UpdateCoins([]);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteCoin_DeletesCoinFromDatabase()
+    {
+        // Arrange
+        await _context.Coins.AddRangeAsync(TestData.CoinsForInsertion);
+        await _context.SaveChangesAsync();
+        var coinToDelete = TestData.CoinsForInsertion.First();
+
+        // Act
+        await _testedRepository.DeleteCoin(coinToDelete);
+
+        // Assert
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(1);
+        coinsInDb.Should().NotContain(coin => coin.Id == coinToDelete.Id);
+    }
+
+    [Fact]
+    public async Task DeleteAllCoinsWithRelatedData_DeletesAllCoinsAndTradingPairs()
+    {
+        // Arrange
+        await _context.Coins.AddRangeAsync(TestData.Coins);
+        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
+        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
+        await _context.SaveChangesAsync();
+
+        // Act
+        await _testedRepository.DeleteAllCoinsWithRelatedData();
+
+        // Assert
+        var coinsInDb = await _context.Coins.ToListAsync();
+        coinsInDb.Should().BeEmpty();
+        var tradingPairsInDb = await _context.TradingPairs.ToListAsync();
+        tradingPairsInDb.Should().BeEmpty();
+        var exchangesInDb = await _context.Exchanges.ToListAsync();
+        exchangesInDb.Should().HaveCount(TestData.Exchanges.Count());
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _context.Dispose();
+        }
+    }
+
+    public static class TestData
+    {
+        public static readonly IEnumerable<CoinsEntity> Coins =
+        [
+            new CoinsEntity
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IsFiat = false,
+                IdCoinGecko = "bitcoin",
+                IsStablecoin = false,
+            },
+            new CoinsEntity
+            {
+                Id = 2,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IsFiat = false,
+                IdCoinGecko = null,
+                IsStablecoin = false,
+            },
+            new CoinsEntity
+            {
+                Id = 3,
+                Symbol = "USDT",
+                Name = "Tether",
+                IsFiat = false,
+                IdCoinGecko = "tether",
+                IsStablecoin = true,
+            },
+        ];
+
+        public static readonly IEnumerable<ExchangesEntity> Exchanges =
+        [
+            new ExchangesEntity { Id = 1, Name = "Binance" },
+            new ExchangesEntity { Id = 2, Name = "Bybit" },
+        ];
+
+        public static readonly IEnumerable<TradingPairsEntity> TradingPairs =
+        [
+            new TradingPairsEntity
+            {
+                Id = 1,
+                IdCoinMain = Coins.First().Id,
+                IdCoinQuote = Coins.Last().Id,
+                CoinMain = Coins.First(),
+                CoinQuote = Coins.Last(),
+                Exchanges = [Exchanges.First()],
+            },
+            new TradingPairsEntity
+            {
+                Id = 2,
+                IdCoinMain = Coins.ElementAt(1).Id,
+                IdCoinQuote = Coins.ElementAt(0).Id,
+                CoinMain = Coins.ElementAt(1),
+                CoinQuote = Coins.ElementAt(0),
+                Exchanges = [Exchanges.First(), Exchanges.Last()],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> CoinsForInsertion =
+        [
+            new CoinsEntity
+            {
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IsFiat = false,
+                IdCoinGecko = "bitcoin",
+                IsStablecoin = false,
+            },
+            new CoinsEntity
+            {
+                Symbol = "USDT",
+                Name = "Tether",
+                IsFiat = false,
+                IdCoinGecko = null,
+                IsStablecoin = true,
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> InsertedCoins =
+        [
+            new CoinsEntity
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IsFiat = false,
+                IdCoinGecko = "bitcoin",
+                IsStablecoin = false,
+            },
+            new CoinsEntity
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                IsFiat = false,
+                IdCoinGecko = null,
+                IsStablecoin = true,
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> CoinsToUpdate =
+        [
+            new CoinsEntity
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IsFiat = false,
+                IdCoinGecko = "bitcoin",
+                IsStablecoin = false,
+            },
+            new CoinsEntity
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                IsFiat = false,
+                IdCoinGecko = null,
+                IsStablecoin = true,
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> UpdatedCoins =
+        [
+            new CoinsEntity
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IsFiat = false,
+                IdCoinGecko = "bitcoin",
+                IsStablecoin = false,
+                MarketCapUsd = int.MaxValue,
+                PriceUsd = "100000",
+                PriceChangePercentage24h = 100,
+            },
+            new CoinsEntity
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                IsFiat = false,
+                IdCoinGecko = null,
+                IsStablecoin = true,
+                MarketCapUsd = int.MaxValue,
+                PriceUsd = "1",
+                PriceChangePercentage24h = 100,
+            },
+        ];
     }
 }
