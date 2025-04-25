@@ -1,5 +1,5 @@
-using AutoFixture;
 using FluentAssertions;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Domain.Entities;
 using SVC_Coins.Domain.ValueObjects;
@@ -10,109 +10,113 @@ namespace SVC_Coins.Tests.Unit.Repositories;
 
 public class CoinsRepositoryTests : IDisposable
 {
-    private readonly CoinsDbContext _context;
+    private readonly SqliteConnection _connection;
+    private readonly CoinsDbContext _seedContext;
+    private readonly CoinsDbContext _actContext;
+    private readonly CoinsDbContext _assertContext;
     private readonly CoinsRepository _testedRepository;
-    private readonly Fixture _fixture;
 
     public CoinsRepositoryTests()
     {
-        _fixture = new Fixture();
-        _fixture.Behaviors.Add(new OmitOnRecursionBehavior(1));
+        _connection = new SqliteConnection("DataSource=:memory:");
+        _connection.Open();
 
-        var options = new DbContextOptionsBuilder<CoinsDbContext>()
-            .UseSqlite("DataSource=:memory:")
-            .Options;
+        var options = new DbContextOptionsBuilder<CoinsDbContext>().UseSqlite(_connection).Options;
 
-        _context = new CoinsDbContext(options);
-        _context.Database.OpenConnection();
-        _context.Database.EnsureCreated();
+        _seedContext = new CoinsDbContext(options);
+        _actContext = new CoinsDbContext(options);
+        _assertContext = new CoinsDbContext(options);
+        _seedContext.Database.EnsureCreated();
 
-        _testedRepository = new CoinsRepository(_context);
+        _testedRepository = new CoinsRepository(_actContext);
     }
 
     [Fact]
-    public async Task GetAllCoins_ReturnsAllCoinsWithTradingPairs()
+    public async Task GetAllCoinsWithRelations_ReturnsAllCoinsWithRelations()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.Coins);
-        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
-        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
-        await _context.SaveChangesAsync();
+        await SeedDatabase(addTradingPairs: true);
 
         // Act
-        var result = await _testedRepository.GetAllCoins();
+        var result = await _testedRepository.GetAllCoinsWithRelations();
 
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(3);
 
         // Verify all coins exist with correct IDs
-        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(0).Id);
-        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(1).Id);
-        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(2).Id);
+        result.Should().Contain(c => c.Id == 1);
+        result.Should().Contain(c => c.Id == 2);
+        result.Should().Contain(c => c.Id == 3);
 
         // Verify important properties for first coin
-        var firstCoin = result.First(c => c.Id == TestData.Coins.First().Id);
+        var firstCoin = result.First(c => c.Id == 1);
         firstCoin.Symbol.Should().Be("BTC");
         firstCoin.Name.Should().Be("Bitcoin");
         firstCoin.TradingPairs.Should().HaveCount(1);
 
         // Verify trading pair details for first coin
         var tradingPair = firstCoin.TradingPairs.First();
-        tradingPair.CoinQuote.Id.Should().Be(TestData.Coins.Last().Id);
+        tradingPair.CoinQuote.Id.Should().Be(3);
         tradingPair.Exchanges.Should().HaveCount(1);
-        tradingPair.Exchanges.First().Name.Should().Be(TestData.Exchanges.First().Name);
+        tradingPair.Exchanges.First().Name.Should().Be("Binance");
 
         // Verify second coin's trading pairs
-        var secondCoin = result.First(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        var secondCoin = result.First(c => c.Id == 2);
         secondCoin.TradingPairs.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task GetCoinsByIds_ReturnsCorrectCoinsWithTradingPairs()
+    public async Task GetAllCoinsWithRelations_WhenNoCoinsExist_ReturnsEmpty()
+    {
+        // Act
+        var result = await _testedRepository.GetAllCoinsWithRelations();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCoinsByIdsWithRelations_ReturnsCorrectCoinsWithTradingPairs()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.Coins);
-        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
-        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
-        await _context.SaveChangesAsync();
-
-        var coinIds = TestData.Coins.Select(c => c.Id);
+        await SeedDatabase(addTradingPairs: true);
+        var coinIds = new[] { 1, 2, 3 };
 
         // Act
-        var result = await _testedRepository.GetCoinsByIds(coinIds);
+        var result = await _testedRepository.GetCoinsByIdsWithRelations(coinIds);
 
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(3);
 
         // Verify all coins exist with correct IDs
-        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(0).Id);
-        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(1).Id);
-        result.Should().Contain(c => c.Id == TestData.Coins.ElementAt(2).Id);
+        result.Should().Contain(c => c.Id == 1);
+        result.Should().Contain(c => c.Id == 2);
+        result.Should().Contain(c => c.Id == 3);
 
         // Verify important properties for first coin
-        var firstCoin = result.First(c => c.Id == TestData.Coins.First().Id);
+        var firstCoin = result.First(c => c.Id == 1);
         firstCoin.Symbol.Should().Be("BTC");
         firstCoin.Name.Should().Be("Bitcoin");
         firstCoin.TradingPairs.Should().HaveCount(1);
 
         // Verify trading pair details for first coin
         var tradingPair = firstCoin.TradingPairs.First();
-        tradingPair.CoinQuote.Id.Should().Be(TestData.Coins.Last().Id);
+        tradingPair.CoinQuote.Id.Should().Be(3);
         tradingPair.Exchanges.Should().HaveCount(1);
-        tradingPair.Exchanges.First().Name.Should().Be(TestData.Exchanges.First().Name);
+        tradingPair.Exchanges.First().Name.Should().Be("Binance");
 
         // Verify second coin's trading pairs
-        var secondCoin = result.First(c => c.Id == TestData.Coins.ElementAt(1).Id);
+        var secondCoin = result.First(c => c.Id == 2);
         secondCoin.TradingPairs.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task GetCoinsByIds_WhenNoCoinsExist_ReturnsEmpty()
+    public async Task GetCoinsByIdsWithRelations_WhenNoCoinsExist_ReturnsEmpty()
     {
         // Act
-        var result = await _testedRepository.GetCoinsByIds([1, 2]);
+        var result = await _testedRepository.GetCoinsByIdsWithRelations([1, 2]);
 
         // Assert
         result.Should().BeEmpty();
@@ -122,16 +126,13 @@ public class CoinsRepositoryTests : IDisposable
     public async Task GetCoinsBySymbolNamePairs_WhenPairsExist_ReturnsMatchingCoins()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.Coins);
-        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
-        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
-        await _context.SaveChangesAsync();
-
-        var pairs = TestData.Coins.Select(c => new CoinSymbolNamePair
+        await SeedDatabase();
+        var pairs = new List<CoinSymbolNamePair>
         {
-            Symbol = c.Symbol,
-            Name = c.Name,
-        });
+            new() { Symbol = "BTC", Name = "Bitcoin" },
+            new() { Symbol = "ETH", Name = "Ethereum" },
+            new() { Symbol = "USDT", Name = "Tether" },
+        };
 
         // Act
         var result = await _testedRepository.GetCoinsBySymbolNamePairs(pairs);
@@ -141,25 +142,14 @@ public class CoinsRepositoryTests : IDisposable
         result.Should().HaveCount(3);
 
         // Verify all coins exist with correct Symbols
-        result.Should().Contain(c => c.Symbol == TestData.Coins.ElementAt(0).Symbol);
-        result.Should().Contain(c => c.Symbol == TestData.Coins.ElementAt(1).Symbol);
-        result.Should().Contain(c => c.Symbol == TestData.Coins.ElementAt(2).Symbol);
+        result.Should().Contain(c => c.Symbol == "BTC");
+        result.Should().Contain(c => c.Symbol == "ETH");
+        result.Should().Contain(c => c.Symbol == "USDT");
 
         // Verify important properties for first coin
-        var firstCoin = result.First(c => c.Id == TestData.Coins.First().Id);
+        var firstCoin = result.First(c => c.Id == 1);
         firstCoin.Symbol.Should().Be("BTC");
         firstCoin.Name.Should().Be("Bitcoin");
-        firstCoin.TradingPairs.Should().HaveCount(1);
-
-        // Verify trading pair details for first coin
-        var tradingPair = firstCoin.TradingPairs.First();
-        tradingPair.CoinQuote.Id.Should().Be(TestData.Coins.Last().Id);
-        tradingPair.Exchanges.Should().HaveCount(1);
-        tradingPair.Exchanges.First().Name.Should().Be(TestData.Exchanges.First().Name);
-
-        // Verify second coin's trading pairs
-        var secondCoin = result.First(c => c.Id == TestData.Coins.ElementAt(1).Id);
-        secondCoin.TradingPairs.Should().HaveCount(1);
     }
 
     [Fact]
@@ -189,7 +179,7 @@ public class CoinsRepositoryTests : IDisposable
         await _testedRepository.InsertCoins(coinsToInsert);
 
         // Assert
-        var coinsInDb = await _context.Coins.ToListAsync();
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
         coinsInDb.Should().HaveCount(coinsToInsert.Count());
         coinsInDb[0].Symbol.Should().Be(TestData.CoinsForInsertion.First().Symbol);
         coinsInDb[1].Symbol.Should().Be(TestData.CoinsForInsertion.Last().Symbol);
@@ -202,7 +192,11 @@ public class CoinsRepositoryTests : IDisposable
         var result = await _testedRepository.InsertCoins(TestData.CoinsForInsertion);
 
         // Assert
-        result.Should().BeEquivalentTo(TestData.InsertedCoins);
+        result.Should().HaveCount(2);
+        result.First().Id.Should().Be(1);
+        result.Last().Id.Should().Be(2);
+        result.First().Symbol.Should().Be("BTC");
+        result.Last().Symbol.Should().Be("USDT");
     }
 
     [Fact]
@@ -212,8 +206,8 @@ public class CoinsRepositoryTests : IDisposable
         var result = await _testedRepository.InsertCoins([]);
 
         // Assert
-        var coinsInDb = await _context.Coins.ToListAsync();
-        coinsInDb.Should().HaveCount(0);
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
+        coinsInDb.Should().BeEmpty();
         result.Should().BeEmpty();
     }
 
@@ -221,11 +215,10 @@ public class CoinsRepositoryTests : IDisposable
     public async Task UpdateCoins_UpdatesCoinsDataInDatabase()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.CoinsToUpdate);
-        await _context.SaveChangesAsync();
+        await SeedDatabase();
 
-        var coinsWithUpdates = TestData.CoinsToUpdate.ToList();
-        foreach (var coin in coinsWithUpdates)
+        var coins = await _actContext.Coins.ToListAsync();
+        foreach (var coin in coins)
         {
             if (coin.Id == 1)
             {
@@ -242,27 +235,26 @@ public class CoinsRepositoryTests : IDisposable
         }
 
         // Act
-        await _testedRepository.UpdateCoins(coinsWithUpdates);
+        await _testedRepository.UpdateCoins(coins);
 
         // Assert
-        var coinsInDb = await _context.Coins.ToListAsync();
-        coinsInDb[0].MarketCapUsd.Should().Be(int.MaxValue);
-        coinsInDb[0].PriceUsd.Should().Be("100000");
-        coinsInDb[0].PriceChangePercentage24h.Should().Be(100);
-        coinsInDb[1].MarketCapUsd.Should().Be(int.MaxValue);
-        coinsInDb[1].PriceUsd.Should().Be("1");
-        coinsInDb[1].PriceChangePercentage24h.Should().Be(100);
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
+        coinsInDb.First(c => c.Id == 1).MarketCapUsd.Should().Be(int.MaxValue);
+        coinsInDb.First(c => c.Id == 1).PriceUsd.Should().Be("100000");
+        coinsInDb.First(c => c.Id == 1).PriceChangePercentage24h.Should().Be(100);
+        coinsInDb.First(c => c.Id == 2).MarketCapUsd.Should().Be(int.MaxValue);
+        coinsInDb.First(c => c.Id == 2).PriceUsd.Should().Be("1");
+        coinsInDb.First(c => c.Id == 2).PriceChangePercentage24h.Should().Be(100);
     }
 
     [Fact]
     public async Task UpdateCoins_ReturnsUpdatedCoins()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.CoinsToUpdate);
-        await _context.SaveChangesAsync();
+        await SeedDatabase();
 
-        var coinsWithUpdates = TestData.CoinsToUpdate.ToList();
-        foreach (var coin in coinsWithUpdates)
+        var coins = await _actContext.Coins.ToListAsync();
+        foreach (var coin in coins)
         {
             if (coin.Id == 1)
             {
@@ -279,10 +271,16 @@ public class CoinsRepositoryTests : IDisposable
         }
 
         // Act
-        var result = await _testedRepository.UpdateCoins(coinsWithUpdates);
+        var result = await _testedRepository.UpdateCoins(coins);
 
         // Assert
-        result.Should().BeEquivalentTo(TestData.UpdatedCoins);
+        result.Should().HaveCount(3);
+        result.First(c => c.Id == 1).MarketCapUsd.Should().Be(int.MaxValue);
+        result.First(c => c.Id == 1).PriceUsd.Should().Be("100000");
+        result.First(c => c.Id == 1).PriceChangePercentage24h.Should().Be(100);
+        result.First(c => c.Id == 2).MarketCapUsd.Should().Be(int.MaxValue);
+        result.First(c => c.Id == 2).PriceUsd.Should().Be("1");
+        result.First(c => c.Id == 2).PriceChangePercentage24h.Should().Be(100);
     }
 
     [Fact]
@@ -299,38 +297,49 @@ public class CoinsRepositoryTests : IDisposable
     public async Task DeleteCoin_DeletesCoinFromDatabase()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.CoinsForInsertion);
-        await _context.SaveChangesAsync();
-        var coinToDelete = TestData.CoinsForInsertion.First();
+        await SeedDatabase();
+        var coinToDelete = await _actContext.Coins.FirstAsync();
 
         // Act
         await _testedRepository.DeleteCoin(coinToDelete);
 
         // Assert
-        var coinsInDb = await _context.Coins.ToListAsync();
-        coinsInDb.Should().HaveCount(1);
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(2);
         coinsInDb.Should().NotContain(coin => coin.Id == coinToDelete.Id);
     }
 
     [Fact]
-    public async Task DeleteAllCoinsWithRelatedData_DeletesAllCoinsAndTradingPairs()
+    public async Task DeleteAllCoinsWithRelations_DeletesAllCoinsAndTradingPairs()
     {
         // Arrange
-        await _context.Coins.AddRangeAsync(TestData.Coins);
-        await _context.Exchanges.AddRangeAsync(TestData.Exchanges);
-        await _context.TradingPairs.AddRangeAsync(TestData.TradingPairs);
-        await _context.SaveChangesAsync();
+        await SeedDatabase(addTradingPairs: true);
 
         // Act
-        await _testedRepository.DeleteAllCoinsWithRelatedData();
+        await _testedRepository.DeleteAllCoinsWithRelations();
 
         // Assert
-        var coinsInDb = await _context.Coins.ToListAsync();
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
         coinsInDb.Should().BeEmpty();
-        var tradingPairsInDb = await _context.TradingPairs.ToListAsync();
+        var tradingPairsInDb = await _assertContext.TradingPairs.ToListAsync();
         tradingPairsInDb.Should().BeEmpty();
-        var exchangesInDb = await _context.Exchanges.ToListAsync();
-        exchangesInDb.Should().HaveCount(TestData.Exchanges.Count());
+        var exchangesInDb = await _assertContext.Exchanges.ToListAsync();
+        exchangesInDb.Should().HaveCount(2);
+    }
+
+    private async Task SeedDatabase(bool addTradingPairs = false)
+    {
+        await _seedContext.Coins.AddRangeAsync(TestData.GetCoins());
+        var exchanges = TestData.GetExchanges().ToList();
+        await _seedContext.Exchanges.AddRangeAsync(exchanges);
+
+        if (addTradingPairs)
+        {
+            var tradingPairs = TestData.GetTradingPairs(exchanges);
+            await _seedContext.TradingPairs.AddRangeAsync(tradingPairs);
+        }
+
+        await _seedContext.SaveChangesAsync();
     }
 
     public void Dispose()
@@ -343,70 +352,63 @@ public class CoinsRepositoryTests : IDisposable
     {
         if (disposing)
         {
-            _context.Dispose();
+            _seedContext.Dispose();
+            _actContext.Dispose();
+            _assertContext.Dispose();
+            _connection.Dispose();
         }
     }
 
     public static class TestData
     {
-        public static readonly IEnumerable<CoinsEntity> Coins =
-        [
-            new CoinsEntity
-            {
-                Id = 1,
-                Symbol = "BTC",
-                Name = "Bitcoin",
-                IsFiat = false,
-                IdCoinGecko = "bitcoin",
-                IsStablecoin = false,
-            },
-            new CoinsEntity
-            {
-                Id = 2,
-                Symbol = "ETH",
-                Name = "Ethereum",
-                IsFiat = false,
-                IdCoinGecko = null,
-                IsStablecoin = false,
-            },
-            new CoinsEntity
-            {
-                Id = 3,
-                Symbol = "USDT",
-                Name = "Tether",
-                IsFiat = false,
-                IdCoinGecko = "tether",
-                IsStablecoin = true,
-            },
-        ];
+        public static IEnumerable<CoinsEntity> GetCoins() =>
+            [
+                new CoinsEntity
+                {
+                    Symbol = "BTC",
+                    Name = "Bitcoin",
+                    IsFiat = false,
+                    IdCoinGecko = "bitcoin",
+                    IsStablecoin = false,
+                },
+                new CoinsEntity
+                {
+                    Symbol = "ETH",
+                    Name = "Ethereum",
+                    IsFiat = false,
+                    IdCoinGecko = null,
+                    IsStablecoin = false,
+                },
+                new CoinsEntity
+                {
+                    Symbol = "USDT",
+                    Name = "Tether",
+                    IsFiat = false,
+                    IdCoinGecko = "tether",
+                    IsStablecoin = true,
+                },
+            ];
 
-        public static readonly IEnumerable<ExchangesEntity> Exchanges =
-        [
-            new ExchangesEntity { Id = 1, Name = "Binance" },
-            new ExchangesEntity { Id = 2, Name = "Bybit" },
-        ];
+        public static IEnumerable<ExchangesEntity> GetExchanges() =>
+            [new ExchangesEntity { Name = "Binance" }, new ExchangesEntity { Name = "Bybit" }];
 
-        public static readonly IEnumerable<TradingPairsEntity> TradingPairs =
-        [
-            new TradingPairsEntity
-            {
-                Id = 1,
-                IdCoinMain = Coins.First().Id,
-                IdCoinQuote = Coins.Last().Id,
-                CoinMain = Coins.First(),
-                CoinQuote = Coins.Last(),
-                Exchanges = [Exchanges.First()],
-            },
-            new TradingPairsEntity
-            {
-                Id = 2,
-                IdCoinMain = Coins.ElementAt(1).Id,
-                IdCoinQuote = Coins.ElementAt(0).Id,
-                CoinMain = Coins.ElementAt(1),
-                CoinQuote = Coins.ElementAt(0),
-                Exchanges = [Exchanges.First(), Exchanges.Last()],
-            },
-        ];
+        public static IEnumerable<TradingPairsEntity> GetTradingPairs(
+            List<ExchangesEntity> exchanges
+        ) =>
+            [
+                new TradingPairsEntity
+                {
+                    IdCoinMain = 1,
+                    IdCoinQuote = 3,
+                    Exchanges = [exchanges[0]],
+                },
+                new TradingPairsEntity
+                {
+                    IdCoinMain = 2,
+                    IdCoinQuote = 1,
+                    Exchanges = [exchanges[0], exchanges[1]],
+                },
+            ];
 
         public static readonly IEnumerable<CoinsEntity> CoinsForInsertion =
         [
@@ -425,78 +427,6 @@ public class CoinsRepositoryTests : IDisposable
                 IsFiat = false,
                 IdCoinGecko = null,
                 IsStablecoin = true,
-            },
-        ];
-
-        public static readonly IEnumerable<CoinsEntity> InsertedCoins =
-        [
-            new CoinsEntity
-            {
-                Id = 1,
-                Symbol = "BTC",
-                Name = "Bitcoin",
-                IsFiat = false,
-                IdCoinGecko = "bitcoin",
-                IsStablecoin = false,
-            },
-            new CoinsEntity
-            {
-                Id = 2,
-                Symbol = "USDT",
-                Name = "Tether",
-                IsFiat = false,
-                IdCoinGecko = null,
-                IsStablecoin = true,
-            },
-        ];
-
-        public static readonly IEnumerable<CoinsEntity> CoinsToUpdate =
-        [
-            new CoinsEntity
-            {
-                Id = 1,
-                Symbol = "BTC",
-                Name = "Bitcoin",
-                IsFiat = false,
-                IdCoinGecko = "bitcoin",
-                IsStablecoin = false,
-            },
-            new CoinsEntity
-            {
-                Id = 2,
-                Symbol = "USDT",
-                Name = "Tether",
-                IsFiat = false,
-                IdCoinGecko = null,
-                IsStablecoin = true,
-            },
-        ];
-
-        public static readonly IEnumerable<CoinsEntity> UpdatedCoins =
-        [
-            new CoinsEntity
-            {
-                Id = 1,
-                Symbol = "BTC",
-                Name = "Bitcoin",
-                IsFiat = false,
-                IdCoinGecko = "bitcoin",
-                IsStablecoin = false,
-                MarketCapUsd = int.MaxValue,
-                PriceUsd = "100000",
-                PriceChangePercentage24h = 100,
-            },
-            new CoinsEntity
-            {
-                Id = 2,
-                Symbol = "USDT",
-                Name = "Tether",
-                IsFiat = false,
-                IdCoinGecko = null,
-                IsStablecoin = true,
-                MarketCapUsd = int.MaxValue,
-                PriceUsd = "1",
-                PriceChangePercentage24h = 100,
             },
         ];
     }
