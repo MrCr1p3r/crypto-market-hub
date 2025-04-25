@@ -9,17 +9,17 @@ namespace SVC_Coins.Repositories.Interfaces;
 public interface ICoinsRepository
 {
     /// <summary>
-    /// Retrieves all coins from the database.
+    /// Retrieves all coins with their related data from the database.
     /// </summary>
-    /// <returns>A collection of coin entities.</returns>
-    Task<IEnumerable<CoinsEntity>> GetAllCoins();
+    /// <returns>A collection of retrieved coin entities.</returns>
+    Task<IEnumerable<CoinsEntity>> GetAllCoinsWithRelations();
 
     /// <summary>
-    /// Retrieves a collection of coins by their IDs.
+    /// Retrieves a collection of coins by their IDs with their related data from the database.
     /// </summary>
     /// <param name="ids">The IDs of the coins to retrieve.</param>
     /// <returns>A collection of found coin entities.</returns>
-    Task<IEnumerable<CoinsEntity>> GetCoinsByIds(IEnumerable<int> ids);
+    Task<IEnumerable<CoinsEntity>> GetCoinsByIdsWithRelations(IEnumerable<int> ids);
 
     /// <summary>
     /// Retrieves a collection of coins that match the specified symbol-name pairs.
@@ -29,17 +29,17 @@ public interface ICoinsRepository
     Task<IEnumerable<CoinsEntity>> GetCoinsBySymbolNamePairs(IEnumerable<CoinSymbolNamePair> pairs);
 
     /// <summary>
-    /// Inserts multiple new Coin entities into the database.
+    /// Inserts multiple new coin entities into the database.
     /// </summary>
-    /// <param name="coins">The collection of Coin entities to insert.</param>
-    /// <returns>A collection of inserted Coin entities.</returns>
+    /// <param name="coins">The collection of coin entities to insert.</param>
+    /// <returns>A collection of inserted coin entities.</returns>
     Task<IEnumerable<CoinsEntity>> InsertCoins(IEnumerable<CoinsEntity> coins);
 
     /// <summary>
-    /// Updates the data of multiple coins.
+    /// Updates the data of multiple coin entities.
     /// </summary>
-    /// <param name="coins">The collection of coins with updated data.</param>
-    /// <returns>A collection of coins with updated data.</returns>
+    /// <param name="coins">The collection of coin entities with updated data.</param>
+    /// <returns>A collection of coin entities with updated data.</returns>
     Task<IEnumerable<CoinsEntity>> UpdateCoins(IEnumerable<CoinsEntity> coins);
 
     /// <summary>
@@ -50,8 +50,8 @@ public interface ICoinsRepository
     Task DeleteCoin(CoinsEntity coin);
 
     /// <summary>
-    /// Clears all data from the Coins and TradingPairs tables in the database.
+    /// Removes all coins together with their related data from the database.
     /// </summary>
-    /// <returns>Task, that clears the database.</returns>
-    Task DeleteAllCoinsWithRelatedData();
+    /// <returns>Task, that removes all coins together with their related data from the database.</returns>
+    Task DeleteAllCoinsWithRelations();
 }

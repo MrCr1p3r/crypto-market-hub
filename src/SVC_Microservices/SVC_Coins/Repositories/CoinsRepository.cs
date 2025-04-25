@@ -1,3 +1,5 @@
+using System.Data;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Domain.Entities;
 using SVC_Coins.Domain.ValueObjects;
@@ -15,14 +17,14 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     private readonly CoinsDbContext _context = context;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CoinsEntity>> GetAllCoins() =>
+    public async Task<IEnumerable<CoinsEntity>> GetAllCoinsWithRelations() =>
         await _context
             .Coins.Include(c => c.TradingPairs)
             .ThenInclude(tp => tp.Exchanges)
             .ToListAsync();
 
     /// <inheritdoc />
-    public async Task<IEnumerable<CoinsEntity>> GetCoinsByIds(IEnumerable<int> ids) =>
+    public async Task<IEnumerable<CoinsEntity>> GetCoinsByIdsWithRelations(IEnumerable<int> ids) =>
         await _context
             .Coins.Where(coin => ids.Contains(coin.Id))
             .Include(c => c.TradingPairs)
@@ -37,18 +39,19 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
         IEnumerable<CoinSymbolNamePair> pairs
     )
     {
-        var pairStrings = pairs.Select(p => p.Symbol + "-" + p.Name).ToHashSet();
+        var coins = pairs.Select(Mapping.ToCoinsEntity).ToList();
 
-        var coins = await _context
-            .Coins.Where(coin => pairStrings.Contains(coin.Symbol + "-" + coin.Name))
-            .Include(c => c.TradingPairs)
-            .ThenInclude(tp => tp.CoinQuote)
-            .Include(c => c.TradingPairs)
-            .ThenInclude(tp => tp.Exchanges)
-            .AsSplitQuery()
-            .ToListAsync();
+        // Add UseTempDB if needed
+        var bulkConfig = new BulkConfig
+        {
+            UpdateByProperties = [nameof(CoinsEntity.Symbol), nameof(CoinsEntity.Name)],
+        };
 
-        return coins;
+        await _context.BulkReadAsync(coins, bulkConfig);
+
+        var foundCoins = coins.Where(coin => coin.Id != 0).ToList();
+
+        return foundCoins;
     }
 
     /// <inheritdoc />
@@ -75,10 +78,16 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     }
 
     /// <inheritdoc />
-    public async Task DeleteAllCoinsWithRelatedData()
+    public async Task DeleteAllCoinsWithRelations()
     {
         _context.TradingPairs.RemoveRange(_context.TradingPairs);
         _context.Coins.RemoveRange(_context.Coins);
         await _context.SaveChangesAsync();
+    }
+
+    private static class Mapping
+    {
+        public static CoinsEntity ToCoinsEntity(CoinSymbolNamePair pair) =>
+            new() { Symbol = pair.Symbol, Name = pair.Name };
     }
 }
