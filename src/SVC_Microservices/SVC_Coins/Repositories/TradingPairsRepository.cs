@@ -20,13 +20,7 @@ public class TradingPairsRepository(CoinsDbContext context) : ITradingPairsRepos
         IEnumerable<TradingPairCoinIdsPair> pairs
     )
     {
-        var tradingPairs = pairs
-            .Select(pair => new TradingPairsEntity
-            {
-                IdCoinMain = pair.IdCoinMain,
-                IdCoinQuote = pair.IdCoinQuote,
-            })
-            .ToList();
+        var tradingPairs = pairs.Select(Mapping.ToTradingPairsEntity).ToList();
 
         // Add UseTempDB if needed
         var bulkConfig = new BulkConfig
@@ -72,4 +66,10 @@ public class TradingPairsRepository(CoinsDbContext context) : ITradingPairsRepos
         await _context
             .TradingPairs.Where(tp => tp.IdCoinMain == idCoin || tp.IdCoinQuote == idCoin)
             .ExecuteDeleteAsync();
+
+    private static class Mapping
+    {
+        public static TradingPairsEntity ToTradingPairsEntity(TradingPairCoinIdsPair pair) =>
+            new() { IdCoinMain = pair.IdCoinMain, IdCoinQuote = pair.IdCoinQuote };
+    }
 }
