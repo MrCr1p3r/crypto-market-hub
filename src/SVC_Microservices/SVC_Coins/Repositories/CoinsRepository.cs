@@ -55,6 +55,10 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     }
 
     /// <inheritdoc />
+    public async Task<bool> CheckCoinExists(int coinId) =>
+        await _context.Coins.AnyAsync(coin => coin.Id == coinId);
+
+    /// <inheritdoc />
     public async Task<IEnumerable<CoinsEntity>> InsertCoins(IEnumerable<CoinsEntity> coins)
     {
         await _context.Coins.AddRangeAsync(coins);
@@ -71,10 +75,9 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     }
 
     /// <inheritdoc />
-    public async Task DeleteCoin(CoinsEntity coin)
+    public async Task DeleteCoinById(int idCoin)
     {
-        _context.Coins.Remove(coin);
-        await _context.SaveChangesAsync();
+        await _context.Coins.Where(coin => coin.Id == idCoin).ExecuteDeleteAsync();
     }
 
     /// <inheritdoc />

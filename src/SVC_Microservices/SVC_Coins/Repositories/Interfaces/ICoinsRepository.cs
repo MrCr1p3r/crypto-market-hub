@@ -29,6 +29,13 @@ public interface ICoinsRepository
     Task<IEnumerable<CoinsEntity>> GetCoinsBySymbolNamePairs(IEnumerable<CoinSymbolNamePair> pairs);
 
     /// <summary>
+    /// Checks if a coin with the specified ID exists in the database.
+    /// </summary>
+    /// <param name="coinId">The ID of the coin to check.</param>
+    /// <returns>True if the coin exists, false otherwise.</returns>
+    Task<bool> CheckCoinExists(int coinId);
+
+    /// <summary>
     /// Inserts multiple new coin entities into the database.
     /// </summary>
     /// <param name="coins">The collection of coin entities to insert.</param>
@@ -43,11 +50,11 @@ public interface ICoinsRepository
     Task<IEnumerable<CoinsEntity>> UpdateCoins(IEnumerable<CoinsEntity> coins);
 
     /// <summary>
-    /// Deletes a coin from the database.
+    /// Deletes a coin from the database by its ID.
     /// </summary>
-    /// <param name="coin">The coin to delete.</param>
+    /// <param name="idCoin">The ID of the coin to delete.</param>
     /// <returns>A task, that deletes the coin.</returns>
-    Task DeleteCoin(CoinsEntity coin);
+    Task DeleteCoinById(int idCoin);
 
     /// <summary>
     /// Removes all coins together with their related data from the database.

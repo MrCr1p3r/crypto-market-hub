@@ -294,19 +294,75 @@ public class CoinsRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteCoin_DeletesCoinFromDatabase()
+    public async Task CheckCoinExists_WhenCoinExists_ReturnsTrue()
     {
         // Arrange
         await SeedDatabase();
-        var coinToDelete = await _actContext.Coins.FirstAsync();
+        const int existingCoinId = 1;
 
         // Act
-        await _testedRepository.DeleteCoin(coinToDelete);
+        var result = await _testedRepository.CheckCoinExists(existingCoinId);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckCoinExists_WhenCoinDoesNotExist_ReturnsFalse()
+    {
+        // Arrange
+        await SeedDatabase();
+        const int nonExistingCoinId = 999;
+
+        // Act
+        var result = await _testedRepository.CheckCoinExists(nonExistingCoinId);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CheckCoinExists_WhenDatabaseIsEmpty_ReturnsFalse()
+    {
+        // Arrange
+        const int anyCoinId = 1;
+
+        // Act
+        var result = await _testedRepository.CheckCoinExists(anyCoinId);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DeleteCoinById_WhenCoinExists_DeletesCoinFromDatabase()
+    {
+        // Arrange
+        await SeedDatabase();
+        const int coinIdToDelete = 1;
+
+        // Act
+        await _testedRepository.DeleteCoinById(coinIdToDelete);
 
         // Assert
         var coinsInDb = await _assertContext.Coins.ToListAsync();
         coinsInDb.Should().HaveCount(2);
-        coinsInDb.Should().NotContain(coin => coin.Id == coinToDelete.Id);
+        coinsInDb.Should().NotContain(c => c.Id == coinIdToDelete);
+    }
+
+    [Fact]
+    public async Task DeleteCoinById_WhenCoinDoesNotExist_DoesNothing()
+    {
+        // Arrange
+        await SeedDatabase();
+        const int nonExistentCoinId = 999;
+
+        // Act
+        await _testedRepository.DeleteCoinById(nonExistentCoinId);
+
+        // Assert
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(3);
     }
 
     [Fact]
@@ -329,13 +385,14 @@ public class CoinsRepositoryTests : IDisposable
 
     private async Task SeedDatabase(bool addTradingPairs = false)
     {
-        await _seedContext.Coins.AddRangeAsync(TestData.GetCoins());
-        var exchanges = TestData.GetExchanges().ToList();
+        var coins = TestData.GetCoins();
+        await _seedContext.Coins.AddRangeAsync(coins);
+        var exchanges = TestData.GetExchanges();
         await _seedContext.Exchanges.AddRangeAsync(exchanges);
 
         if (addTradingPairs)
         {
-            var tradingPairs = TestData.GetTradingPairs(exchanges);
+            var tradingPairs = TestData.GetTradingPairs([.. exchanges]);
             await _seedContext.TradingPairs.AddRangeAsync(tradingPairs);
         }
 
