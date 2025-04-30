@@ -15,6 +15,13 @@ public interface ICoinsRepository
     Task<IEnumerable<CoinsEntity>> GetAllCoinsWithRelations();
 
     /// <summary>
+    /// Retrieves a collection of coins by their IDs from the database.
+    /// </summary>
+    /// <param name="ids">The IDs of the coins to retrieve.</param>
+    /// <returns>A collection of found coin entities.</returns>
+    Task<IEnumerable<CoinsEntity>> GetCoinsByIds(IEnumerable<int> ids);
+
+    /// <summary>
     /// Retrieves a collection of coins by their IDs with their related data from the database.
     /// </summary>
     /// <param name="ids">The IDs of the coins to retrieve.</param>
@@ -27,6 +34,13 @@ public interface ICoinsRepository
     /// <param name="pairs">The collection of symbol-name pairs to match.</param>
     /// <returns>A collection of found coin entities.</returns>
     Task<IEnumerable<CoinsEntity>> GetCoinsBySymbolNamePairs(IEnumerable<CoinSymbolNamePair> pairs);
+
+    /// <summary>
+    /// Gets the IDs of coins from the provided list that are missing in the database.
+    /// </summary>
+    /// <param name="coinIds">The collection of coin IDs to check.</param>
+    /// <returns>A HashSet containing the IDs of the missing coins.</returns>
+    Task<HashSet<int>> GetMissingCoinIds(HashSet<int> coinIds);
 
     /// <summary>
     /// Checks if a coin with the specified ID exists in the database.
