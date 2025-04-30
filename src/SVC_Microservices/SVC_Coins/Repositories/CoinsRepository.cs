@@ -24,6 +24,10 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
             .ToListAsync();
 
     /// <inheritdoc />
+    public async Task<IEnumerable<CoinsEntity>> GetCoinsByIds(IEnumerable<int> ids) =>
+        await _context.Coins.Where(coin => ids.Contains(coin.Id)).ToListAsync();
+
+    /// <inheritdoc />
     public async Task<IEnumerable<CoinsEntity>> GetCoinsByIdsWithRelations(IEnumerable<int> ids) =>
         await _context
             .Coins.Where(coin => ids.Contains(coin.Id))
@@ -53,6 +57,22 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
 
         return foundCoins;
     }
+
+    public async Task<HashSet<int>> GetMissingCoinIds(HashSet<int> coinIds)
+    {
+        var existingIds = await GetExistingCoinIds(coinIds);
+
+        var missingIds = new HashSet<int>(coinIds);
+        missingIds.ExceptWith(existingIds);
+        return missingIds;
+    }
+
+    private async Task<IEnumerable<int>> GetExistingCoinIds(HashSet<int> coinIds) =>
+        await _context
+            .Coins.AsNoTracking()
+            .Where(coin => coinIds.Contains(coin.Id))
+            .Select(coin => coin.Id)
+            .ToListAsync();
 
     /// <inheritdoc />
     public async Task<bool> CheckCoinExists(int coinId) =>
