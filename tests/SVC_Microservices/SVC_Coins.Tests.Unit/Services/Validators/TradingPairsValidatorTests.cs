@@ -27,7 +27,7 @@ public class TradingPairsValidatorTests
 
         _exchangesRepositoryMock
             .Setup(repo => repo.GetAllExchanges())
-            .ReturnsAsync(TestData.SampleExchanges);
+            .ReturnsAsync(TestData.Exchanges);
 
         _coinsRepositoryMock
             .Setup(repo => repo.GetMissingCoinIds(It.IsAny<HashSet<int>>()))
@@ -131,7 +131,7 @@ public class TradingPairsValidatorTests
     {
         public static readonly Exchange InvalidExchange = (Exchange)999;
 
-        public static readonly List<TradingPairCreationRequest> ValidTradingPairRequests =
+        public static readonly IEnumerable<TradingPairCreationRequest> ValidTradingPairRequests =
         [
             new()
             {
@@ -147,7 +147,7 @@ public class TradingPairsValidatorTests
             },
         ];
 
-        public static List<TradingPairCreationRequest> GetRequestsWithMissingCoinId(
+        public static IEnumerable<TradingPairCreationRequest> GetRequestsWithMissingCoinId(
             int missingId
         ) =>
             [
@@ -159,7 +159,7 @@ public class TradingPairsValidatorTests
                 },
             ];
 
-        public static List<TradingPairCreationRequest> GetRequestsWithInvalidExchange(
+        public static IEnumerable<TradingPairCreationRequest> GetRequestsWithInvalidExchange(
             Exchange invalidExchange
         ) =>
             [
@@ -171,7 +171,7 @@ public class TradingPairsValidatorTests
                 },
             ];
 
-        public static List<TradingPairCreationRequest> GetRequestsWithMultipleErrors(
+        public static IEnumerable<TradingPairCreationRequest> GetRequestsWithMultipleErrors(
             int missingId,
             Exchange invalidExchange
         ) =>
@@ -190,7 +190,7 @@ public class TradingPairsValidatorTests
                 }, // Invalid exchange
             ];
 
-        public static readonly IEnumerable<ExchangesEntity> SampleExchanges =
+        public static readonly IEnumerable<ExchangesEntity> Exchanges =
         [
             new ExchangesEntity { Id = 1, Name = "Binance" },
             new ExchangesEntity { Id = 2, Name = "Bybit" },
