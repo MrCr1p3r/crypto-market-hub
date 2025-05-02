@@ -29,7 +29,7 @@ public class CoinsValidatorTests
 
         _exchangesRepositoryMock
             .Setup(repo => repo.GetAllExchanges())
-            .ReturnsAsync(TestData.SampleExchanges);
+            .ReturnsAsync(TestData.Exchanges);
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class CoinsValidatorTests
         _coinsRepositoryMock.Setup(repo => repo.GetMissingCoinIds(quoteCoinIds)).ReturnsAsync([]); // No missing Ids
         _exchangesRepositoryMock
             .Setup(repo => repo.GetAllExchanges())
-            .ReturnsAsync(TestData.SampleExchanges); // Valid exchanges
+            .ReturnsAsync(TestData.Exchanges); // Valid exchanges
 
         // Act
         var result = await _validator.ValidateCoinCreationRequests(requests);
@@ -262,7 +262,7 @@ public class CoinsValidatorTests
     {
         public static readonly Exchange InvalidExchange = (Exchange)999;
 
-        public static readonly List<CoinCreationRequest> ValidCoinCreationRequests =
+        public static readonly IEnumerable<CoinCreationRequest> ValidCoinCreationRequests =
         [
             new()
             {
@@ -309,7 +309,7 @@ public class CoinsValidatorTests
             },
         ];
 
-        public static readonly List<CoinCreationRequest> RequestWithExistingBtc =
+        public static readonly IEnumerable<CoinCreationRequest> RequestWithExistingBtc =
         [
             new()
             {
@@ -319,7 +319,7 @@ public class CoinsValidatorTests
             },
         ]; // Empty trading pairs for simplicity
 
-        public static readonly List<CoinCreationRequest> RequestWithNewQuoteUsdt =
+        public static readonly IEnumerable<CoinCreationRequest> RequestWithNewQuoteUsdt =
         [
             new()
             {
@@ -336,7 +336,7 @@ public class CoinsValidatorTests
             },
         ];
 
-        public static List<CoinCreationRequest> GetRequestWithNonExistingQuoteId(int id) =>
+        public static IEnumerable<CoinCreationRequest> GetRequestWithNonExistingQuoteId(int id) =>
             [
                 new()
                 {
@@ -359,7 +359,7 @@ public class CoinsValidatorTests
                 },
             ];
 
-        public static List<CoinCreationRequest> GetRequestWithInvalidExchange(
+        public static IEnumerable<CoinCreationRequest> GetRequestWithInvalidExchange(
             Exchange invalidExchange
         ) =>
             [
@@ -384,7 +384,7 @@ public class CoinsValidatorTests
                 },
             ];
 
-        public static List<CoinCreationRequest> GetRequestWithMultipleErrors(
+        public static IEnumerable<CoinCreationRequest> GetRequestWithMultipleErrors(
             int missingId,
             Exchange invalidExchange
         ) =>
@@ -416,20 +416,20 @@ public class CoinsValidatorTests
                 },
             ];
 
-        public static readonly List<CoinMarketDataUpdateRequest> ValidMarketDataUpdateRequests =
+        public static readonly IEnumerable<CoinMarketDataUpdateRequest> ValidMarketDataUpdateRequests =
         [
             new() { Id = 1 },
             new() { Id = 2 },
         ];
 
-        public static List<CoinMarketDataUpdateRequest> GetMarketDataUpdateRequestsWithMissingId(
+        public static IEnumerable<CoinMarketDataUpdateRequest> GetMarketDataUpdateRequestsWithMissingId(
             int missingId
         ) => [new() { Id = 1 }, new() { Id = missingId }];
 
         public static readonly CoinsEntity BtcEntity = new() { Symbol = "BTC", Name = "Bitcoin" };
         public static readonly CoinsEntity UsdtEntity = new() { Symbol = "USDT", Name = "Tether" };
 
-        public static readonly IEnumerable<ExchangesEntity> SampleExchanges =
+        public static readonly IEnumerable<ExchangesEntity> Exchanges =
         [
             new ExchangesEntity { Id = 1, Name = "Binance" },
             new ExchangesEntity { Id = 2, Name = "Bybit" },
