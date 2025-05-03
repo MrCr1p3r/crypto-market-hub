@@ -5,7 +5,7 @@ namespace SharedLibrary.Enums;
 /// </summary>
 public enum Exchange
 {
-    Binance,
-    Mexc,
-    Bybit,
+    Binance = 1,
+    Bybit = 2,
+    Mexc = 3,
 }
