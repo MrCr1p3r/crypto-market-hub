@@ -20,7 +20,7 @@ public class TradingPairsEntity
     /// Gets or sets unique identifier for the trading pair.
     /// </summary>
     [Required]
-    public int Id { get; private init; }
+    public int Id { get; init; }
 
     /// <summary>
     /// Gets or sets foreign key referencing the main coin in the trading pair.
