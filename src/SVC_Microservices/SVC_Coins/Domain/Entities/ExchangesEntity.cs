@@ -13,7 +13,7 @@ public class ExchangesEntity
     /// Gets or sets unique identifier for the exchange.
     /// </summary>
     [Required]
-    public int Id { get; private init; }
+    public int Id { get; init; }
 
     /// <summary>
     /// Gets or sets name of the exchange.

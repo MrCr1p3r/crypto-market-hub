@@ -15,7 +15,7 @@ public class CoinsEntity
     /// This is the primary key of the table.
     /// </summary>
     [Required]
-    public int Id { get; private init; }
+    public int Id { get; init; }
 
     /// <summary>
     /// Gets or sets symbol of the cryptocurrency (e.g., "BTC" for Bitcoin).
