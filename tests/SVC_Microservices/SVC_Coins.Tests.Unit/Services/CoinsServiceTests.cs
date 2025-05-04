@@ -89,7 +89,7 @@ public class CoinsServiceTests
         // Arrange
         var requestedIds = TestData.ExistingIds;
         _coinsRepositoryMock
-            .Setup(r => r.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
+            .Setup(repo => repo.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync([]);
 
         // Act
@@ -200,6 +200,7 @@ public class CoinsServiceTests
         var validationFailureResult = Result.Fail(
             new GenericErrors.BadRequestError("Validation failed")
         );
+
         _coinsValidatorMock
             .Setup(validator =>
                 validator.ValidateCoinCreationRequests(It.IsAny<IEnumerable<CoinCreationRequest>>())
@@ -213,16 +214,8 @@ public class CoinsServiceTests
 
         // Assert
         result.Should().BeEquivalentTo(validationFailureResult);
-
-        // Verify that no coins or trading pairs are inserted
-        _coinsRepositoryMock.Verify(
-            repo => repo.InsertCoins(It.IsAny<IEnumerable<CoinsEntity>>()),
-            Times.Never
-        );
-        _tradingPairsRepositoryMock.Verify(
-            repo => repo.InsertTradingPairs(It.IsAny<IEnumerable<TradingPairsEntity>>()),
-            Times.Never
-        );
+        _coinsRepositoryMock.VerifyNoOtherCalls();
+        _tradingPairsRepositoryMock.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -230,60 +223,50 @@ public class CoinsServiceTests
     {
         // Arrange
         var requests = TestData.CoinCreationRequests;
-        var expectedSymbolNamePairs = TestData.ExpectedSymbolNamePairs;
-        var insertedCoinEntitiesWithIds = TestData.InsertedCoinsWithIds;
-        var expectedTradingPairsToInsert = TestData.ExpectedTradingPairsToInsert;
-        var expectedNewCoinEntities = TestData.AllNewCoinEntities;
-
-        // Calculate expected IDs for the final query based on test data
-        var expectedMainCoinIds = insertedCoinEntitiesWithIds
-            .Where(c =>
-                TestData.NewMainCoinEntitiesFromRequest.Any(nc =>
-                    nc.Symbol == c.Symbol && nc.Name == c.Name
-                )
-            )
-            .Select(c => c.Id);
-
-        var finalCoinsWithRelations = TestData.FinalCoinsWithRelations;
-        var expectedResultCoins = TestData.ExpectedCreatedCoinsResult;
 
         // Setup validation
         _coinsValidatorMock
-            .Setup(v => v.ValidateCoinCreationRequests(requests))
+            .Setup(validator => validator.ValidateCoinCreationRequests(requests))
             .ReturnsAsync(Result.Ok());
 
         // Setup repository calls needed during the process
         _coinsRepositoryMock
-            .Setup(r => r.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>()))
-            .ReturnsAsync(insertedCoinEntitiesWithIds);
-        _exchangesRepositoryMock.Setup(r => r.GetAllExchanges()).ReturnsAsync(TestData.Exchanges);
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync(TestData.InsertedCoinsWithIds);
+        _exchangesRepositoryMock
+            .Setup(repo => repo.GetAllExchanges())
+            .ReturnsAsync(TestData.Exchanges);
         _coinsRepositoryMock
-            .Setup(r => r.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
-            .ReturnsAsync(finalCoinsWithRelations);
+            .Setup(repo => repo.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(TestData.FinalCoinsWithRelations);
 
         // Act
         var result = await _testedService.CreateCoinsWithTradingPairs(requests);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEquivalentTo(expectedResultCoins);
+        result.Value.Should().BeEquivalentTo(TestData.ExpectedCreatedCoinsResult);
 
         // Verify repository calls with specific arguments
         _coinsRepositoryMock.Verify(
-            r => r.InsertCoins(Its.EquivalentTo(expectedNewCoinEntities)),
+            repo => repo.InsertCoins(Its.EquivalentTo(TestData.AllNewCoinEntities)),
             Times.Once
         );
         _coinsRepositoryMock.Verify(
-            r => r.GetCoinsBySymbolNamePairs(Its.EquivalentTo(expectedSymbolNamePairs)),
+            repo =>
+                repo.GetCoinsBySymbolNamePairs(Its.EquivalentTo(TestData.ExpectedSymbolNamePairs)),
             Times.Once
         );
-        _exchangesRepositoryMock.Verify(r => r.GetAllExchanges(), Times.Once);
+        _exchangesRepositoryMock.Verify(repo => repo.GetAllExchanges(), Times.Once);
         _tradingPairsRepositoryMock.Verify(
-            r => r.InsertTradingPairs(Its.EquivalentTo(expectedTradingPairsToInsert)),
+            repo =>
+                repo.InsertTradingPairs(Its.EquivalentTo(TestData.ExpectedTradingPairsToInsert)),
             Times.Once
         );
         _coinsRepositoryMock.Verify(
-            r => r.GetCoinsByIdsWithRelations(Its.EquivalentTo(expectedMainCoinIds)),
+            repo => repo.GetCoinsByIdsWithRelations(Its.EquivalentTo(TestData.ExpectedMainCoinIds)),
             Times.Once
         );
     }
@@ -337,14 +320,7 @@ public class CoinsServiceTests
         result.Should().BeEquivalentTo(validationFailureResult);
 
         // Verify that no repository calls are made after validation fails
-        _coinsRepositoryMock.Verify(
-            repo => repo.GetCoinsByIds(It.IsAny<IEnumerable<int>>()),
-            Times.Never
-        );
-        _coinsRepositoryMock.Verify(
-            repo => repo.UpdateCoins(It.IsAny<IEnumerable<CoinsEntity>>()),
-            Times.Never
-        );
+        _coinsRepositoryMock.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -433,11 +409,8 @@ public class CoinsServiceTests
         result.Should().BeEquivalentTo(validationFailureResult);
 
         // Verify that no repository calls are made after validation fails
-        _exchangesRepositoryMock.Verify(repo => repo.GetAllExchanges(), Times.Never);
-        _tradingPairsRepositoryMock.Verify(
-            repo => repo.ReplaceAllTradingPairs(It.IsAny<IEnumerable<TradingPairsEntity>>()),
-            Times.Never
-        );
+        _exchangesRepositoryMock.VerifyNoOtherCalls();
+        _tradingPairsRepositoryMock.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -480,6 +453,7 @@ public class CoinsServiceTests
     {
         // Arrange
         const int nonExistingId = 99;
+
         _coinsRepositoryMock.Setup(repo => repo.CheckCoinExists(nonExistingId)).ReturnsAsync(false);
 
         // Act
@@ -490,12 +464,10 @@ public class CoinsServiceTests
         result.Errors.Should().ContainSingle();
         result.Errors[0].Should().BeOfType<GenericErrors.NotFoundError>();
 
-        // Verify that no repository calls are made
-        _tradingPairsRepositoryMock.Verify(
-            repo => repo.DeleteTradingPairsForIdCoin(It.IsAny<int>()),
-            Times.Never
-        );
-        _coinsRepositoryMock.Verify(repo => repo.DeleteCoinById(It.IsAny<int>()), Times.Never);
+        // Verify that no other repository calls are made
+        _tradingPairsRepositoryMock.VerifyNoOtherCalls();
+        _coinsRepositoryMock.Verify(repo => repo.CheckCoinExists(nonExistingId), Times.Once);
+        _coinsRepositoryMock.VerifyNoOtherCalls();
     }
 
     [Fact]
@@ -731,6 +703,14 @@ public class CoinsServiceTests
                 Name = "Dogecoin",
             },
         ];
+
+        public static readonly IEnumerable<int> ExpectedMainCoinIds = InsertedCoinsWithIds
+            .Where(insertedCoin =>
+                NewMainCoinEntitiesFromRequest.Any(newCoin =>
+                    newCoin.Symbol == insertedCoin.Symbol && newCoin.Name == insertedCoin.Name
+                )
+            )
+            .Select(insertedCoin => insertedCoin.Id);
 
         public static readonly IEnumerable<TradingPairsEntity> ExpectedTradingPairsToInsert =
         [

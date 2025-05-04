@@ -24,7 +24,7 @@ public interface ICoinsService
     Task<IEnumerable<Coin>> GetCoinsByIds(IEnumerable<int> ids);
 
     /// <summary>
-    /// Creates multiple new coins with their trading pairs.
+    /// Creates multiple new coins along with their trading pairs.
     /// </summary>
     /// <param name="requests">The collection of requests with the new coin data.</param>
     /// <returns>
@@ -48,7 +48,7 @@ public interface ICoinsService
     );
 
     /// <summary>
-    /// Replaces all trading pairs in the system.
+    /// Replaces all trading pairs in the system with the new ones.
     /// </summary>
     /// <param name="requests">The collection of trading pairs to replace.</param>
     /// <returns>
