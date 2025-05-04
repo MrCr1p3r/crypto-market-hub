@@ -106,8 +106,7 @@ public partial class CoinsService(
     )
     {
         var exchanges = await _exchangesRepository.GetAllExchanges();
-        var tradingPairs = Mapping.ToTradingPairsEntities(requests, insertedCoins, exchanges);
-
+        var tradingPairs = Mapping.ToTradingPairEntities(requests, insertedCoins, exchanges);
         return tradingPairs;
     }
 
@@ -151,7 +150,6 @@ public partial class CoinsService(
     {
         var requestsById = requests.ToDictionary(request => request.Id);
         var coinsToUpdate = await _coinsRepository.GetCoinsByIds(requestsById.Keys);
-
         var coinsWithUpdatedData = coinsToUpdate.Select(coin =>
             Mapping.ToCoinWithUpdatedData(coin, requestsById[coin.Id])
         );
@@ -248,25 +246,6 @@ public partial class CoinsService(
                 _ => null,
             };
 
-        public static IEnumerable<int> ToMainCoinIds(
-            IEnumerable<CoinsEntity> insertedCoins,
-            IEnumerable<CoinCreationRequest> requests
-        )
-        {
-            var insertedCoinIdByPairMap = insertedCoins.ToDictionary(
-                coin => (coin.Symbol, coin.Name),
-                coin => coin.Id
-            );
-            var requestPairs = requests
-                .Select(request => (request.Symbol, request.Name))
-                .ToHashSet();
-            var insertedMainCoinIds = insertedCoinIdByPairMap
-                .Where(kvp => requestPairs.Contains(kvp.Key))
-                .Select(kvp => kvp.Value);
-
-            return insertedMainCoinIds;
-        }
-
         public static TradingPair ToTradingPair(TradingPairsEntity tradingPairEntity) =>
             new()
             {
@@ -274,6 +253,25 @@ public partial class CoinsService(
                 CoinQuote = ToTradingPairCoinQuote(tradingPairEntity.CoinQuote),
                 Exchanges = tradingPairEntity.Exchanges.Select(exchange => (Exchange)exchange.Id),
             };
+
+        public static IEnumerable<int> ToMainCoinIds(
+            IEnumerable<CoinsEntity> insertedCoins,
+            IEnumerable<CoinCreationRequest> requests
+        )
+        {
+            var symbolNameToCoinIdMap = insertedCoins.ToDictionary(
+                coin => (coin.Symbol, coin.Name),
+                coin => coin.Id
+            );
+            var requestPairs = requests
+                .Select(request => (request.Symbol, request.Name))
+                .ToHashSet();
+            var insertedMainCoinIds = symbolNameToCoinIdMap
+                .Where(kvp => requestPairs.Contains(kvp.Key))
+                .Select(kvp => kvp.Value);
+
+            return insertedMainCoinIds;
+        }
 
         public static IEnumerable<CoinsEntity> ToNewCoins(IEnumerable<CoinCreationRequest> requests)
         {
@@ -344,7 +342,7 @@ public partial class CoinsService(
                 ],
             };
 
-        public static IEnumerable<TradingPairsEntity> ToTradingPairsEntities(
+        public static IEnumerable<TradingPairsEntity> ToTradingPairEntities(
             IEnumerable<CoinCreationRequest> requests,
             IEnumerable<CoinsEntity> insertedCoins,
             IEnumerable<ExchangesEntity> exchanges
