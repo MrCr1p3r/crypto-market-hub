@@ -1,55 +1,31 @@
-using DotNetEnv;
-using Microsoft.EntityFrameworkCore;
-using SharedLibrary.Infrastructure;
-using SVC_Coins.Repositories;
-using SVC_Coins.Repositories.Interfaces;
+using SVC_Coins.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Env.TraversePath().Load();
-
-// Add Aspire service defaults (includes OpenTelemetry)
+// Aspire service defaults (includes OpenTelemetry)
 builder.AddServiceDefaults();
 
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-builder.Services.AddDbContext<CoinsDbContext>(options =>
-    options.UseSqlServer(
-        $"Server={Environment.GetEnvironmentVariable("DB_SERVER")};"
-            + $"Database={Environment.GetEnvironmentVariable("DB_NAME")};"
-            + $"User Id={Environment.GetEnvironmentVariable("DB_USER")};"
-            + $"Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};"
-            + "MultipleActiveResultSets=true;TrustServerCertificate=true;"
-    )
-);
-
-// Register the repository for dependency injection
-builder.Services.AddScoped<ICoinsRepository, CoinsRepository>();
-
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails();
+// DI composition (bottom-up)
+builder
+    .Services.AddInfrastructureServices()
+    .AddDatabaseServices(builder.Configuration)
+    .AddRepositories()
+    .AddApplicationServices()
+    .AddInputValidationServices()
+    .AddWebApiServices();
 
 var app = builder.Build();
 
-// Map health check endpoints
-app.MapDefaultEndpoints();
-
+// Middleware pipeline
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
 app.UseHttpsRedirection();
 
+app.UseSwaggerPipeline();
+
+app.MapDefaultEndpoints();
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
 
 public partial class Program { }
