@@ -149,8 +149,9 @@ public class TradingPairsRepositoryTests : IDisposable
         // Assert
         var tradingPairsInDb = await _assertContext
             .TradingPairs.Include(tp => tp.Exchanges)
+            .Include(tp => tp.CoinMain)
+            .Include(tp => tp.CoinQuote)
             .ToListAsync();
-        tradingPairsInDb.Should().HaveCount(TestData.NewInsertedTradingPairs.Count());
         tradingPairsInDb
             .Should()
             .BeEquivalentTo(
@@ -160,6 +161,7 @@ public class TradingPairsRepositoryTests : IDisposable
                         .Excluding(tp => tp.Id)
                         .For(tp => tp.Exchanges)
                         .Exclude(exchange => exchange.Id)
+                        .Excluding(tp => tp.CoinMain.TradingPairs)
             );
     }
 
@@ -184,6 +186,7 @@ public class TradingPairsRepositoryTests : IDisposable
                         .Excluding(tp => tp.Id)
                         .For(tp => tp.Exchanges)
                         .Exclude(exchange => exchange.Id)
+                        .Excluding(tp => tp.CoinMain.TradingPairs)
             );
     }
 
@@ -317,7 +320,19 @@ public class TradingPairsRepositoryTests : IDisposable
             new TradingPairsEntity
             {
                 IdCoinMain = 1,
+                CoinMain = new CoinsEntity
+                {
+                    Id = 1,
+                    Name = "Bitcoin",
+                    Symbol = "BTC",
+                },
                 IdCoinQuote = 3,
+                CoinQuote = new CoinsEntity
+                {
+                    Id = 3,
+                    Name = "Tether",
+                    Symbol = "USDT",
+                },
                 Exchanges =
                 [
                     new ExchangesEntity { Name = "Binance" },
@@ -327,7 +342,19 @@ public class TradingPairsRepositoryTests : IDisposable
             new TradingPairsEntity
             {
                 IdCoinMain = 2,
+                CoinMain = new CoinsEntity
+                {
+                    Id = 2,
+                    Name = "Ethereum",
+                    Symbol = "ETH",
+                },
                 IdCoinQuote = 3,
+                CoinQuote = new CoinsEntity
+                {
+                    Id = 3,
+                    Name = "Tether",
+                    Symbol = "USDT",
+                },
                 Exchanges = [new ExchangesEntity { Name = "Binance" }],
             },
         ];

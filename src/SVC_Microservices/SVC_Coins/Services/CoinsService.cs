@@ -169,7 +169,6 @@ public partial class CoinsService(
             return Result.Fail(validationResult.Errors);
         }
 
-        // Does not load coin data. Change later if needed.
         var newTradingPairs = await ReplaceTradingPairs(requests);
 
         return Result.Ok(newTradingPairs.Select(Mapping.ToTradingPair));
