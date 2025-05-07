@@ -20,5 +20,5 @@ public class TradingPair
     /// <summary>
     /// Exchanges, on which this trading pair is available.
     /// </summary>
-    public IEnumerable<Exchange> Exchanges { get; set; } = [];
+    public required IEnumerable<Exchange> Exchanges { get; set; }
 }
