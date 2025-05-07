@@ -6,14 +6,14 @@ namespace SVC_External.Models.Output;
 public class CoinGeckoAssetInfo
 {
     /// <summary>
-    /// The trading symbol of the asset (e.g., "BTC").
+    /// The coingecko id of the asset.
     /// </summary>
     public required string Id { get; set; }
 
     /// <summary>
     /// The market capitalization in USD.
     /// </summary>
-    public decimal? MarketCapUsd { get; set; }
+    public int? MarketCapUsd { get; set; }
 
     /// <summary>
     /// The current price in USD.

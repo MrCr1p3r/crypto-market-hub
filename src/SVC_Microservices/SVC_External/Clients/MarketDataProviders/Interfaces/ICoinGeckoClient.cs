@@ -33,7 +33,7 @@ public interface ICoinGeckoClient
     /// <summary>
     /// Fetches market data for specified CoinGecko IDs.
     /// </summary>
-    /// <param name="ids">Collection of CoinGecko coin IDs</param>
+    /// <param name="ids">Collection of CoinGecko coin IDs. </param>
     /// <returns>
     /// Success: Result containing a collection of CoinGecko assets with market data. <br/>
     /// Failure: Result with an error object describing the failure inside.

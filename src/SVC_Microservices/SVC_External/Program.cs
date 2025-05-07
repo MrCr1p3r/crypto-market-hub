@@ -137,4 +137,5 @@ app.UseHttpsRedirection();
 app.MapControllers();
 await app.RunAsync();
 
+// Allows WebApplicationFactory to access the Program class.
 public partial class Program { }

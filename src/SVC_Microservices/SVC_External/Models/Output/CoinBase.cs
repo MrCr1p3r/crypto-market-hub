@@ -5,7 +5,7 @@ namespace SVC_External.Models.Output;
 /// <summary>
 /// Represents a base class for coin.
 /// </summary>
-public class CoinBase
+public abstract class CoinBase
 {
     /// <summary>
     /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin). Is always uppercase.

@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using System.Globalization;
 using FluentResults;
 using ISO._4217;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -32,6 +33,7 @@ public class ExchangesDataCollector(
     private readonly ILogger<ExchangesDataCollector> _logger = logger;
 
     #region GetAllCurrentActiveSpotCoins
+
     /// <inheritdoc />
     public async Task<Result<IEnumerable<Coin>>> GetAllCurrentActiveSpotCoins()
     {
@@ -63,11 +65,13 @@ public class ExchangesDataCollector(
             _exchangeClients.Select(client => client.GetAllSpotCoins())
         );
         if (coinsLists.Any(list => list.IsFailed))
+        {
             return Result.Fail(
                 new InternalError(
                     $"No coins found for one or more exchanges: {string.Join(", ", coinsLists.Where(list => list.IsFailed).Select(list => list.Errors[0].Message))}"
                 )
             );
+        }
 
         var convertedCoinsLists = coinsLists.Select(coinsList =>
             coinsList.Value.Select(Mapping.ToCoin)
@@ -76,11 +80,13 @@ public class ExchangesDataCollector(
 
         var geckoCoinsResult = await _coinGeckoClient.GetCoinsList();
         if (geckoCoinsResult.IsFailed)
+        {
             return Result.Fail(
                 new InternalError(
                     $"Failed to retrieve a coins list from CoinGecko: {geckoCoinsResult.Errors[0].Message}"
                 )
             );
+        }
 
         var processExchangeCoinsResults = await Task.WhenAll(
             activeCoinsLists.Select(async exchangeCoins =>
@@ -91,11 +97,13 @@ public class ExchangesDataCollector(
             )
         );
         if (processExchangeCoinsResults.Any(result => result.Processed.IsFailed))
+        {
             return Result.Fail(
                 new Error(
                     $"Failed to process exchange coins: {string.Join(", ", processExchangeCoinsResults.Where(result => result.Processed.IsFailed).Select(result => result.Processed.Errors[0].Message))}"
                 )
             );
+        }
 
         var processedCoinsLists = processExchangeCoinsResults
             .Where(result => result.Processed.IsSuccess)
@@ -141,7 +149,9 @@ public class ExchangesDataCollector(
         string idExchange = GetIdExchange(exchangeCoins);
         var symbolToIdMap = await _coinGeckoClient.GetSymbolToIdMapForExchange(idExchange);
         if (symbolToIdMap.IsFailed)
+        {
             return Result.Fail(symbolToIdMap.Errors[0]);
+        }
 
         var quoteCoins = exchangeCoins
             .SelectMany(coin => coin.TradingPairs)
@@ -179,7 +189,9 @@ public class ExchangesDataCollector(
 
         var remainingCoins = coinsToUpdate.Except(updatedCoins);
         if (!remainingCoins.Any())
+        {
             return;
+        }
 
         UpdateCoinsFromIsoCodes(remainingCoins, updatedCoins);
 
@@ -188,18 +200,24 @@ public class ExchangesDataCollector(
             .DistinctBy(c => c.Symbol)
             .ToArray();
         if (coinsWithoutNames.Length == 0)
+        {
             return;
+        }
 
         if (typeof(T) == typeof(Coin))
+        {
             _logger.LogSymbolsWithoutNames(
                 idExchange,
                 string.Join(", ", coinsWithoutNames.Select(c => c.Symbol))
             );
+        }
         else
+        {
             _logger.LogQuoteSymbolsWithoutNames(
                 idExchange,
                 string.Join(", ", coinsWithoutNames.Select(c => c.Symbol))
             );
+        }
     }
 
     private List<T> UpdateCoinsFromGecko<T>(
@@ -216,7 +234,9 @@ public class ExchangesDataCollector(
         foreach (var coin in coinsToUpdate)
         {
             if (!symbolToIdMap.TryGetValue(coin.Symbol, out var id) || id is null)
+            {
                 continue;
+            }
 
             var geckoCoin = geckoCoins.FirstOrDefault(gc => gc.Id == id);
             if (geckoCoin is null)
@@ -232,6 +252,7 @@ public class ExchangesDataCollector(
         }
 
         if (inactiveCoins.Count != 0)
+        {
             _logger.LogInactiveCoinGeckoCoins(
                 idExchange,
                 string.Join(
@@ -243,6 +264,7 @@ public class ExchangesDataCollector(
                     })
                 )
             );
+        }
 
         return updatedCoins;
     }
@@ -257,7 +279,9 @@ public class ExchangesDataCollector(
         {
             var currencies = CurrencyCodesResolver.GetCurrenciesByCode(coin.Symbol);
             if (currencies?.Any() == false)
+            {
                 continue;
+            }
 
             coin.Name = currencies!.First().Name;
             coin.Category = CoinCategory.Fiat;
@@ -304,6 +328,7 @@ public class ExchangesDataCollector(
     #endregion
 
     #region GetKlineDataForTradingPair
+
     /// <inheritdoc />
     public async Task<Result<KlineDataRequestResponse>> GetKlineDataForTradingPair(
         KlineDataRequest request
@@ -323,6 +348,7 @@ public class ExchangesDataCollector(
                 new Error($"No kline data found for trading pair with ID: {request.TradingPair.Id}")
             );
         }
+
         var output = Mapping.ToOutputKlineDataRequestResponse(request.TradingPair.Id, klineData);
         return Result.Ok(output);
     }
@@ -340,6 +366,7 @@ public class ExchangesDataCollector(
                 return result.Value;
             }
         }
+
         return [];
     }
 
@@ -353,6 +380,7 @@ public class ExchangesDataCollector(
     #endregion
 
     #region GetFirstSuccessfulKlineDataPerCoin
+
     /// <inheritdoc />
     public async Task<Dictionary<int, IEnumerable<KlineData>>> GetFirstSuccessfulKlineDataPerCoin(
         KlineDataBatchRequest request
@@ -396,6 +424,7 @@ public class ExchangesDataCollector(
                 return Result.Ok(kvp);
             }
         }
+
         _logger.LogNoKlineDataFoundForCoin(mainCoin.Id, mainCoin.Symbol, mainCoin.Name);
         return Result.Fail(new Error($"No kline data found for coin with ID: {mainCoin.Id}"));
     }
@@ -412,7 +441,9 @@ public class ExchangesDataCollector(
 
         var stablecoinInfos = await stablecoinInfosTask;
         if (stablecoinInfos.IsFailed)
+        {
             return Result.Fail(stablecoinInfos.Errors[0]);
+        }
 
         var stablecoinIds = await stablecoinIdsTask;
         return stablecoinIds.IsFailed
@@ -519,7 +550,10 @@ public class ExchangesDataCollector(
             new()
             {
                 Id = coinGeckoAssetInfo.Id,
-                MarketCapUsd = coinGeckoAssetInfo.MarketCapUsd,
+                MarketCapUsd = Convert.ToInt32(
+                    coinGeckoAssetInfo.MarketCapUsd,
+                    CultureInfo.InvariantCulture
+                ),
                 PriceUsd = coinGeckoAssetInfo.PriceUsd,
                 PriceChangePercentage24h = coinGeckoAssetInfo.PriceChangePercentage24h,
                 IsStablecoin = stablecoinIds.Contains(coinGeckoAssetInfo.Id),
