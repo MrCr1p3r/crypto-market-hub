@@ -1,37 +1,34 @@
 using Microsoft.Extensions.DependencyInjection;
-using SVC_Coins.Models.Entities;
-using SVC_Coins.Repositories;
+using Respawn;
+using SVC_Coins.Infrastructure;
 using SVC_Coins.Tests.Integration.Factories;
 
 namespace SVC_Coins.Tests.Integration;
 
 public abstract class BaseIntegrationTest(CustomWebApplicationFactory factory) : IAsyncLifetime
 {
-    protected readonly CustomWebApplicationFactory Factory = factory;
-    protected readonly HttpClient Client = factory.CreateClient();
+    private protected CustomWebApplicationFactory Factory { get; } = factory;
 
-    public virtual Task InitializeAsync() => Task.CompletedTask;
+    private protected HttpClient Client { get; } = factory.CreateClient();
 
-    public virtual async Task DisposeAsync()
+    private Respawner _respawner = null!;
+
+    public virtual async Task InitializeAsync()
     {
-        using var scope = Factory.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
-        dbContext.Coins.RemoveRange(dbContext.Coins);
-        dbContext.TradingPairs.RemoveRange(dbContext.TradingPairs);
-        await dbContext.SaveChangesAsync();
+        var connectionString = Factory.GetConnectionString();
+        _respawner = await Respawner.CreateAsync(
+            connectionString,
+            new RespawnerOptions { DbAdapter = DbAdapter.SqlServer, WithReseed = true }
+        );
+
+        await _respawner.ResetAsync(connectionString);
     }
+
+    public virtual async Task DisposeAsync() => await Task.CompletedTask;
 
     protected CoinsDbContext GetDbContext()
     {
         var scope = Factory.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
-    }
-
-    protected async Task<IEnumerable<CoinsEntity>> InsertCoinsAsync(IEnumerable<CoinsEntity> coins)
-    {
-        using var dbContext = GetDbContext();
-        dbContext.Coins.AddRange(coins);
-        await dbContext.SaveChangesAsync();
-        return coins;
     }
 }
