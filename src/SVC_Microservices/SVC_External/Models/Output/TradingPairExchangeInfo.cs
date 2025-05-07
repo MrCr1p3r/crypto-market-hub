@@ -15,5 +15,6 @@ public record TradingPairExchangeInfo
     /// <summary>
     /// The status of the trading pair tradability on this exchange.
     /// </summary>
+    /// TODO: Do I need status if I always return active trading pairs?
     public ExchangeTradingPairStatus Status { get; set; }
 }

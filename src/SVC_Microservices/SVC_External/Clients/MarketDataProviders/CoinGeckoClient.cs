@@ -53,16 +53,22 @@ public partial class CoinGeckoClient(
                 $"Failed to retrieve exchange tickers from CoinGecko for exchange: {idExchange}, page: {page}"
             );
             if (response.IsFailed)
+            {
                 return Result.Fail(response.Errors);
+            }
 
             var tickers = response.Value.Tickers;
             if (tickers == null || !tickers.Any())
+            {
                 break;
+            }
 
             allTickers.AddRange(tickers);
 
             if (tickers.Count() < MaxTickersPerRequest)
+            {
                 break;
+            }
 
             page++;
         }
@@ -77,7 +83,9 @@ public partial class CoinGeckoClient(
     {
         var idsArray = ids.ToArray();
         if (idsArray.Length == 0)
+        {
             return Result.Fail(new BadRequestError("No CoinGecko IDs provided"));
+        }
 
         var chunks = idsArray.Chunk(MaxIdsPerRequest).Select(chunk => chunk.ToArray()).ToArray();
         var allResults = new List<AssetCoinGecko>();
@@ -86,7 +94,10 @@ public partial class CoinGeckoClient(
         {
             var chunkResult = await FetchMarketDataForIds(chunk);
             if (chunkResult.IsFailed)
+            {
                 return chunkResult;
+            }
+
             allResults.AddRange(chunkResult.Value);
         }
 
@@ -128,19 +139,26 @@ public partial class CoinGeckoClient(
                 "Failed to fetch stablecoins from CoinGecko"
             );
             if (response.IsFailed)
+            {
                 return Result.Fail(response.Errors);
+            }
 
             var coins = response.Value;
             if (coins == null || coins.Count == 0)
+            {
                 break;
+            }
 
             stablecoinsIds.AddRange(coins.Select(coin => coin.Id));
 
             if (coins.Count < MaxIdsPerRequest)
+            {
                 break;
+            }
 
             page++;
         }
+
         return Result.Ok<IEnumerable<string>>(stablecoinsIds);
     }
 

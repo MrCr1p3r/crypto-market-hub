@@ -1,5 +1,8 @@
 namespace SVC_External.DataCollectors.Logging;
 
+/// <summary>
+/// Logging methods for the ExchangesDataCollector class.
+/// </summary>
 public static partial class ExchangesDataCollectorLogging
 {
     [LoggerMessage(

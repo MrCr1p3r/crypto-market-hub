@@ -6,7 +6,7 @@ namespace SVC_External.Models.Output;
 public record TradingPair
 {
     /// <summary>
-    /// The base coin in the trading pair.
+    /// The quote coin in the trading pair.
     /// </summary>
     public required TradingPairCoinQuote CoinQuote { get; set; }
 
