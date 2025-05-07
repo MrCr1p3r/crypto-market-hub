@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SVC_Coins.Repositories;
+using SVC_Coins.Infrastructure;
 using Testcontainers.MsSql;
 
 namespace SVC_Coins.Tests.Integration.Factories;
@@ -13,6 +13,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         .WithPassword("Password12!")
         .WithEnvironment("ACCEPT_EULA", "Y")
         .Build();
+
+    public string GetConnectionString() => _databaseContainer.GetConnectionString();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
