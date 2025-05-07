@@ -58,7 +58,10 @@ public class TradingPairsRepository(CoinsDbContext context) : ITradingPairsRepos
         await _context.TradingPairs.AddRangeAsync(tradingPairs);
         await _context.SaveChangesAsync();
 
-        return tradingPairs;
+        return await _context
+            .TradingPairs.Include(tp => tp.CoinMain)
+            .Include(tp => tp.CoinQuote)
+            .ToListAsync();
     }
 
     /// <inheritdoc />
