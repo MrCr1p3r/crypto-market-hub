@@ -4,10 +4,10 @@ using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using SharedLibrary.Errors;
+using SVC_Coins.ApiContracts.Requests;
+using SVC_Coins.ApiContracts.Requests.CoinCreation;
+using SVC_Coins.ApiContracts.Responses;
 using SVC_Coins.ApiControllers;
-using SVC_Coins.ApiModels.Requests;
-using SVC_Coins.ApiModels.Requests.CoinCreation;
-using SVC_Coins.ApiModels.Responses;
 using SVC_Coins.Services.Interfaces;
 
 namespace SVC_Coins.Tests.Unit.ApiControllers;

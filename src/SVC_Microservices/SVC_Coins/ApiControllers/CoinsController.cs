@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Extensions;
-using SVC_Coins.ApiModels.Requests;
-using SVC_Coins.ApiModels.Requests.CoinCreation;
-using SVC_Coins.ApiModels.Responses;
+using SVC_Coins.ApiContracts.Requests;
+using SVC_Coins.ApiContracts.Requests.CoinCreation;
+using SVC_Coins.ApiContracts.Responses;
 using SVC_Coins.Services.Interfaces;
 
 namespace SVC_Coins.ApiControllers;

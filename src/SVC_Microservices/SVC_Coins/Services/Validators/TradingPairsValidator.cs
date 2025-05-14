@@ -1,6 +1,6 @@
 using FluentResults;
 using SharedLibrary.Errors;
-using SVC_Coins.ApiModels.Requests;
+using SVC_Coins.ApiContracts.Requests;
 using SVC_Coins.Repositories.Interfaces;
 using SVC_Coins.Services.Validators.Interfaces;
 

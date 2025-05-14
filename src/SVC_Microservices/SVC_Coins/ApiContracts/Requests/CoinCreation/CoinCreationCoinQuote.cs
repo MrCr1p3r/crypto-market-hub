@@ -1,4 +1,4 @@
-namespace SVC_Coins.ApiModels.Requests.CoinCreation;
+namespace SVC_Coins.ApiContracts.Requests.CoinCreation;
 
 /// <summary>
 /// Contains data for trading pair's quote coin.

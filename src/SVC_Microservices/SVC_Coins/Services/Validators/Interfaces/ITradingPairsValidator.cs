@@ -1,5 +1,5 @@
 using FluentResults;
-using SVC_Coins.ApiModels.Requests;
+using SVC_Coins.ApiContracts.Requests;
 
 namespace SVC_Coins.Services.Validators.Interfaces;
 

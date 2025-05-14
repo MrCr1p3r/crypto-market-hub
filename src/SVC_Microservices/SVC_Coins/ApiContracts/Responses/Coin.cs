@@ -1,4 +1,4 @@
-namespace SVC_Coins.ApiModels.Responses;
+namespace SVC_Coins.ApiContracts.Responses;
 
 /// <summary>
 /// Represents a cryptocurrency model.

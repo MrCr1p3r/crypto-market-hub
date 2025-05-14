@@ -1,7 +1,7 @@
 using FluentValidation;
-using SVC_Coins.ApiModels.Requests.CoinCreation;
+using SVC_Coins.ApiContracts.Requests.CoinCreation;
 
-namespace SVC_Coins.ApiModels.Requests.Validators.CoinCreation;
+namespace SVC_Coins.ApiContracts.Requests.Validators.CoinCreation;
 
 /// <summary>
 /// Defines validation rules for coin-creation model collection.

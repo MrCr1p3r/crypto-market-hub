@@ -3,7 +3,7 @@ using FluentAssertions;
 using Moq;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
-using SVC_Coins.ApiModels.Requests;
+using SVC_Coins.ApiContracts.Requests;
 using SVC_Coins.Domain.Entities;
 using SVC_Coins.Repositories.Interfaces;
 using SVC_Coins.Services.Validators;
