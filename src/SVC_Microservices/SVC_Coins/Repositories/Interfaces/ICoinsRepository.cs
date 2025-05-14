@@ -71,6 +71,13 @@ public interface ICoinsRepository
     Task DeleteCoinById(int idCoin);
 
     /// <summary>
+    /// Deletes all coins from the database that are neither referenced as a main
+    /// nor a quote coin in any trading pair.
+    /// </summary>
+    /// <returns>A task, that deletes all coins without trading pairs reference from the database.</returns>
+    Task DeleteCoinsNotReferencedByTradingPairs();
+
+    /// <summary>
     /// Removes all coins together with their related data from the database.
     /// </summary>
     /// <returns>Task, that removes all coins together with their related data from the database.</returns>

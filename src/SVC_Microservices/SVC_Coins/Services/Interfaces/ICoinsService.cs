@@ -70,6 +70,12 @@ public interface ICoinsService
     Task<Result> DeleteCoinWithTradingPairs(int idCoin);
 
     /// <summary>
+    /// Deletes all coins that are neither referenced as a main nor a quote coin in any trading pair.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task DeleteCoinsNotReferencedByTradingPairs();
+
+    /// <summary>
     /// Deletes all coins and their related data from the system.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>

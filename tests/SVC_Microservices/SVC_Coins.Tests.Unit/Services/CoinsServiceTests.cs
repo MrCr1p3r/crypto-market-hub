@@ -493,6 +493,19 @@ public class CoinsServiceTests
     }
 
     [Fact]
+    public async Task DeleteCoinsNotReferencedByTradingPairs_Always_CallsRepositoryMethod()
+    {
+        // Act
+        await _testedService.DeleteCoinsNotReferencedByTradingPairs();
+
+        // Assert
+        _coinsRepositoryMock.Verify(
+            repo => repo.DeleteCoinsNotReferencedByTradingPairs(),
+            Times.Once
+        );
+    }
+
+    [Fact]
     public async Task DeleteAllCoinsWithRelatedData_Always_CallsRepositoryMethod()
     {
         // Act
