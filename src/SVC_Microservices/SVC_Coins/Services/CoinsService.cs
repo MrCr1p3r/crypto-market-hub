@@ -218,6 +218,10 @@ public partial class CoinsService(
     }
 
     /// <inheritdoc />
+    public async Task DeleteCoinsNotReferencedByTradingPairs() =>
+        await _coinsRepository.DeleteCoinsNotReferencedByTradingPairs();
+
+    /// <inheritdoc />
     public async Task DeleteAllCoinsWithRelatedData() =>
         await _coinsRepository.DeleteAllCoinsWithRelations();
 

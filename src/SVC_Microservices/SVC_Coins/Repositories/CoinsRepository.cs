@@ -101,6 +101,18 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     }
 
     /// <inheritdoc />
+    public async Task DeleteCoinsNotReferencedByTradingPairs()
+    {
+        await _context
+            .Coins.Where(coin =>
+                !_context.TradingPairs.Any(tp =>
+                    tp.CoinMain.Id == coin.Id || tp.CoinQuote.Id == coin.Id
+                )
+            )
+            .ExecuteDeleteAsync();
+    }
+
+    /// <inheritdoc />
     public async Task DeleteAllCoinsWithRelations()
     {
         _context.TradingPairs.RemoveRange(_context.TradingPairs);

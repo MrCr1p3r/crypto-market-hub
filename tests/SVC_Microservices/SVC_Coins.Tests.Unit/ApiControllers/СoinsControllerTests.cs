@@ -324,6 +324,26 @@ public class CoinsControllerTests
     }
 
     [Fact]
+    public async Task DeleteUnreferencedCoins_CallsServiceAndReturnsNoContent()
+    {
+        // Arrange
+        _mockCoinsService
+            .Setup(service => service.DeleteCoinsNotReferencedByTradingPairs())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _testedController.DeleteUnreferencedCoins();
+
+        // Assert
+        result.Should().BeOfType<NoContentResult>();
+
+        _mockCoinsService.Verify(
+            service => service.DeleteCoinsNotReferencedByTradingPairs(),
+            Times.Once
+        );
+    }
+
+    [Fact]
     public async Task DeleteAllCoins_CallsServiceAndReturnsNoContent()
     {
         // Arrange

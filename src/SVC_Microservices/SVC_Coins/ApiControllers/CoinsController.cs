@@ -123,6 +123,21 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     }
 
     /// <summary>
+    /// Deletes all coins that are neither referenced as a base nor a quote coin in any trading pair.
+    /// </summary>
+    /// <returns>A status indicating the result of the operation.</returns>
+    /// <response code="204">All unreferenced coins were successfully deleted.</response>
+    /// <response code="500">Internal error occurred during orphaned‐coins deletion operation.</response>
+    [HttpDelete("unreferenced")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> DeleteUnreferencedCoins()
+    {
+        await _coinsService.DeleteCoinsNotReferencedByTradingPairs();
+        return NoContent();
+    }
+
+    /// <summary>
     /// Deletes all coins (and, via cascade, any related data) from the system.
     /// </summary>
     /// <returns>A status indicating the result of the operation.</returns>

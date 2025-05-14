@@ -242,6 +242,24 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
+    public async Task DeleteUnreferencedCoins_WhenSuccessful_ReturnsNoContent()
+    {
+        // Arrange
+        await SeedDatabase();
+
+        // Act
+        var response = await Client.DeleteAsync("/coins/unreferenced");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var dbContext = GetDbContext();
+        (await dbContext.Coins.CountAsync()).Should().Be(3);
+        (await dbContext.TradingPairs.CountAsync()).Should().Be(3);
+        (await dbContext.Exchanges.CountAsync()).Should().Be(2);
+    }
+
+    [Fact]
     public async Task DeleteAllCoins_WhenSuccessful_ReturnsNoContent()
     {
         // Arrange

@@ -77,6 +77,96 @@ public class CoinsRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task GetCoinsByIds_ReturnsCorrectCoinsWithoutRelations()
+    {
+        // Arrange
+        // Seed with relations, but GetCoinsByIds should not load them
+        await SeedDatabase(addTradingPairs: true);
+        var coinIds = new[] { 1, 2 };
+
+        // Act
+        var result = await _testedRepository.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+
+        // Verify coins exist with correct IDs
+        result.Should().Contain(c => c.Id == 1);
+        result.Should().Contain(c => c.Id == 2);
+
+        // Verify important properties and ABSENCE of relations
+        var firstCoin = result.First(c => c.Id == 1);
+        firstCoin.Symbol.Should().Be("BTC");
+        firstCoin.Name.Should().Be("Bitcoin");
+        firstCoin.TradingPairs.Should().BeNullOrEmpty();
+
+        var secondCoin = result.First(c => c.Id == 2);
+        secondCoin.Symbol.Should().Be("ETH");
+        secondCoin.TradingPairs.Should().BeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_WhenSomeIdsDontExist_ReturnsOnlyExistingCoins()
+    {
+        // Arrange
+        await SeedDatabase(); // Seeds 1, 2, 3
+        var coinIds = new[] { 1, 999, 2 }; // 999 does not exist
+
+        // Act
+        var result = await _testedRepository.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        result.Should().Contain(c => c.Id == 1);
+        result.Should().Contain(c => c.Id == 2);
+        result.Should().NotContain(c => c.Id == 3);
+        result.Should().NotContain(c => c.Id == 999);
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_WhenNoIdsExist_ReturnsEmpty()
+    {
+        // Arrange
+        await SeedDatabase();
+        var coinIds = new[] { 998, 999 };
+
+        // Act
+        var result = await _testedRepository.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_WhenInputIsEmpty_ReturnsEmpty()
+    {
+        // Arrange
+        await SeedDatabase();
+        var coinIds = Array.Empty<int>();
+
+        // Act
+        var result = await _testedRepository.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCoinsByIds_WhenDatabaseIsEmpty_ReturnsEmpty()
+    {
+        // Arrange
+        var coinIds = new[] { 1, 2 };
+
+        // Act
+        var result = await _testedRepository.GetCoinsByIds(coinIds);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetCoinsByIdsWithRelations_ReturnsCorrectCoinsWithTradingPairs()
     {
         // Arrange
@@ -167,6 +257,68 @@ public class CoinsRepositoryTests : IDisposable
 
         // Assert
         result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMissingCoinIds_WhenSomeIdsAreMissing_ReturnsMissingIds()
+    {
+        // Arrange
+        await SeedDatabase();
+        var coinIdsToCheck = new HashSet<int> { 1, 2, 999, 1000 }; // Existing IDs: 1, 2, 3
+
+        // Act
+        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        result.Should().Contain(999);
+        result.Should().Contain(1000);
+    }
+
+    [Fact]
+    public async Task GetMissingCoinIds_WhenAllIdsExist_ReturnsEmpty()
+    {
+        // Arrange
+        await SeedDatabase();
+        var coinIdsToCheck = new HashSet<int> { 1, 2, 3 }; // All exist
+
+        // Act
+        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMissingCoinIds_WhenInputIsEmpty_ReturnsEmpty()
+    {
+        // Arrange
+        await SeedDatabase();
+        var coinIdsToCheck = new HashSet<int>();
+
+        // Act
+        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMissingCoinIds_WhenDatabaseIsEmpty_ReturnsAllInputIds()
+    {
+        // Arrange
+        var coinIdsToCheck = new HashSet<int> { 1, 2, 3 };
+
+        // Act
+        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(3);
+        result.Should().BeEquivalentTo(coinIdsToCheck);
     }
 
     [Fact]
@@ -366,6 +518,34 @@ public class CoinsRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task DeleteCoinsNotReferencedByTradingPairs_DeletesCoinsWithoutTradingPairs()
+    {
+        // Arrange
+        await SeedDatabase();
+
+        // Act
+        await _testedRepository.DeleteCoinsNotReferencedByTradingPairs();
+
+        // Assert
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
+        coinsInDb.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task DeleteCoinsNotReferencedByTradingPairs_WhenAllCoinsAreReferenced_DoesNothing()
+    {
+        // Arrange
+        await SeedDatabase(addTradingPairs: true);
+
+        // Act
+        await _testedRepository.DeleteCoinsNotReferencedByTradingPairs();
+
+        // Assert
+        var coinsInDb = await _assertContext.Coins.ToListAsync();
+        coinsInDb.Should().HaveCount(3);
+    }
+
+    [Fact]
     public async Task DeleteAllCoinsWithRelations_DeletesAllCoinsAndTradingPairs()
     {
         // Arrange
@@ -381,158 +561,6 @@ public class CoinsRepositoryTests : IDisposable
         tradingPairsInDb.Should().BeEmpty();
         var exchangesInDb = await _assertContext.Exchanges.ToListAsync();
         exchangesInDb.Should().HaveCount(2);
-    }
-
-    [Fact]
-    public async Task GetMissingCoinIds_WhenSomeIdsAreMissing_ReturnsMissingIds()
-    {
-        // Arrange
-        await SeedDatabase();
-        var coinIdsToCheck = new HashSet<int> { 1, 2, 999, 1000 }; // Existing IDs: 1, 2, 3
-
-        // Act
-        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        result.Should().Contain(999);
-        result.Should().Contain(1000);
-    }
-
-    [Fact]
-    public async Task GetMissingCoinIds_WhenAllIdsExist_ReturnsEmpty()
-    {
-        // Arrange
-        await SeedDatabase();
-        var coinIdsToCheck = new HashSet<int> { 1, 2, 3 }; // All exist
-
-        // Act
-        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetMissingCoinIds_WhenInputIsEmpty_ReturnsEmpty()
-    {
-        // Arrange
-        await SeedDatabase();
-        var coinIdsToCheck = new HashSet<int>();
-
-        // Act
-        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetMissingCoinIds_WhenDatabaseIsEmpty_ReturnsAllInputIds()
-    {
-        // Arrange
-        var coinIdsToCheck = new HashSet<int> { 1, 2, 3 };
-
-        // Act
-        var result = await _testedRepository.GetMissingCoinIds(coinIdsToCheck);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(3);
-        result.Should().BeEquivalentTo(coinIdsToCheck);
-    }
-
-    [Fact]
-    public async Task GetCoinsByIds_ReturnsCorrectCoinsWithoutRelations()
-    {
-        // Arrange
-        // Seed with relations, but GetCoinsByIds should not load them
-        await SeedDatabase(addTradingPairs: true);
-        var coinIds = new[] { 1, 2 };
-
-        // Act
-        var result = await _testedRepository.GetCoinsByIds(coinIds);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-
-        // Verify coins exist with correct IDs
-        result.Should().Contain(c => c.Id == 1);
-        result.Should().Contain(c => c.Id == 2);
-
-        // Verify important properties and ABSENCE of relations
-        var firstCoin = result.First(c => c.Id == 1);
-        firstCoin.Symbol.Should().Be("BTC");
-        firstCoin.Name.Should().Be("Bitcoin");
-        firstCoin.TradingPairs.Should().BeNullOrEmpty();
-
-        var secondCoin = result.First(c => c.Id == 2);
-        secondCoin.Symbol.Should().Be("ETH");
-        secondCoin.TradingPairs.Should().BeNullOrEmpty();
-    }
-
-    [Fact]
-    public async Task GetCoinsByIds_WhenSomeIdsDontExist_ReturnsOnlyExistingCoins()
-    {
-        // Arrange
-        await SeedDatabase(); // Seeds 1, 2, 3
-        var coinIds = new[] { 1, 999, 2 }; // 999 does not exist
-
-        // Act
-        var result = await _testedRepository.GetCoinsByIds(coinIds);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Should().HaveCount(2);
-        result.Should().Contain(c => c.Id == 1);
-        result.Should().Contain(c => c.Id == 2);
-        result.Should().NotContain(c => c.Id == 3);
-        result.Should().NotContain(c => c.Id == 999);
-    }
-
-    [Fact]
-    public async Task GetCoinsByIds_WhenNoIdsExist_ReturnsEmpty()
-    {
-        // Arrange
-        await SeedDatabase();
-        var coinIds = new[] { 998, 999 };
-
-        // Act
-        var result = await _testedRepository.GetCoinsByIds(coinIds);
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetCoinsByIds_WhenInputIsEmpty_ReturnsEmpty()
-    {
-        // Arrange
-        await SeedDatabase();
-        var coinIds = Array.Empty<int>();
-
-        // Act
-        var result = await _testedRepository.GetCoinsByIds(coinIds);
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task GetCoinsByIds_WhenDatabaseIsEmpty_ReturnsEmpty()
-    {
-        // Arrange
-        var coinIds = new[] { 1, 2 };
-
-        // Act
-        var result = await _testedRepository.GetCoinsByIds(coinIds);
-
-        // Assert
-        result.Should().BeEmpty();
     }
 
     private async Task SeedDatabase(bool addTradingPairs = false)
