@@ -80,7 +80,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task InsertCoins_WhenSuccessful_ReturnsCreatedCoins()
+    public async Task CreateCoins_WhenSuccessful_ReturnsCreatedCoins()
     {
         // Arrange
         await SeedDatabase();
@@ -106,7 +106,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task InsertCoins_WhenValidationFails_ReturnsBadRequest()
+    public async Task CreateCoins_WhenValidationFails_ReturnsBadRequest()
     {
         // Act
         var response = await Client.PostAsJsonAsync("/coins", TestData.CoinsToInsert);

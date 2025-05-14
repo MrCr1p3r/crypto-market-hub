@@ -40,11 +40,11 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     }
 
     /// <summary>
-    /// Inserts multiple new coins into the database along with their trading pairs.
+    /// Creates multiple new coins along with their trading pairs.
     /// </summary>
     /// <param name="coins">The collection of creation requests.</param>
     /// <returns>A collection of created coins.</returns>
-    /// <response code="200">The coins and trading pairs were successfully inserted.</response>
+    /// <response code="200">The coins and trading pairs were successfully created.</response>
     /// <response code="400">One or more validation errors occurred.</response>
     /// <response code="500">Internal error occurred during coins creating operation.</response>
     [HttpPost]
@@ -53,7 +53,7 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> InsertCoins([FromBody] IEnumerable<CoinCreationRequest> coins)
+    public async Task<IActionResult> CreateCoins([FromBody] IEnumerable<CoinCreationRequest> coins)
     {
         var result = await _coinsService.CreateCoinsWithTradingPairs(coins);
         return result.ToActionResult(this);
