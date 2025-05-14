@@ -1,7 +1,7 @@
 using FluentValidation;
 using SharedLibrary.Enums;
 
-namespace SVC_Coins.ApiModels.Requests.Validators.TradingPairCreation;
+namespace SVC_Coins.ApiContracts.Requests.Validators.TradingPairCreation;
 
 /// <summary>
 /// Validator for a single trading pair creation request.

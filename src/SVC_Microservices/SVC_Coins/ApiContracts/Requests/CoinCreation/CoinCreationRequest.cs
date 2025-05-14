@@ -1,4 +1,4 @@
-namespace SVC_Coins.ApiModels.Requests.CoinCreation;
+namespace SVC_Coins.ApiContracts.Requests.CoinCreation;
 
 /// <summary>
 /// Represents a model for creating a new coin.

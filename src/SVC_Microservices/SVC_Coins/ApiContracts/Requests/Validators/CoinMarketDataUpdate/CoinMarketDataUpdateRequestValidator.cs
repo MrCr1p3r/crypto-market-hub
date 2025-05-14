@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace SVC_Coins.ApiModels.Requests.Validators.CoinMarketDataUpdate;
+namespace SVC_Coins.ApiContracts.Requests.Validators.CoinMarketDataUpdate;
 
 /// <summary>
 /// Defines validation rules for the coin market data update request model.

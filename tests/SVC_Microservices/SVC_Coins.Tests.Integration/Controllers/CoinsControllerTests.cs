@@ -3,9 +3,9 @@ using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary.Enums;
-using SVC_Coins.ApiModels.Requests;
-using SVC_Coins.ApiModels.Requests.CoinCreation;
-using SVC_Coins.ApiModels.Responses;
+using SVC_Coins.ApiContracts.Requests;
+using SVC_Coins.ApiContracts.Requests.CoinCreation;
+using SVC_Coins.ApiContracts.Responses;
 using SVC_Coins.Domain.Entities;
 using SVC_Coins.Tests.Integration.Factories;
 

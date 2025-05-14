@@ -1,8 +1,8 @@
 using FluentValidation;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
-using SVC_Coins.ApiModels.Requests.Validators.CoinCreation;
-using SVC_Coins.ApiModels.Requests.Validators.CoinMarketDataUpdate;
-using SVC_Coins.ApiModels.Requests.Validators.TradingPairCreation;
+using SVC_Coins.ApiContracts.Requests.Validators.CoinCreation;
+using SVC_Coins.ApiContracts.Requests.Validators.CoinMarketDataUpdate;
+using SVC_Coins.ApiContracts.Requests.Validators.TradingPairCreation;
 
 namespace SVC_Coins.Infrastructure.DependencyInjection;
 

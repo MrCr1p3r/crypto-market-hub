@@ -1,4 +1,4 @@
-namespace SVC_Coins.ApiModels.Requests;
+namespace SVC_Coins.ApiContracts.Requests;
 
 /// <summary>
 /// Represents a request model for updating the market data of a coin.

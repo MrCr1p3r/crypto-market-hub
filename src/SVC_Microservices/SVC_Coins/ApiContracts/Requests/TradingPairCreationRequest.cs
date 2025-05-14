@@ -1,6 +1,6 @@
 using SharedLibrary.Enums;
 
-namespace SVC_Coins.ApiModels.Requests;
+namespace SVC_Coins.ApiContracts.Requests;
 
 /// <summary>
 /// Represents a request model for creating a new trading pair.

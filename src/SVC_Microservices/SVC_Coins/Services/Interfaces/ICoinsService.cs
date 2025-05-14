@@ -1,7 +1,7 @@
 using FluentResults;
-using SVC_Coins.ApiModels.Requests;
-using SVC_Coins.ApiModels.Requests.CoinCreation;
-using SVC_Coins.ApiModels.Responses;
+using SVC_Coins.ApiContracts.Requests;
+using SVC_Coins.ApiContracts.Requests.CoinCreation;
+using SVC_Coins.ApiContracts.Responses;
 
 namespace SVC_Coins.Services.Interfaces;
 

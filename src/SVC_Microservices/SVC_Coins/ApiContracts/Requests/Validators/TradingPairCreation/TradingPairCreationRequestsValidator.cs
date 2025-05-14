@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace SVC_Coins.ApiModels.Requests.Validators.TradingPairCreation;
+namespace SVC_Coins.ApiContracts.Requests.Validators.TradingPairCreation;
 
 /// <summary>
 /// Defines validation rules for a list of trading pair creation requests.
