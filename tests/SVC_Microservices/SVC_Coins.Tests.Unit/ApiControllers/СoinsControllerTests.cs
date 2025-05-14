@@ -97,7 +97,7 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task InsertCoins_OnSuccess_CallsServiceAndReturnsOk()
+    public async Task CreateCoins_OnSuccess_CallsServiceAndReturnsOk()
     {
         // Arrange
         var requests = _fixture.CreateMany<CoinCreationRequest>(3).ToList();
@@ -111,7 +111,7 @@ public class CoinsControllerTests
             .ReturnsAsync(successResult);
 
         // Act
-        var result = await _testedController.InsertCoins(requests);
+        var result = await _testedController.CreateCoins(requests);
 
         // Assert
         result
@@ -127,7 +127,7 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task InsertCoins_OnFailure_CallsServiceAndReturnsBadRequest()
+    public async Task CreateCoins_OnFailure_CallsServiceAndReturnsBadRequest()
     {
         // Arrange
         var requests = _fixture.CreateMany<CoinCreationRequest>(3).ToList();
@@ -143,7 +143,7 @@ public class CoinsControllerTests
             .ReturnsAsync(failureResult);
 
         // Act
-        var result = await _testedController.InsertCoins(requests);
+        var result = await _testedController.CreateCoins(requests);
 
         // Assert
         result
