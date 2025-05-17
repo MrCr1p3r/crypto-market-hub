@@ -1,4 +1,3 @@
-using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using SVC_Coins.Domain.Entities;
