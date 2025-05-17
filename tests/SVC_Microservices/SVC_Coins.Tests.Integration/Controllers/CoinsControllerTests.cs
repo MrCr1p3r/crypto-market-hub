@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using SharedLibrary.Enums;
 using SVC_Coins.ApiContracts.Requests;

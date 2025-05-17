@@ -1,8 +1,5 @@
-using AutoFixture;
-using FluentAssertions;
 using FluentResults;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
 using SharedLibrary.Errors;
 using SVC_Coins.ApiContracts.Requests;
 using SVC_Coins.ApiContracts.Requests.CoinCreation;

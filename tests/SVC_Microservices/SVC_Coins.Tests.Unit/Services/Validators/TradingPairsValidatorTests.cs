@@ -1,6 +1,4 @@
 using System.Globalization;
-using FluentAssertions;
-using Moq;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
 using SVC_Coins.ApiContracts.Requests;
