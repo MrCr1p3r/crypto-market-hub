@@ -17,8 +17,8 @@ public static class FakeLoggerExtensions
     /// <param name="logLevel">The expected log level.</param>
     /// <param name="message">The message substring expected to be in the log entry.</param>
     /// <exception cref="AssertionFailedException">Thrown when no matching log entry is found.</exception>
-    public static void VerifyWasCalled<T>(
-        this FakeLogger<T> fakeLogger,
+    public static void VerifyWasCalled(
+        this FakeLogger fakeLogger,
         LogLevel logLevel,
         string message
     )
@@ -41,6 +41,28 @@ public static class FakeLoggerExtensions
             + $"Log entries found:"
             + Environment.NewLine
             + string.Join(Environment.NewLine, fakeLogger.Collector.GetSnapshot().Select(l => l));
+
+        throw new AssertionFailedException(exceptionMessage);
+    }
+
+    /// <summary>
+    /// Verifies that no log entries were written to the fake logger.
+    /// </summary>
+    /// <param name="fakeLogger">The fake logger to verify.</param>
+    /// <exception cref="AssertionFailedException">Thrown when log entries are found.</exception>
+    public static void VerifyNoLogsWritten(this FakeLogger fakeLogger)
+    {
+        var logEntries = fakeLogger.Collector.GetSnapshot();
+
+        if (!logEntries.Any())
+        {
+            return;
+        }
+
+        var exceptionMessage =
+            $"Expected no log entries, but found {logEntries.Count} log entries:"
+            + Environment.NewLine
+            + string.Join(Environment.NewLine, logEntries.Select(l => $"[{l.Level}] {l.Message}"));
 
         throw new AssertionFailedException(exceptionMessage);
     }

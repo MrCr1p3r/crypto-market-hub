@@ -3,127 +3,193 @@ using FluentResults;
 namespace SharedLibrary.Errors;
 
 /// <summary>
-/// Contains custom error types for domain operations
+/// Contains custom error types for domain operations.
 /// </summary>
 public static class GenericErrors
 {
     /// <summary>
-    /// Bad request error (invalid input)
+    /// Bad request error (invalid input).
     /// </summary>
     public class BadRequestError : Error
     {
-        public BadRequestError(string message)
+        public BadRequestError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "BadRequest");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Unauthorized error (not authenticated)
+    /// Unauthorized error (not authenticated).
     /// </summary>
     public class UnauthorizedError : Error
     {
-        public UnauthorizedError(string message)
+        public UnauthorizedError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "Unauthorized");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Forbidden error (not authorized)
+    /// Forbidden error (not authorized).
     /// </summary>
     public class ForbiddenError : Error
     {
-        public ForbiddenError(string message)
+        public ForbiddenError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "Forbidden");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Not found error (resource doesn't exist)
+    /// Not found error (resource doesn't exist).
     /// </summary>
     public class NotFoundError : Error
     {
-        public NotFoundError(string message)
+        public NotFoundError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "NotFound");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Conflict error (resource already exists or state conflict)
+    /// Conflict error (resource already exists or state conflict).
     /// </summary>
     public class ConflictError : Error
     {
-        public ConflictError(string message)
+        public ConflictError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "Conflict");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Too many requests error (rate limit exceeded)
+    /// Too many requests error (rate limit exceeded).
     /// </summary>
     public class TooManyRequestsError : Error
     {
-        public TooManyRequestsError(string message)
+        public TooManyRequestsError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "TooManyRequests");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Internal error (internal server error)
+    /// Internal error (internal server error).
     /// </summary>
     public class InternalError : Error
     {
-        public InternalError(string message)
+        public InternalError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "InternalError");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Bad gateway error (bad gateway)
+    /// Bad gateway error (bad gateway).
     /// </summary>
     public class GatewayError : Error
     {
-        public GatewayError(string message)
+        public GatewayError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "BadGateway");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Unavailable error (unavailable)
+    /// Unavailable error (unavailable).
     /// </summary>
     public class UnavailableError : Error
     {
-        public UnavailableError(string message)
+        public UnavailableError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "Unavailable");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
         }
     }
 
     /// <summary>
-    /// Timeout error (timeout)
+    /// Timeout error (timeout).
     /// </summary>
     public class TimeoutError : Error
     {
-        public TimeoutError(string message)
+        public TimeoutError(
+            string message,
+            Dictionary<string, object>? metadata = null,
+            IEnumerable<IError>? reasons = null
+        )
             : base(message)
         {
-            Metadata.Add("ErrorCode", "Timeout");
+            this.AddMetadata(metadata);
+            this.AddReasons(reasons);
+        }
+    }
+
+    private static void AddMetadata(this Error error, Dictionary<string, object>? metadata)
+    {
+        if (metadata is not null)
+        {
+            error.WithMetadata(metadata);
+        }
+    }
+
+    private static void AddReasons(this Error error, IEnumerable<IError>? reasons)
+    {
+        if (reasons is not null)
+        {
+            error.CausedBy(reasons);
         }
     }
 }
