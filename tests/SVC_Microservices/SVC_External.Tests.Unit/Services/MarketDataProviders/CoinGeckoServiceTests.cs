@@ -64,7 +64,7 @@ public class CoinGeckoServiceTests
         foreach (var item in result.Value)
         {
             var sourceAsset = assetInfos.First(asset => asset.Id == item.Id);
-            item.MarketCapUsd.Should().Be(Convert.ToInt32(sourceAsset.MarketCapUsd));
+            item.MarketCapUsd.Should().Be(Convert.ToInt64(sourceAsset.MarketCapUsd));
             item.PriceUsd.Should().Be(sourceAsset.PriceUsd);
             item.PriceChangePercentage24h.Should().Be(sourceAsset.PriceChangePercentage24h);
         }
