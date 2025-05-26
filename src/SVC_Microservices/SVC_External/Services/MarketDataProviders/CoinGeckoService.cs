@@ -58,7 +58,7 @@ public class CoinGeckoService(ICoinGeckoClient coinGeckoClient) : ICoinGeckoServ
             new()
             {
                 Id = coinGeckoAssetInfo.Id,
-                MarketCapUsd = Convert.ToInt32(coinGeckoAssetInfo.MarketCapUsd),
+                MarketCapUsd = Convert.ToInt64(coinGeckoAssetInfo.MarketCapUsd),
                 PriceUsd = coinGeckoAssetInfo.PriceUsd,
                 PriceChangePercentage24h = coinGeckoAssetInfo.PriceChangePercentage24h,
                 IsStablecoin = stablecoinIds.Contains(coinGeckoAssetInfo.Id),

@@ -3,7 +3,7 @@ namespace SVC_External.ApiContracts.Requests;
 /// <summary>
 /// A base class for a kline data request coin.
 /// </summary>
-public abstract class KlineDataRequestCoinBase
+public class KlineDataRequestCoinBase
 {
     /// <summary>
     /// The id of the coin.

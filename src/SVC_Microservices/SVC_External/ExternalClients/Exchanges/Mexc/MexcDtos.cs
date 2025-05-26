@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace SVC_External.ExternalClients.Exchanges.Mexc;
@@ -40,7 +41,7 @@ public static class MexcDtos
         /// The current trading status of the trading pair.
         /// </summary>
         [JsonPropertyName("status")]
-        [JsonConverter(typeof(JsonNumberEnumConverter<TradingPairStatus>))]
+        [JsonConverter(typeof(MexcStatusConverter))]
         public required TradingPairStatus Status { get; set; }
 
         /// <summary>
@@ -69,5 +70,33 @@ public static class MexcDtos
         /// Trading pair is permanently unavailable.
         /// </summary>
         Unavailable = 3,
+    }
+
+    public class MexcStatusConverter : JsonConverter<TradingPairStatus>
+    {
+        public override TradingPairStatus Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options
+        )
+        {
+            var statusString = reader.GetString();
+            return statusString switch
+            {
+                "1" => TradingPairStatus.Trading,
+                "2" => TradingPairStatus.CurrentlyUnavailable,
+                "3" => TradingPairStatus.Unavailable,
+                _ => throw new JsonException($"Unsupported status value: {statusString}"),
+            };
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            TradingPairStatus value,
+            JsonSerializerOptions options
+        )
+        {
+            writer.WriteStringValue(((int)value).ToString());
+        }
     }
 }
