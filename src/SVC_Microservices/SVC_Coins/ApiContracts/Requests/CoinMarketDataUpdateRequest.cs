@@ -13,7 +13,7 @@ public class CoinMarketDataUpdateRequest
     /// <summary>
     /// The market capitalization in USD.
     /// </summary>
-    public int? MarketCapUsd { get; set; }
+    public long? MarketCapUsd { get; set; }
 
     /// <summary>
     /// The current price in USD.

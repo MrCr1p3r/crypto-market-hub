@@ -1,3 +1,4 @@
+using CryptoChartAnalyzer.ServiceDefaults;
 using SVC_Coins.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,4 +1,3 @@
-using System.Globalization;
 using FluentAssertions.ArgumentMatchers.Moq;
 using FluentResults;
 using SharedLibrary.Enums;
@@ -1009,9 +1008,9 @@ public class CoinsServiceTests
                 Symbol = "BTC",
                 Name = "Bitcoin",
                 IdCoinGecko = "bitcoin",
-                MarketCapUsd = 1_000_000_000, // int?
-                PriceUsd = 50000m.ToString(CultureInfo.InvariantCulture), // string?
-                PriceChangePercentage24h = 1.5m, // decimal?
+                MarketCapUsd = 1_000_000_000,
+                PriceUsd = 50000m.ToString(),
+                PriceChangePercentage24h = 1.5m,
             },
             new()
             {
@@ -1019,9 +1018,9 @@ public class CoinsServiceTests
                 Symbol = "ETH",
                 Name = "Ethereum",
                 IdCoinGecko = "ethereum",
-                MarketCapUsd = 500_000_000, // int?
-                PriceUsd = 4000m.ToString(CultureInfo.InvariantCulture), // string?
-                PriceChangePercentage24h = -0.5m, // decimal?
+                MarketCapUsd = 500_000_000,
+                PriceUsd = 4000m.ToString(),
+                PriceChangePercentage24h = -0.5m,
             },
         ];
 
@@ -1034,9 +1033,9 @@ public class CoinsServiceTests
                 Symbol = "BTC",
                 Name = "Bitcoin",
                 IdCoinGecko = "bitcoin",
-                MarketCapUsd = 1_000_000_000, // int?
-                PriceUsd = 50000m.ToString(CultureInfo.InvariantCulture), // string?
-                PriceChangePercentage24h = 1.5m, // Assuming string?
+                MarketCapUsd = 1_000_000_000,
+                PriceUsd = 50000m.ToString(),
+                PriceChangePercentage24h = 1.5m,
             },
             new()
             {
@@ -1044,9 +1043,9 @@ public class CoinsServiceTests
                 Symbol = "ETH",
                 Name = "Ethereum",
                 IdCoinGecko = "ethereum",
-                MarketCapUsd = 500_000_000, // int?
-                PriceUsd = 4000m.ToString(CultureInfo.InvariantCulture), // string?
-                PriceChangePercentage24h = -0.5m, // Assuming string?
+                MarketCapUsd = 500_000_000,
+                PriceUsd = 4000m.ToString(),
+                PriceChangePercentage24h = -0.5m,
             },
         ];
 
@@ -1060,9 +1059,9 @@ public class CoinsServiceTests
                 Name = "Bitcoin",
                 IdCoinGecko = "bitcoin",
                 MarketCapUsd = 1_000_000_000,
-                PriceUsd = 50000m.ToString(CultureInfo.InvariantCulture),
+                PriceUsd = 50000m.ToString(),
                 PriceChangePercentage24h = 1.5m,
-                TradingPairs = [], // Assuming no trading pairs loaded in this flow
+                TradingPairs = [],
             },
             new()
             {
@@ -1071,9 +1070,9 @@ public class CoinsServiceTests
                 Name = "Ethereum",
                 IdCoinGecko = "ethereum",
                 MarketCapUsd = 500_000_000,
-                PriceUsd = 4000m.ToString(CultureInfo.InvariantCulture),
+                PriceUsd = 4000m.ToString(),
                 PriceChangePercentage24h = -0.5m,
-                TradingPairs = [], // Assuming no trading pairs loaded in this flow
+                TradingPairs = [],
             },
         ];
     }
