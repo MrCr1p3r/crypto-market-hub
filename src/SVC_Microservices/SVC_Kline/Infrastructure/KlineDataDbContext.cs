@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using SVC_Kline.Models.Entities;
+using SVC_Kline.Domain.Entities;
 
-namespace SVC_Kline.Repositories;
+namespace SVC_Kline.Infrastructure;
 
 /// <summary>
 /// The DbContext class for managing database operations related to Kline data.
@@ -30,7 +30,7 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
         modelBuilder.Entity<KlineDataEntity>(entity =>
         {
             entity
-                .HasKey(e => new { e.IdTradePair, e.OpenTime })
+                .HasKey(e => new { e.IdTradingPair, e.OpenTime })
                 .HasName("PK__KlineDat__031B42F9984E192C");
 
             entity.Property(e => e.ClosePrice).HasMaxLength(100).IsUnicode(true);
@@ -42,7 +42,7 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
             entity
                 .HasOne(d => d.IdTradePairNavigation)
                 .WithMany()
-                .HasForeignKey(d => d.IdTradePair)
+                .HasForeignKey(d => d.IdTradingPair)
                 .HasConstraintName("FK_KlineData_TradingPairs");
         });
 

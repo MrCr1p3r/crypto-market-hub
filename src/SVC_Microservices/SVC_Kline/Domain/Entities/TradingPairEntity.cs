@@ -1,4 +1,4 @@
-namespace SVC_Kline.Models.Entities;
+namespace SVC_Kline.Domain.Entities;
 
 /// <summary>
 /// Minimal or “stub” entity just to represent the TradingPair table
@@ -7,7 +7,7 @@ namespace SVC_Kline.Models.Entities;
 public class TradingPairEntity
 {
     /// <summary>
-    /// The primary key in the trading pairs table
+    /// The primary key in the trading pairs table.
     /// </summary>
     public int Id { get; set; }
 }
