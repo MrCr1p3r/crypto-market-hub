@@ -1,14 +1,14 @@
-namespace SVC_Kline.Models.Input;
+namespace SVC_Kline.ApiContracts.Responses;
 
 /// <summary>
-/// Represents Kline (candlestick) data for a trading pair for a new entry in the db.
+/// Represents Kline (candlestick) data for a trading pair.
 /// </summary>
-public class KlineDataNew
+public class KlineData
 {
     /// <summary>
-    /// Id of the trade pair for which the Kline data is recorded.
+    /// Id of the trading pair for which the Kline data is recorded.
     /// </summary>
-    public int IdTradePair { get; set; }
+    public int IdTradingPair { get; set; }
 
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.

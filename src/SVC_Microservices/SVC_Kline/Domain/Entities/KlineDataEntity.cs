@@ -1,20 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace SVC_Kline.Models.Entities;
+namespace SVC_Kline.Domain.Entities;
 
 /// <summary>
 /// Entity class representing Kline (candlestick) data for a trading pair in the database.
 /// </summary>
-[PrimaryKey(nameof(IdTradePair), nameof(OpenTime))]
+[PrimaryKey(nameof(IdTradingPair), nameof(OpenTime))]
 public class KlineDataEntity
 {
     /// <summary>
-    /// Id of the trade pair for which the Kline data is recorded.
+    /// Id of the trading pair for which the Kline data is recorded.
     /// </summary>
     [Required]
-    public int IdTradePair { get; set; }
+    public int IdTradingPair { get; set; }
 
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.

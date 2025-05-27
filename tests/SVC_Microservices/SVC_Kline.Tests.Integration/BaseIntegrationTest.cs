@@ -1,15 +1,15 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SVC_Kline.Models.Entities;
-using SVC_Kline.Repositories;
+using SVC_Kline.Domain.Entities;
+using SVC_Kline.Infrastructure;
 using SVC_Kline.Tests.Integration.Factories;
 
 namespace SVC_Kline.Tests.Integration;
 
 public abstract class BaseIntegrationTest(CustomWebApplicationFactory factory) : IAsyncLifetime
 {
-    protected readonly CustomWebApplicationFactory Factory = factory;
-    protected readonly HttpClient Client = factory.CreateClient();
+    private protected CustomWebApplicationFactory Factory { get; } = factory;
+
+    private protected HttpClient Client { get; } = factory.CreateClient();
 
     public virtual Task InitializeAsync() => Task.CompletedTask;
 

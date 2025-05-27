@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using SVC_Kline.Repositories;
+using SVC_Kline.Infrastructure;
 using Testcontainers.MsSql;
 
 namespace SVC_Kline.Tests.Integration.Factories;
