@@ -36,7 +36,7 @@ public class KlineDataRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task GetAllKlineData_ShouldReturnAllEntitiesGroupedByTradingPairId()
+    public async Task GetAllKlineData_ShouldReturnKlineDataResponsesGroupedByTradingPairId()
     {
         // Arrange
         var tradingPair1 = await CreateTradingPairAsync();
@@ -79,35 +79,69 @@ public class KlineDataRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var klineDataDict = await _repository.GetAllKlineData();
+        var klineDataResponses = await _repository.GetAllKlineData();
 
         // Assert
-        klineDataDict.Should().HaveCount(2);
-        klineDataDict[tradingPair1.Id].Should().HaveCount(2);
-        klineDataDict[tradingPair2.Id].Should().HaveCount(1);
+        var responseList = klineDataResponses.ToList();
+        responseList.Should().HaveCount(2);
+
+        var tradingPair1Response = responseList.First(r => r.IdTradingPair == tradingPair1.Id);
+        tradingPair1Response.KlineData.Should().HaveCount(2);
+
+        var tradingPair2Response = responseList.First(r => r.IdTradingPair == tradingPair2.Id);
+        tradingPair2Response.KlineData.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task InsertManyKlineData_ShouldAddEntitiesToDatabase()
+    public async Task InsertKlineData_ShouldAddEntitiesToDatabaseAndReturnInsertedData()
     {
         // Arrange
-        var tradingPair = await CreateTradingPairAsync();
-        var klineDataList = _fixture
-            .Build<KlineDataCreationRequest>()
-            .With(x => x.IdTradingPair, tradingPair.Id)
-            .CreateMany(5)
-            .ToList();
+        var tradingPair1 = await CreateTradingPairAsync();
+        var tradingPair2 = await CreateTradingPairAsync();
+
+        var klineDataList = new List<KlineDataCreationRequest>
+        {
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, tradingPair1.Id)
+                .Create(),
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, tradingPair1.Id)
+                .Create(),
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, tradingPair1.Id)
+                .Create(),
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, tradingPair2.Id)
+                .Create(),
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, tradingPair2.Id)
+                .Create(),
+        };
 
         // Act
-        await _repository.InsertKlineData(klineDataList);
+        var result = await _repository.InsertKlineData(klineDataList);
 
         // Assert
         var entities = await _context.KlineData.ToListAsync();
         entities.Should().HaveCount(5);
+
+        var responseList = result.ToList();
+        responseList.Should().HaveCount(2);
+
+        var tradingPair1Response = responseList.First(r => r.IdTradingPair == tradingPair1.Id);
+        tradingPair1Response.KlineData.Should().HaveCount(3);
+
+        var tradingPair2Response = responseList.First(r => r.IdTradingPair == tradingPair2.Id);
+        tradingPair2Response.KlineData.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task ReplaceAllKlineData_ShouldReplaceExistingData()
+    public async Task ReplaceAllKlineData_ShouldReplaceExistingDataAndReturnNewData()
     {
         // Arrange
         var tradingPair1 = await CreateTradingPairAsync();
@@ -118,16 +152,31 @@ public class KlineDataRepositoryTests : IDisposable
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair1.Id)
+                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair1.Id)
+                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair2.Id)
+                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
+                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
         };
@@ -135,19 +184,36 @@ public class KlineDataRepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         var newTradingPair = await CreateTradingPairAsync();
-        var newKlineData = _fixture
-            .Build<KlineDataCreationRequest>()
-            .With(x => x.IdTradingPair, newTradingPair.Id)
-            .CreateMany(3)
-            .ToArray();
+        var newKlineData = new[]
+        {
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, newTradingPair.Id)
+                .Create(),
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, newTradingPair.Id)
+                .Create(),
+            _fixture
+                .Build<KlineDataCreationRequest>()
+                .With(x => x.IdTradingPair, newTradingPair.Id)
+                .Create(),
+        };
 
         // Act
-        await _repository.ReplaceAllKlineData(newKlineData);
+        var result = await _repository.ReplaceAllKlineData(newKlineData);
 
         // Assert
         var entities = await _context.KlineData.ToListAsync();
         entities.Should().HaveCount(3);
         entities.Should().AllSatisfy(e => e.IdTradingPair.Should().Be(newTradingPair.Id));
+
+        var responseList = result.ToList();
+        responseList.Should().HaveCount(1);
+
+        var response = responseList[0];
+        response.IdTradingPair.Should().Be(newTradingPair.Id);
+        response.KlineData.Should().HaveCount(3);
     }
 
     public void Dispose()

@@ -24,12 +24,12 @@ public class KlineDataControllerTests
     public async Task GetAllKlineData_CallsRepository()
     {
         // Arrange
-        var klineDataDict = new Dictionary<int, IEnumerable<KlineData>>
+        var klineDataResponses = new List<KlineDataResponse>
         {
-            { 1, _fixture.CreateMany<KlineData>(2) },
-            { 2, _fixture.CreateMany<KlineData>(1) },
+            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(2) },
+            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(1) },
         };
-        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataDict);
+        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataResponses);
 
         // Act
         await _controller.GetAllKlineData();
@@ -42,12 +42,12 @@ public class KlineDataControllerTests
     public async Task GetAllKlineData_ReturnsOkResultWithExpectedData()
     {
         // Arrange
-        var klineDataDict = new Dictionary<int, IEnumerable<KlineData>>
+        var klineDataResponses = new List<KlineDataResponse>
         {
-            { 1, _fixture.CreateMany<KlineData>(2) },
-            { 2, _fixture.CreateMany<KlineData>(1) },
+            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(2) },
+            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(1) },
         };
-        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataDict);
+        _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataResponses);
 
         // Act
         var result = await _controller.GetAllKlineData();
@@ -57,14 +57,22 @@ public class KlineDataControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(klineDataDict);
+            .BeEquivalentTo(klineDataResponses);
     }
 
     [Fact]
-    public async Task InsertManyKlineData_CallsRepository()
+    public async Task InsertKlineData_CallsRepository()
     {
         // Arrange
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToList();
+        var expectedResponse = new List<KlineDataResponse>
+        {
+            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(3) },
+            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(2) },
+        };
+        _mockRepository
+            .Setup(repo => repo.InsertKlineData(klineDataList))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         await _controller.InsertKlineData(klineDataList);
@@ -74,10 +82,18 @@ public class KlineDataControllerTests
     }
 
     [Fact]
-    public async Task InsertManyKlineData_ValidData_ReturnsOkResult()
+    public async Task InsertKlineData_ValidData_ReturnsOkResultWithInsertedData()
     {
         // Arrange
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToList();
+        var expectedResponse = new List<KlineDataResponse>
+        {
+            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(3) },
+            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(2) },
+        };
+        _mockRepository
+            .Setup(repo => repo.InsertKlineData(klineDataList))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _controller.InsertKlineData(klineDataList);
@@ -87,7 +103,7 @@ public class KlineDataControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .Be("Multiple Kline data entries inserted successfully.");
+            .BeEquivalentTo(expectedResponse);
     }
 
     [Fact]
@@ -95,6 +111,13 @@ public class KlineDataControllerTests
     {
         // Arrange
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToArray();
+        var expectedResponse = new List<KlineDataResponse>
+        {
+            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(5) },
+        };
+        _mockRepository
+            .Setup(repo => repo.ReplaceAllKlineData(klineDataList))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         await _controller.ReplaceAllKlineData(klineDataList);
@@ -104,10 +127,17 @@ public class KlineDataControllerTests
     }
 
     [Fact]
-    public async Task ReplaceAllKlineData_ValidData_ReturnsOkResult()
+    public async Task ReplaceAllKlineData_ValidData_ReturnsOkResultWithReplacedData()
     {
         // Arrange
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToArray();
+        var expectedResponse = new List<KlineDataResponse>
+        {
+            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(5) },
+        };
+        _mockRepository
+            .Setup(repo => repo.ReplaceAllKlineData(klineDataList))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _controller.ReplaceAllKlineData(klineDataList);
@@ -117,6 +147,6 @@ public class KlineDataControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .Be("All Kline data replaced successfully.");
+            .BeEquivalentTo(expectedResponse);
     }
 }
