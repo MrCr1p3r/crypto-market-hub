@@ -1,15 +1,10 @@
 namespace SVC_Kline.ApiContracts.Responses;
 
 /// <summary>
-/// Represents Kline (candlestick) data for a trading pair.
+/// Represents Kline (candlestick) data.
 /// </summary>
 public class KlineData
 {
-    /// <summary>
-    /// Id of the trading pair for which the Kline data is recorded.
-    /// </summary>
-    public int IdTradingPair { get; set; }
-
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.
     /// </summary>
