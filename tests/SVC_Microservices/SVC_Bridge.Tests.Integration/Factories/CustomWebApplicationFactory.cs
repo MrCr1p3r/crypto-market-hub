@@ -1,45 +1,57 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using SVC_Bridge.Clients.Interfaces;
-using SVC_Bridge.DataCollectors.Interfaces;
+using Microsoft.Extensions.Configuration;
+using WireMock.Client;
+using WireMock.Net.Testcontainers;
 
-namespace SVC_Bridge.Tests.Integration.Factories
+namespace SVC_Bridge.Tests.Integration.Factories;
+
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    public class CustomWebApplicationFactory(
-        IKlineDataCollector dataCollector,
-        ISvcKlineClient klineClient
-    ) : WebApplicationFactory<Program>
+    private readonly WireMockContainer _svcCoinsWireMockContainer =
+        new WireMockContainerBuilder().Build();
+
+    private readonly WireMockContainer _svcExternalWireMockContainer =
+        new WireMockContainerBuilder().Build();
+
+    // Expose mock servers for tests
+    public IWireMockAdminApi SvcCoinsServerMock { get; private set; } = null!;
+
+    public IWireMockAdminApi SvcExternalServerMock { get; private set; } = null!;
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        private readonly IKlineDataCollector _dataCollector = dataCollector;
-        private readonly ISvcKlineClient _klineClient = klineClient;
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.ConfigureServices(services =>
+        builder.ConfigureAppConfiguration(
+            (context, config) =>
             {
-                // Remove the existing IKlineDataCollector registration
-                var dataCollectorDescriptor = services.SingleOrDefault(d =>
-                    d.ServiceType == typeof(IKlineDataCollector)
+                config.AddInMemoryCollection(
+                    new Dictionary<string, string?>
+                    {
+                        ["Services:SvcCoinsClient:BaseUrl"] =
+                            _svcCoinsWireMockContainer.GetPublicUrl(),
+                        ["Services:SvcExternalClient:BaseUrl"] =
+                            _svcExternalWireMockContainer.GetPublicUrl(),
+                    }
                 );
-                if (dataCollectorDescriptor != null)
-                {
-                    services.Remove(dataCollectorDescriptor);
-                }
+            }
+        );
+    }
 
-                // Remove the existing ISvcKlineClient registration
-                var klineClientDescriptor = services.SingleOrDefault(d =>
-                    d.ServiceType == typeof(ISvcKlineClient)
-                );
-                if (klineClientDescriptor != null)
-                {
-                    services.Remove(klineClientDescriptor);
-                }
+    public async Task InitializeAsync()
+    {
+        await Task.WhenAll(
+            _svcCoinsWireMockContainer.StartAsync(),
+            _svcExternalWireMockContainer.StartAsync()
+        );
 
-                // Register the mocked IKlineDataCollector and ISvcKlineClient
-                services.AddSingleton(_dataCollector);
-                services.AddSingleton(_klineClient);
-            });
-        }
+        SvcCoinsServerMock = _svcCoinsWireMockContainer.CreateWireMockAdminClient();
+        SvcExternalServerMock = _svcExternalWireMockContainer.CreateWireMockAdminClient();
+    }
+
+    public new async Task DisposeAsync()
+    {
+        await _svcCoinsWireMockContainer.DisposeAsync();
+        await _svcExternalWireMockContainer.DisposeAsync();
+        await base.DisposeAsync();
     }
 }

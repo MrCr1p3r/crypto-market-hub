@@ -1,10 +1,9 @@
+using CryptoChartAnalyzer.ServiceDefaults;
 using SharedLibrary.Infrastructure;
-using SVC_Bridge.Clients;
-using SVC_Bridge.Clients.Interfaces;
-using SVC_Bridge.DataCollectors;
-using SVC_Bridge.DataCollectors.Interfaces;
-using SVC_Bridge.DataDistributors;
-using SVC_Bridge.DataDistributors.Interfaces;
+using SVC_Bridge.MicroserviceClients.SvcCoins;
+using SVC_Bridge.MicroserviceClients.SvcExternal;
+using SVC_Bridge.Services;
+using SVC_Bridge.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +23,7 @@ builder.Services.AddHttpClient(
             builder.Configuration["Services:SvcCoinsClient:BaseUrl"] ?? "http://localhost:5161";
         client.BaseAddress = new Uri(baseAddress);
     }
-); // Add resilience to HTTP client
+);
 
 builder.Services.AddHttpClient(
     "SvcExternalClient",
@@ -36,21 +35,11 @@ builder.Services.AddHttpClient(
     }
 );
 
-builder.Services.AddHttpClient(
-    "SvcKlineClient",
-    client =>
-    {
-        var baseAddress =
-            builder.Configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5117";
-        client.BaseAddress = new Uri(baseAddress);
-    }
-);
-
 builder.Services.AddScoped<ISvcCoinsClient, SvcCoinsClient>();
 builder.Services.AddScoped<ISvcExternalClient, SvcExternalClient>();
-builder.Services.AddScoped<ISvcKlineClient, SvcKlineClient>();
-builder.Services.AddScoped<IKlineDataCollector, KlineDataCollector>();
-builder.Services.AddScoped<IKlineDataDistributor, KlineDataDistributor>();
+
+builder.Services.AddScoped<ICoinsService, CoinsService>();
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
@@ -71,6 +60,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
-app.Run();
+await app.RunAsync();
 
 public partial class Program { }
