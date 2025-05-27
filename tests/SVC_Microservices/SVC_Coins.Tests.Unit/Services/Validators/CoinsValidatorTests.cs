@@ -1,4 +1,3 @@
-using System.Globalization;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
 using SVC_Coins.ApiContracts.Requests;
@@ -147,9 +146,7 @@ public class CoinsValidatorTests
         result.IsFailed.Should().BeTrue();
         result
             .Errors.Should()
-            .ContainSingle(error =>
-                error.Message.Contains(nonExistingId.ToString(CultureInfo.InvariantCulture))
-            );
+            .ContainSingle(error => error.Message.Contains(nonExistingId.ToString()));
         result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
     }
 
@@ -209,7 +206,7 @@ public class CoinsValidatorTests
         result.IsFailed.Should().BeTrue();
         var errorMessage = result.Errors[0].Message;
         errorMessage.Should().Contain(existingBtc.Name);
-        errorMessage.Should().Contain(missingQuoteId.ToString(CultureInfo.InvariantCulture));
+        errorMessage.Should().Contain(missingQuoteId.ToString());
         errorMessage.Should().Contain(invalidExchange.ToString());
         result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
     }
@@ -248,11 +245,7 @@ public class CoinsValidatorTests
 
         // Assert
         result.IsFailed.Should().BeTrue();
-        result
-            .Errors.Should()
-            .ContainSingle(error =>
-                error.Message.Contains(missingId.ToString(CultureInfo.InvariantCulture))
-            );
+        result.Errors.Should().ContainSingle(error => error.Message.Contains(missingId.ToString()));
         result.Errors[0].Should().BeOfType<GenericErrors.NotFoundError>();
     }
 

@@ -1,4 +1,3 @@
-using System.Globalization;
 using FluentValidation;
 using SVC_Coins.ApiContracts.Requests.CoinCreation;
 
@@ -16,12 +15,7 @@ public class CoinCreationCoinQuoteValidator : AbstractValidator<CoinCreationCoin
             .WithMessage("Quote coin symbol is required.")
             .MaximumLength(50)
             .WithMessage("Quote coin symbol must not exceed 50 characters.")
-            .Must(symbol =>
-                symbol.Equals(
-                    symbol.ToUpper(CultureInfo.InvariantCulture),
-                    StringComparison.Ordinal
-                )
-            )
+            .Must(symbol => symbol.Equals(symbol.ToUpper(), StringComparison.Ordinal))
             .WithMessage("Quote coin symbol '{PropertyValue}' must be uppercase.");
 
         RuleFor(request => request.Name)

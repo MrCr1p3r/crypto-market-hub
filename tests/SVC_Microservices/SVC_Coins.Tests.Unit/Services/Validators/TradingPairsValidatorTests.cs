@@ -1,4 +1,3 @@
-using System.Globalization;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
 using SVC_Coins.ApiContracts.Requests;
@@ -70,9 +69,7 @@ public class TradingPairsValidatorTests
         result.IsFailed.Should().BeTrue();
         result
             .Errors.Should()
-            .ContainSingle(error =>
-                error.Message.Contains(missingCoinId.ToString(CultureInfo.InvariantCulture))
-            );
+            .ContainSingle(error => error.Message.Contains(missingCoinId.ToString()));
         result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
     }
 
@@ -120,7 +117,7 @@ public class TradingPairsValidatorTests
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().HaveCount(1); // Combined into one BadRequestError
         var errorMessage = result.Errors[0].Message;
-        errorMessage.Should().Contain(missingCoinId.ToString(CultureInfo.InvariantCulture));
+        errorMessage.Should().Contain(missingCoinId.ToString());
         errorMessage.Should().Contain(invalidExchange.ToString());
         result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
     }
