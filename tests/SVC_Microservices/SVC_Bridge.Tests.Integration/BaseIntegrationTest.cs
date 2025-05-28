@@ -18,6 +18,7 @@ public abstract class BaseIntegrationTest(CustomWebApplicationFactory factory) :
     private async Task ClearWireMockMappings() =>
         await Task.WhenAll(
             Factory.SvcCoinsServerMock.ResetMappingsAsync(),
-            Factory.SvcExternalServerMock.ResetMappingsAsync()
+            Factory.SvcExternalServerMock.ResetMappingsAsync(),
+            Factory.SvcKlineServerMock.ResetMappingsAsync()
         );
 }

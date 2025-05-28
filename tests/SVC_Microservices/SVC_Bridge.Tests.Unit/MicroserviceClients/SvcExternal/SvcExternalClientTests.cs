@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Testing;
 using Moq.Contrib.HttpClient;
 using SVC_Bridge.MicroserviceClients.SvcExternal;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 using static SharedLibrary.Errors.GenericErrors;
 
 namespace SVC_Bridge.Tests.Unit.MicroserviceClients.SvcExternal;
@@ -218,5 +220,145 @@ public class SvcExternalClientTests
                     .RequestUri!.ToString()
                     .Contains("market-data-providers/coingecko/assets-info")
         );
+    }
+
+    [Fact]
+    public async Task GetKlineData_CallsCorrectUrl()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var expectedResponse = _fixture.CreateMany<KlineDataResponse>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedResponse);
+
+        // Act
+        await _client.GetKlineData(request);
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Post,
+            "https://example.com/exchanges/kline/query/bulk"
+        );
+    }
+
+    [Fact]
+    public async Task GetKlineData_OnSuccess_ReturnsSuccessWithKlineDataResponses()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var expectedResponse = _fixture.CreateMany<KlineDataResponse>(3).ToList();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedResponse);
+
+        // Act
+        var result = await _client.GetKlineData(request);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedResponse);
+        result.Value.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task GetKlineData_OnSuccess_ReturnsEmptyList()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, new List<KlineDataResponse>());
+
+        // Act
+        var result = await _client.GetKlineData(request);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetKlineData_SendsRequestBodyAsJson()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var expectedResponse = _fixture.CreateMany<KlineDataResponse>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedResponse);
+
+        // Act
+        await _client.GetKlineData(request);
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Post,
+            httpRequest =>
+            {
+                httpRequest.RequestUri!.ToString().Should().Contain("exchanges/kline/query/bulk");
+                httpRequest.Content.Should().NotBeNull();
+                httpRequest.Content!.Headers.ContentType!.MediaType.Should().Be("application/json");
+                return true;
+            }
+        );
+    }
+
+    [Fact]
+    public async Task GetKlineData_OnClientError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var problemDetails = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+            Title = "Bad Request",
+            Status = 400,
+            Detail = "Invalid kline data request parameters.",
+            Instance = "/exchanges/kline/query/bulk",
+        };
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
+
+        // Act
+        var result = await _client.GetKlineData(request);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<BadRequestError>();
+    }
+
+    [Fact]
+    public async Task GetKlineData_OnServerError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var request = _fixture.Create<KlineDataBatchRequest>();
+        var problemDetails = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
+            Title = "Internal Server Error",
+            Status = 500,
+            Detail = "An error occurred while processing the kline data request.",
+            Instance = "/exchanges/kline/query/bulk",
+        };
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
+
+        // Act
+        var result = await _client.GetKlineData(request);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<InternalError>();
     }
 }

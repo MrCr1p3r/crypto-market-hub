@@ -1,5 +1,7 @@
 using FluentResults;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace SVC_Bridge.MicroserviceClients.SvcExternal;
 
@@ -19,4 +21,15 @@ public interface ISvcExternalClient
     Task<Result<IEnumerable<CoinGeckoAssetInfo>>> GetCoinGeckoAssetsInfo(
         IEnumerable<string> coinGeckoIds
     );
+
+    /// <summary>
+    /// Retrieves kline data for coins.
+    /// </summary>
+    /// <param name="request">The request containing request parameters and coins
+    /// for which kline data mist be retrieved.</param>
+    /// <returns>
+    /// Success: The retrieved kline data grouped by trading pairs.
+    /// Failure: An error that occured during the retrieval of the kline data.
+    /// </returns>
+    Task<Result<IEnumerable<KlineDataResponse>>> GetKlineData(KlineDataBatchRequest request);
 }

@@ -2,6 +2,7 @@ using CryptoChartAnalyzer.ServiceDefaults;
 using SharedLibrary.Infrastructure;
 using SVC_Bridge.MicroserviceClients.SvcCoins;
 using SVC_Bridge.MicroserviceClients.SvcExternal;
+using SVC_Bridge.MicroserviceClients.SvcKline;
 using SVC_Bridge.Services;
 using SVC_Bridge.Services.Interfaces;
 
@@ -35,10 +36,22 @@ builder.Services.AddHttpClient(
     }
 );
 
+builder.Services.AddHttpClient(
+    "SvcKlineClient",
+    client =>
+    {
+        var baseAddress =
+            builder.Configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5117";
+        client.BaseAddress = new Uri(baseAddress);
+    }
+);
+
 builder.Services.AddScoped<ISvcCoinsClient, SvcCoinsClient>();
 builder.Services.AddScoped<ISvcExternalClient, SvcExternalClient>();
+builder.Services.AddScoped<ISvcKlineClient, SvcKlineClient>();
 
 builder.Services.AddScoped<ICoinsService, CoinsService>();
+builder.Services.AddScoped<IKlineDataService, KlineDataService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

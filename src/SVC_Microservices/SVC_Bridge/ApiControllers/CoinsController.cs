@@ -15,7 +15,7 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     private readonly ICoinsService _coinsService = coinsService;
 
     /// <summary>
-    /// Updates the market data for all coins in the system by fetching the latest data from external sources.
+    /// Updates the market data for all coins in the system.
     /// </summary>
     /// <returns>A collection of updated coin market data.</returns>
     /// <response code="200">Market data successfully updated for all coins.</response>
