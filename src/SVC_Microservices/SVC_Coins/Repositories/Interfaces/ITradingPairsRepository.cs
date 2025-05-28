@@ -30,10 +30,8 @@ public interface ITradingPairsRepository
     /// Replaces all trading pairs in the database with the provided trading pairs.
     /// </summary>
     /// <param name="tradingPairs">The collection of trading pair entities to replace the existing ones with.</param>
-    /// <returns>A collection of new trading pair entities.</returns>
-    Task<IEnumerable<TradingPairsEntity>> ReplaceAllTradingPairs(
-        IEnumerable<TradingPairsEntity> tradingPairs
-    );
+    /// <returns>A task, that replaces all trading pairs in the database with the provided ones.</returns>
+    Task ReplaceAllTradingPairs(IEnumerable<TradingPairsEntity> tradingPairs);
 
     /// <summary>
     /// Deletes all trading pairs for a given coin ID.

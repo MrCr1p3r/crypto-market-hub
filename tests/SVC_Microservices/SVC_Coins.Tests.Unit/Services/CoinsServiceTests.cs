@@ -426,7 +426,10 @@ public class CoinsServiceTests
             .ReturnsAsync(TestData.Exchanges);
         _tradingPairsRepositoryMock
             .Setup(repo => repo.ReplaceAllTradingPairs(It.IsAny<IEnumerable<TradingPairsEntity>>()))
-            .ReturnsAsync(TestData.ReplacedTradingPairsEntities);
+            .Returns(Task.CompletedTask);
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetAllCoinsWithRelations())
+            .ReturnsAsync(TestData.CoinEntities);
 
         // Act
         var result = await _testedService.ReplaceAllTradingPairs(
@@ -435,7 +438,7 @@ public class CoinsServiceTests
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEquivalentTo(TestData.ExpectedReplacedTradingPairs);
+        result.Value.Should().BeEquivalentTo(TestData.ExpectedCoins);
 
         // Verify that all repository calls are made
         _exchangesRepositoryMock.Verify(repo => repo.GetAllExchanges(), Times.Once);
@@ -443,6 +446,7 @@ public class CoinsServiceTests
             repo => repo.ReplaceAllTradingPairs(Its.EquivalentTo(TestData.NewTradingPairsEntities)),
             Times.Once
         );
+        _coinsRepositoryMock.Verify(repo => repo.GetAllCoinsWithRelations(), Times.Once);
     }
 
     [Fact]
@@ -897,68 +901,6 @@ public class CoinsServiceTests
                 IdCoinMain = 3,
                 IdCoinQuote = 2,
                 Exchanges = [Exchanges.First(exchange => exchange.Id == (int)Exchange.Bybit)],
-            },
-        ];
-
-        // Represents the data returned by the repository after replacement
-        public static readonly IEnumerable<TradingPairsEntity> ReplacedTradingPairsEntities =
-        [
-            new()
-            {
-                Id = 201, // New ID after replacement
-                IdCoinMain = 1,
-                IdCoinQuote = 2,
-                CoinQuote = new()
-                {
-                    Id = 2,
-                    Symbol = "USDT",
-                    Name = "Tether",
-                    IsStablecoin = true,
-                }, // Need quote for mapping
-                Exchanges = [Exchanges.First(e => e.Id == (int)Exchange.Binance)],
-            },
-            new()
-            {
-                Id = 202, // New ID after replacement
-                IdCoinMain = 3,
-                IdCoinQuote = 2,
-                CoinQuote = new()
-                {
-                    Id = 2,
-                    Symbol = "USDT",
-                    Name = "Tether",
-                    IsStablecoin = true,
-                }, // Need quote for mapping
-                Exchanges = [Exchanges.First(e => e.Id == (int)Exchange.Bybit)],
-            },
-        ];
-
-        // Expected final result from the service method
-        public static readonly IEnumerable<TradingPair> ExpectedReplacedTradingPairs =
-        [
-            new()
-            {
-                Id = 201,
-                CoinQuote = new()
-                {
-                    Id = 2,
-                    Symbol = "USDT",
-                    Name = "Tether",
-                    Category = CoinCategory.Stablecoin,
-                },
-                Exchanges = [Exchange.Binance],
-            },
-            new()
-            {
-                Id = 202,
-                CoinQuote = new()
-                {
-                    Id = 2,
-                    Symbol = "USDT",
-                    Name = "Tether",
-                    Category = CoinCategory.Stablecoin,
-                },
-                Exchanges = [Exchange.Bybit],
             },
         ];
 

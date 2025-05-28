@@ -158,7 +158,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task ReplaceTradingPairs_WhenSuccessful_ReturnsNewTradingPairs()
+    public async Task ReplaceTradingPairs_WhenSuccessful_ReturnsCoinsWithNewTradingPairs()
     {
         // Arrange
         await SeedDatabase();
@@ -171,10 +171,8 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var actualTradingPairs = await response.Content.ReadFromJsonAsync<
-            IEnumerable<TradingPair>
-        >();
-        actualTradingPairs.Should().BeEquivalentTo(TestData.ExpectedTradingPairs);
+        var actualCoins = await response.Content.ReadFromJsonAsync<IEnumerable<Coin>>();
+        actualCoins.Should().BeEquivalentTo(TestData.ExpectedCoinsWithNewTradingPairs);
 
         using var dbContext = GetDbContext();
         var tradingPairsList = await dbContext.TradingPairs.ToListAsync();
@@ -591,33 +589,63 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
             },
         ];
 
-        public static readonly IEnumerable<TradingPair> ExpectedTradingPairs =
+        public static readonly IEnumerable<Coin> ExpectedCoinsWithNewTradingPairs =
         [
             new()
             {
-                Id = 4,
-                CoinQuote = new TradingPairCoinQuote
-                {
-                    Id = EthId,
-                    Name = "Ethereum",
-                    Symbol = "ETH",
-                },
-                Exchanges = [Exchange.Binance, Exchange.Bybit],
+                Id = BtcId,
+                Name = "Bitcoin",
+                Symbol = "BTC",
+                IdCoinGecko = "coingecko-bitcoin",
+                MarketCapUsd = 1000000000,
+                PriceUsd = "50000",
+                PriceChangePercentage24h = -10,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 4, // New ID after replacement
+                        CoinQuote = new TradingPairCoinQuote
+                        {
+                            Id = EthId,
+                            Name = "Ethereum",
+                            Symbol = "ETH",
+                        },
+                        Exchanges = [Exchange.Binance, Exchange.Bybit],
+                    },
+                ],
             },
             new()
             {
-                Id = 5,
-                CoinQuote = new TradingPairCoinQuote
-                {
-                    Id = BtcId,
-                    Name = "Bitcoin",
-                    Symbol = "BTC",
-                    IdCoinGecko = "coingecko-bitcoin",
-                    MarketCapUsd = 1000000000,
-                    PriceUsd = "50000",
-                    PriceChangePercentage24h = -10,
-                },
-                Exchanges = [Exchange.Binance, Exchange.Bybit],
+                Id = EthId,
+                Name = "Ethereum",
+                Symbol = "ETH",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 5, // New ID after replacement
+                        CoinQuote = new TradingPairCoinQuote
+                        {
+                            Id = BtcId,
+                            Name = "Bitcoin",
+                            Symbol = "BTC",
+                            IdCoinGecko = "coingecko-bitcoin",
+                            MarketCapUsd = 1000000000,
+                            PriceUsd = "50000",
+                            PriceChangePercentage24h = -10,
+                        },
+                        Exchanges = [Exchange.Binance, Exchange.Bybit],
+                    },
+                ],
+            },
+            new()
+            {
+                Id = UsdtId,
+                Name = "Tether",
+                Symbol = "USDT",
+                Category = CoinCategory.Stablecoin,
+                TradingPairs = [], // No trading pairs after replacement
             },
         ];
     }

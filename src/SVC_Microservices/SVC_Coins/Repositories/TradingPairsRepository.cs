@@ -50,18 +50,11 @@ public class TradingPairsRepository(CoinsDbContext context) : ITradingPairsRepos
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<TradingPairsEntity>> ReplaceAllTradingPairs(
-        IEnumerable<TradingPairsEntity> tradingPairs
-    )
+    public async Task ReplaceAllTradingPairs(IEnumerable<TradingPairsEntity> tradingPairs)
     {
         _context.TradingPairs.RemoveRange(_context.TradingPairs);
         await _context.TradingPairs.AddRangeAsync(tradingPairs);
         await _context.SaveChangesAsync();
-
-        return await _context
-            .TradingPairs.Include(tp => tp.CoinMain)
-            .Include(tp => tp.CoinQuote)
-            .ToListAsync();
     }
 
     /// <inheritdoc />

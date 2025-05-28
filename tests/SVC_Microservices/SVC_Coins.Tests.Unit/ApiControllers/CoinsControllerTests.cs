@@ -220,8 +220,8 @@ public class CoinsControllerTests
     {
         // Arrange
         var requests = _fixture.CreateMany<TradingPairCreationRequest>(3);
-        var createdPairs = _fixture.CreateMany<TradingPair>(3);
-        var successResult = Result.Ok(createdPairs);
+        var coinsWithNewPairs = _fixture.CreateMany<Coin>(3);
+        var successResult = Result.Ok(coinsWithNewPairs);
 
         _mockCoinsService
             .Setup(service =>
@@ -237,7 +237,7 @@ public class CoinsControllerTests
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(createdPairs);
+            .BeEquivalentTo(coinsWithNewPairs);
 
         _mockCoinsService.Verify(service => service.ReplaceAllTradingPairs(requests), Times.Once);
     }
@@ -248,7 +248,7 @@ public class CoinsControllerTests
         // Arrange
         var requests = _fixture.CreateMany<TradingPairCreationRequest>(3);
         var errorMessage = "Invalid trading pair data";
-        var failureResult = Result.Fail<IEnumerable<TradingPair>>(
+        var failureResult = Result.Fail<IEnumerable<Coin>>(
             new GenericErrors.BadRequestError(errorMessage)
         );
 
