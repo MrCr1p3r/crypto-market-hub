@@ -52,10 +52,10 @@ public interface ICoinsService
     /// </summary>
     /// <param name="requests">The collection of trading pairs to replace.</param>
     /// <returns>
-    /// Success: A collection of new trading pairs.
+    /// Success: A collection of coins with new trading pairs.
     /// Failure: A collection of occurred errors.
     /// </returns>
-    Task<Result<IEnumerable<TradingPair>>> ReplaceAllTradingPairs(
+    Task<Result<IEnumerable<Coin>>> ReplaceAllTradingPairs(
         IEnumerable<TradingPairCreationRequest> requests
     );
 

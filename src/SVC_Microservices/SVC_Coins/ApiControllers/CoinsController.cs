@@ -85,14 +85,14 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     /// Replaces all existing trading pairs with the provided ones.
     /// </summary>
     /// <param name="requests">The collection of trading pair creation requests.</param>
-    /// <returns>A list of the newly created trading pairs.</returns>
+    /// <returns>A list of the coins with the new trading pairs.</returns>
     /// <response code="200">Trading pairs were successfully replaced.</response>
     /// <response code="400">One or more validation errors occurred.</response>
     /// <response code="500">Internal error occurred during trading pairs replacing operation.</response>
     [HttpPut("trading-pairs")]
     [Consumes("application/json")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(IEnumerable<TradingPair>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ReplaceTradingPairs(

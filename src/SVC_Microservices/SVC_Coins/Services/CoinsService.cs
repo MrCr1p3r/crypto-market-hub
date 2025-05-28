@@ -157,7 +157,7 @@ public partial class CoinsService(
     }
 
     /// <inheritdoc />
-    public async Task<Result<IEnumerable<TradingPair>>> ReplaceAllTradingPairs(
+    public async Task<Result<IEnumerable<Coin>>> ReplaceAllTradingPairs(
         IEnumerable<TradingPairCreationRequest> requests
     )
     {
@@ -169,20 +169,16 @@ public partial class CoinsService(
             return Result.Fail(validationResult.Errors);
         }
 
-        var newTradingPairs = await ReplaceTradingPairs(requests);
+        await ReplaceTradingPairs(requests);
 
-        return Result.Ok(newTradingPairs.Select(Mapping.ToTradingPair));
+        var coinsWithNewTradingPairs = await GetAllCoins();
+        return Result.Ok(coinsWithNewTradingPairs);
     }
 
-    private async Task<IEnumerable<TradingPairsEntity>> ReplaceTradingPairs(
-        IEnumerable<TradingPairCreationRequest> requests
-    )
+    private async Task ReplaceTradingPairs(IEnumerable<TradingPairCreationRequest> requests)
     {
         var tradingPairsForInsertion = await GetTradingPairsForInsertion(requests);
-        var newTradingPairs = await _tradingPairsRepository.ReplaceAllTradingPairs(
-            tradingPairsForInsertion
-        );
-        return newTradingPairs;
+        await _tradingPairsRepository.ReplaceAllTradingPairs(tradingPairsForInsertion);
     }
 
     private async Task<IEnumerable<TradingPairsEntity>> GetTradingPairsForInsertion(

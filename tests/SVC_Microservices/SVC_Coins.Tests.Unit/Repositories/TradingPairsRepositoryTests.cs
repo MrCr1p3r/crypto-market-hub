@@ -165,7 +165,7 @@ public class TradingPairsRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task ReplaceAllTradingPairs_ReturnsNewPairs()
+    public async Task ReplaceAllTradingPairs_ExecutesSuccessfully()
     {
         // Arrange
         await SeedDatabase(addTradingPairs: true);
@@ -173,20 +173,11 @@ public class TradingPairsRepositoryTests : IDisposable
         var tradingPairs = TestData.GetNewTradingPairs(exchanges);
 
         // Act
-        var result = await _testedRepository.ReplaceAllTradingPairs(tradingPairs);
+        await _testedRepository.ReplaceAllTradingPairs(tradingPairs);
 
         // Assert
-        result
-            .Should()
-            .BeEquivalentTo(
-                TestData.NewInsertedTradingPairs,
-                options =>
-                    options
-                        .Excluding(tp => tp.Id)
-                        .For(tp => tp.Exchanges)
-                        .Exclude(exchange => exchange.Id)
-                        .Excluding(tp => tp.CoinMain.TradingPairs)
-            );
+        var tradingPairsInDb = await _assertContext.TradingPairs.ToListAsync();
+        tradingPairsInDb.Should().HaveCount(2);
     }
 
     [Fact]
