@@ -1,6 +1,8 @@
 using FluentResults;
 using SharedLibrary.Extensions.HttpClient.Internal;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace SVC_Bridge.MicroserviceClients.SvcExternal;
 
@@ -26,4 +28,13 @@ public class SvcExternalClient(
             "Failed to retrieve CoinGecko assets info."
         );
     }
+
+    /// <inheritdoc />
+    public async Task<Result<IEnumerable<KlineDataResponse>>> GetKlineData(
+        KlineDataBatchRequest request
+    ) =>
+        await _httpClient.PostAsJsonSafeAsync<
+            KlineDataBatchRequest,
+            IEnumerable<KlineDataResponse>
+        >("exchanges/kline/query/bulk", request, logger, "Failed to retrieve kline data.");
 }

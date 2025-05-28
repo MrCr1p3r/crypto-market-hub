@@ -14,10 +14,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     private readonly WireMockContainer _svcExternalWireMockContainer =
         new WireMockContainerBuilder().Build();
 
+    private readonly WireMockContainer _svcKlineWireMockContainer =
+        new WireMockContainerBuilder().Build();
+
     // Expose mock servers for tests
     public IWireMockAdminApi SvcCoinsServerMock { get; private set; } = null!;
 
     public IWireMockAdminApi SvcExternalServerMock { get; private set; } = null!;
+
+    public IWireMockAdminApi SvcKlineServerMock { get; private set; } = null!;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -31,6 +36,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                             _svcCoinsWireMockContainer.GetPublicUrl(),
                         ["Services:SvcExternalClient:BaseUrl"] =
                             _svcExternalWireMockContainer.GetPublicUrl(),
+                        ["Services:SvcKlineClient:BaseUrl"] =
+                            _svcKlineWireMockContainer.GetPublicUrl(),
                     }
                 );
             }
@@ -41,17 +48,20 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     {
         await Task.WhenAll(
             _svcCoinsWireMockContainer.StartAsync(),
-            _svcExternalWireMockContainer.StartAsync()
+            _svcExternalWireMockContainer.StartAsync(),
+            _svcKlineWireMockContainer.StartAsync()
         );
 
         SvcCoinsServerMock = _svcCoinsWireMockContainer.CreateWireMockAdminClient();
         SvcExternalServerMock = _svcExternalWireMockContainer.CreateWireMockAdminClient();
+        SvcKlineServerMock = _svcKlineWireMockContainer.CreateWireMockAdminClient();
     }
 
     public new async Task DisposeAsync()
     {
         await _svcCoinsWireMockContainer.DisposeAsync();
         await _svcExternalWireMockContainer.DisposeAsync();
+        await _svcKlineWireMockContainer.DisposeAsync();
         await base.DisposeAsync();
     }
 }
