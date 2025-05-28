@@ -62,6 +62,34 @@ public static class InternalHttpClientExtensions
     }
 
     /// <summary>
+    /// Performs an HTTP PUT request with a JSON payload to the specified endpoint
+    /// and deserializes the JSON response into the given type while handling errors
+    /// gracefully.
+    /// </summary>
+    /// <typeparam name="TRequest">The type of the object to be serialized into the JSON payload of the request.</typeparam>
+    /// <typeparam name="TResponse">The type into which the JSON payload of the response is deserialized.</typeparam>
+    /// <param name="client">The HttpClient instance used for making the request.</param>
+    /// <param name="requestUri">The URI of the HTTP PUT request.</param>
+    /// <param name="requestData">The data to be sent as JSON in the request body.</param>
+    /// <param name="logger">The logger instance for logging errors.</param>
+    /// <param name="failureMessage">A custom failure message.</param>
+    /// <returns>
+    /// Success: Result with the deserialized object.
+    /// Failure: Failure message.
+    /// </returns>
+    public static async Task<Result<TResponse>> PutAsJsonSafeAsync<TRequest, TResponse>(
+        this System.Net.Http.HttpClient client,
+        string requestUri,
+        TRequest requestData,
+        ILogger logger,
+        string failureMessage
+    )
+    {
+        var response = await client.PutAsJsonAsync(requestUri, requestData);
+        return await ProcessHttpResponseAsync<TResponse>(response, logger, failureMessage);
+    }
+
+    /// <summary>
     /// Performs an HTTP PATCH request with a JSON payload to the specified endpoint
     /// and deserializes the JSON response into the given type while handling errors
     /// gracefully.
