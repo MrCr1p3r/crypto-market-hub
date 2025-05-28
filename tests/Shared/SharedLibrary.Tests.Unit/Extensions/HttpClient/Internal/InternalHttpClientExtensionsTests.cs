@@ -696,6 +696,276 @@ public class InternalHttpClientExtensionsTests
 
     #endregion
 
+    #region DeleteSafeAsync Tests
+
+    [Fact]
+    public async Task DeleteSafeAsync_SuccessfulResponse_ReturnsOkResult()
+    {
+        // Arrange
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsResponse(HttpStatusCode.OK);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify no logs were written for successful case
+        _fakeLogger.VerifyNoLogsWritten();
+    }
+
+    [Fact]
+    public async Task DeleteSafeAsync_NoContentResponse_ReturnsOkResult()
+    {
+        // Arrange
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsResponse(HttpStatusCode.NoContent);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify no logs were written for successful case
+        _fakeLogger.VerifyNoLogsWritten();
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.Conflict)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task DeleteSafeAsync_UnsuccessfulResponse_ReturnsFailedResultAndLogsError(
+        HttpStatusCode statusCode
+    )
+    {
+        // Arrange
+        var problemDetails = CreateBasicProblemDetails("Delete operation failed");
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsJsonResponse(statusCode, problemDetails);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error.Message.Contains(FailureMessage));
+
+        // Verify that LogUnsuccessfulHttpResponse was called
+        _fakeLogger.VerifyWasCalled(LogLevel.Warning, "Delete operation failed");
+    }
+
+    [Fact]
+    public async Task DeleteSafeAsync_NotFoundError_ReturnsNotFoundError()
+    {
+        // Arrange
+        var problemDetails = CreateBasicProblemDetails("Resource not found for deletion");
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.NotFound, problemDetails);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is NotFoundError);
+
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+        mainError.Reasons.Should().ContainSingle();
+        mainError.Reasons[0].Message.Should().Be("Resource not found for deletion");
+
+        // Verify that LogUnsuccessfulHttpResponse was called
+        _fakeLogger.VerifyWasCalled(LogLevel.Warning, "Resource not found for deletion");
+    }
+
+    [Fact]
+    public async Task DeleteSafeAsync_ConflictWithMetadata_ReturnsStructuredError()
+    {
+        // Arrange
+        var problemDetails = CreateProblemDetailsWithMetadata(
+            "Cannot delete resource with active dependencies",
+            new Dictionary<string, object>
+            {
+                ["dependencyCount"] = 5,
+                ["resourceType"] = "User",
+                ["resourceId"] = "user-123",
+                ["correlationId"] = "delete-456",
+            }
+        );
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.Conflict, problemDetails);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is ConflictError);
+
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+        mainError.Reasons.Should().ContainSingle();
+
+        var reasonError = mainError.Reasons[0];
+        reasonError.Message.Should().Be("Cannot delete resource with active dependencies");
+        reasonError.Metadata.Should().ContainKey("dependencyCount").WhoseValue.Should().Be(5);
+        reasonError.Metadata.Should().ContainKey("resourceType").WhoseValue.Should().Be("User");
+        reasonError.Metadata.Should().ContainKey("resourceId").WhoseValue.Should().Be("user-123");
+        reasonError
+            .Metadata.Should()
+            .ContainKey("correlationId")
+            .WhoseValue.Should()
+            .Be("delete-456");
+    }
+
+    [Fact]
+    public async Task DeleteSafeAsync_WithNestedReasons_ReturnsHierarchicalError()
+    {
+        // Arrange
+        var nestedReasons = new[]
+        {
+            new Dictionary<string, object>
+            {
+                ["message"] = "Active user sessions exist",
+                ["metadata"] = new Dictionary<string, object>
+                {
+                    ["activeSessionCount"] = 3,
+                    ["lastActivity"] = "2024-01-15T14:30:00Z",
+                },
+            },
+            new Dictionary<string, object>
+            {
+                ["message"] = "Pending transactions found",
+                ["metadata"] = new Dictionary<string, object>
+                {
+                    ["pendingTransactionCount"] = 2,
+                    ["totalAmount"] = "$150.00",
+                },
+            },
+        };
+
+        var problemDetails = CreateProblemDetailsWithReasons(
+            "Cannot delete user account",
+            nestedReasons
+        );
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.Conflict, problemDetails);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is ConflictError);
+
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+
+        var reasonError = mainError.Reasons[0];
+        reasonError.Message.Should().Be("Cannot delete user account");
+        reasonError.Reasons.Should().HaveCount(2);
+
+        var sessionError = reasonError.Reasons[0];
+        sessionError.Message.Should().Be("Active user sessions exist");
+        sessionError.Metadata.Should().ContainKey("activeSessionCount").WhoseValue.Should().Be(3);
+        sessionError
+            .Metadata.Should()
+            .ContainKey("lastActivity")
+            .WhoseValue.Should()
+            .Be("2024-01-15T14:30:00Z");
+
+        var transactionError = reasonError.Reasons[1];
+        transactionError.Message.Should().Be("Pending transactions found");
+        transactionError
+            .Metadata.Should()
+            .ContainKey("pendingTransactionCount")
+            .WhoseValue.Should()
+            .Be(2);
+        transactionError
+            .Metadata.Should()
+            .ContainKey("totalAmount")
+            .WhoseValue.Should()
+            .Be("$150.00");
+    }
+
+    [Fact]
+    public async Task DeleteSafeAsync_ForbiddenError_ReturnsForbiddenError()
+    {
+        // Arrange
+        var problemDetails = CreateBasicProblemDetails(
+            "Insufficient permissions to delete resource"
+        );
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Delete, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.Forbidden, problemDetails);
+
+        // Act
+        var result = await _httpClient.DeleteSafeAsync(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is ForbiddenError);
+
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+        mainError.Reasons.Should().ContainSingle();
+        mainError.Reasons[0].Message.Should().Be("Insufficient permissions to delete resource");
+
+        // Verify that LogUnsuccessfulHttpResponse was called
+        _fakeLogger.VerifyWasCalled(
+            LogLevel.Warning,
+            "Insufficient permissions to delete resource"
+        );
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static ProblemDetails CreateBasicProblemDetails(string detail)

@@ -117,6 +117,48 @@ public static class InternalHttpClientExtensions
         return await ProcessHttpResponseAsync<TResponse>(response, logger, failureMessage);
     }
 
+    /// <summary>
+    /// Performs an HTTP DELETE request to the specified endpoint
+    /// while handling errors gracefully.
+    /// </summary>
+    /// <param name="client">The HttpClient instance used for making the request.</param>
+    /// <param name="requestUri">The URI of the HTTP DELETE request.</param>
+    /// <param name="logger">The logger instance for logging errors.</param>
+    /// <param name="failureMessage">A custom failure message.</param>
+    /// <returns>
+    /// Success: Result indicating successful operation.
+    /// Failure: Failure message.
+    /// </returns>
+    public static async Task<Result> DeleteSafeAsync(
+        this System.Net.Http.HttpClient client,
+        string requestUri,
+        ILogger logger,
+        string failureMessage
+    )
+    {
+        var response = await client.DeleteAsync(requestUri);
+        return await ProcessHttpResponseAsync(response, logger, failureMessage);
+    }
+
+    private static async Task<Result> ProcessHttpResponseAsync(
+        HttpResponseMessage response,
+        ILogger logger,
+        string failureMessage
+    )
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            await logger.LogUnsuccessfulHttpResponse(response);
+
+            return await InternalHttpResponseExtensions.ToFailedResultAsync(
+                response,
+                failureMessage
+            );
+        }
+
+        return Result.Ok();
+    }
+
     private static async Task<Result<TResponse>> ProcessHttpResponseAsync<TResponse>(
         HttpResponseMessage response,
         ILogger logger,
