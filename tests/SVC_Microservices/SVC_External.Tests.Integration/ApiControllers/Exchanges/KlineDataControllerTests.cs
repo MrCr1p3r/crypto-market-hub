@@ -22,7 +22,7 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
 
         // Act
         var response = await Client.PostAsJsonAsync(
-            "/exchanges/kline-data/query",
+            "/exchanges/kline/query",
             TestData.KlineRequest
         );
 
@@ -45,7 +45,7 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
 
         // Act
         var response = await Client.PostAsJsonAsync(
-            "/exchanges/kline-data/query/bulk",
+            "/exchanges/kline/query/bulk",
             TestData.KlineBatchRequest
         );
 
@@ -73,7 +73,7 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
 
         // Act
         var response = await Client.PostAsJsonAsync(
-            "/exchanges/kline-data/query/bulk",
+            "/exchanges/kline/query/bulk",
             TestData.KlineBatchRequestWithInvalidCoin
         );
 
@@ -91,7 +91,7 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
     {
         // Act
         var response = await Client.PostAsJsonAsync(
-            "/exchanges/kline-data/query/bulk",
+            "/exchanges/kline/query/bulk",
             TestData.KlineBatchRequestWithInvalidCoins
         );
 
