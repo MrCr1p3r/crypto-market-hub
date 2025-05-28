@@ -31,7 +31,7 @@ public class CoinsServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.BitcoinAndEthereumCoins);
+            .ReturnsAsync(Result.Ok(TestData.BitcoinAndEthereumCoins));
 
         _mockSvcExternalClient
             .Setup(client => client.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
@@ -79,10 +79,43 @@ public class CoinsServiceTests
     }
 
     [Fact]
+    public async Task UpdateCoinsMarketData_WhenGetAllCoinsFails_ShouldReturnFailureResult()
+    {
+        // Arrange
+        var coinsServiceError = new GenericErrors.InternalError("Coins service unavailable");
+
+        _mockSvcCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Fail(coinsServiceError));
+
+        // Act
+        var result = await _coinsService.UpdateCoinsMarketData();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .Contain(error =>
+                error.Message.Contains("Failed to retrieve coins from coins service")
+            );
+
+        // Check that the original error is nested as a reason within the InternalError
+        var internalError = result.Errors.OfType<GenericErrors.InternalError>().First();
+        internalError.Reasons.Should().Contain(coinsServiceError);
+
+        // Verify only GetAllCoins was called
+        _mockSvcCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
+        _mockSvcCoinsClient.VerifyNoOtherCalls();
+        _mockSvcExternalClient.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task UpdateCoinsMarketData_WhenNoCoinsExist_ShouldReturnEmptyResult()
     {
         // Arrange
-        _mockSvcCoinsClient.Setup(client => client.GetAllCoins()).ReturnsAsync([]);
+        _mockSvcCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Ok(Enumerable.Empty<Coin>()));
 
         // Act
         var result = await _coinsService.UpdateCoinsMarketData();
@@ -102,7 +135,7 @@ public class CoinsServiceTests
         // Arrange
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.CoinsWithNoCoinGeckoIds);
+            .ReturnsAsync(Result.Ok(TestData.CoinsWithNoCoinGeckoIds));
 
         // Act
         var result = await _coinsService.UpdateCoinsMarketData();
@@ -125,7 +158,7 @@ public class CoinsServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.SingleBitcoinCoin);
+            .ReturnsAsync(Result.Ok(TestData.SingleBitcoinCoin));
 
         _mockSvcExternalClient
             .Setup(client => client.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
@@ -162,7 +195,7 @@ public class CoinsServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.SingleBitcoinCoin);
+            .ReturnsAsync(Result.Ok(TestData.SingleBitcoinCoin));
 
         _mockSvcExternalClient
             .Setup(client => client.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
@@ -209,7 +242,7 @@ public class CoinsServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.MixedCoinsWithAndWithoutCoinGeckoIds);
+            .ReturnsAsync(Result.Ok(TestData.MixedCoinsWithAndWithoutCoinGeckoIds));
 
         _mockSvcExternalClient
             .Setup(client => client.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
@@ -252,7 +285,7 @@ public class CoinsServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.BitcoinAndUnknownCoins);
+            .ReturnsAsync(Result.Ok(TestData.BitcoinAndUnknownCoins));
 
         _mockSvcExternalClient
             .Setup(client => client.GetCoinGeckoAssetsInfo(It.IsAny<IEnumerable<string>>()))
@@ -291,7 +324,9 @@ public class CoinsServiceTests
         var unknownCoins = TestData.UnknownCoins;
         var coinGeckoIds = unknownCoins.Select(coin => coin.IdCoinGecko!);
 
-        _mockSvcCoinsClient.Setup(client => client.GetAllCoins()).ReturnsAsync(unknownCoins);
+        _mockSvcCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Ok(unknownCoins));
 
         _mockSvcExternalClient
             .Setup(client => client.GetCoinGeckoAssetsInfo(coinGeckoIds))

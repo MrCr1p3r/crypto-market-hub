@@ -12,8 +12,11 @@ public interface ISvcCoinsClient
     /// <summary>
     /// Retrieves all coins from the system.
     /// </summary>
-    /// <returns>A list of all retrieved coins.</returns>
-    Task<IEnumerable<Coin>> GetAllCoins();
+    /// <returns>
+    /// Success: A list of all retrieved coins.
+    /// Failure: An error that occured during the retrieval of the coins.
+    /// </returns>
+    Task<Result<IEnumerable<Coin>>> GetAllCoins();
 
     /// <summary>
     /// Updates the market data for multiple coins.
