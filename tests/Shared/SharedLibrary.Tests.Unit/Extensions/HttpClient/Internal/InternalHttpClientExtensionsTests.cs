@@ -453,108 +453,245 @@ public class InternalHttpClientExtensionsTests
 
     #endregion
 
-    #region Cross-Method Tests
+    #region PutAsJsonSafeAsync Tests
 
-    [Theory]
-    [InlineData("Simple error message")]
-    [InlineData("Error with special characters: !@#$%^&*()")]
-    [InlineData("")]
-    [InlineData(
-        "Very long error message that contains multiple sentences and should be handled properly by the extension method without any issues or truncation."
-    )]
-    public async Task AllMethods_VariousFailureMessages_PreservesMessage(string message)
+    [Fact]
+    public async Task PutAsJsonSafeAsync_ReturnsOkResultWithContent()
     {
         // Arrange
-        var requestDto = new TestData.TestRequestDto { Name = "Test" };
-        var problemDetails = CreateBasicProblemDetails("Internal error");
-
+        var requestDto = new TestData.TestRequestDto { Name = "Updated Name" };
+        var expectedResponse = new TestData.TestDto { Id = 1, Name = "Updated Name" };
         _mockHttpMessageHandler
-            .SetupRequest(HttpMethod.Get, TestRequestUri)
-            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
-        _mockHttpMessageHandler
-            .SetupRequest(HttpMethod.Post, TestRequestUri)
-            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
-        _mockHttpMessageHandler
-            .SetupRequest(HttpMethod.Patch, TestRequestUri)
-            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
+            .SetupRequest(HttpMethod.Put, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedResponse);
 
         // Act
-        var getResult = await _httpClient.GetFromJsonSafeAsync<TestData.TestDto>(
-            RelativeTestUri,
-            _fakeLogger,
-            message
-        );
-        var postResult = await _httpClient.PostAsJsonSafeAsync<
+        var result = await _httpClient.PutAsJsonSafeAsync<
             TestData.TestRequestDto,
             TestData.TestDto
-        >(RelativeTestUri, requestDto, _fakeLogger, message);
-        var patchResult = await _httpClient.PatchAsJsonSafeAsync<
-            TestData.TestRequestDto,
-            TestData.TestDto
-        >(RelativeTestUri, requestDto, _fakeLogger, message);
+        >(RelativeTestUri, requestDto, _fakeLogger, FailureMessage);
 
         // Assert
-        getResult.Should().NotBeNull();
-        getResult.IsFailed.Should().BeTrue();
-        getResult.Errors[0].Message.Should().Be(message);
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedResponse);
 
-        postResult.Should().NotBeNull();
-        postResult.IsFailed.Should().BeTrue();
-        postResult.Errors[0].Message.Should().Be(message);
-
-        patchResult.Should().NotBeNull();
-        patchResult.IsFailed.Should().BeTrue();
-        patchResult.Errors[0].Message.Should().Be(message);
+        // Verify no logs were written for successful case
+        _fakeLogger.VerifyNoLogsWritten();
     }
 
     [Fact]
-    public async Task AllMethods_DifferentGenericTypes_ReturnsCorrectFailedResult()
+    public async Task PutAsJsonSafeAsync_ContentDeserializesToNull_ReturnsFailedDeserializationResult()
     {
         // Arrange
-        var requestDto = new TestData.TestRequestDto { Name = "Test" };
-        var problemDetails = CreateBasicProblemDetails("Not found");
+        var requestDto = new TestData.TestRequestDto { Name = "Updated Name" };
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Put, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.OK, (object?)null);
 
+        // Act
+        var result = await _httpClient.PutAsJsonSafeAsync<
+            TestData.TestRequestDto,
+            TestData.TestDto
+        >(RelativeTestUri, requestDto, _fakeLogger, FailureMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .ContainSingle(error =>
+                error.Message.Contains("was null or could not be deserialized")
+            );
+
+        // Verify no logs were written for deserialization failure (not an HTTP error)
+        _fakeLogger.VerifyNoLogsWritten();
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.Conflict)]
+    [InlineData(HttpStatusCode.UnprocessableEntity)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task PutAsJsonSafeAsync_UnsuccessfulResponse_ReturnsFailedResultAndLogsError(
+        HttpStatusCode statusCode
+    )
+    {
+        // Arrange
+        var requestDto = new TestData.TestRequestDto { Name = "Updated Name" };
+        var problemDetails = CreateBasicProblemDetails("Put operation failed");
         _mockHttpMessageHandler
-            .SetupRequest(HttpMethod.Get, TestRequestUri)
-            .ReturnsJsonResponse(HttpStatusCode.NotFound, problemDetails);
+            .SetupRequest(HttpMethod.Put, TestRequestUri)
+            .ReturnsJsonResponse(statusCode, problemDetails);
+
+        // Act
+        var result = await _httpClient.PutAsJsonSafeAsync<
+            TestData.TestRequestDto,
+            TestData.TestDto
+        >(RelativeTestUri, requestDto, _fakeLogger, FailureMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error.Message.Contains(FailureMessage));
+
+        // Verify that LogUnsuccessfulHttpResponse was called
+        _fakeLogger.VerifyWasCalled(LogLevel.Warning, "Put operation failed");
+    }
+
+    [Fact]
+    public async Task PutAsJsonSafeAsync_WithValidationErrorMetadata_ReturnsStructuredError()
+    {
+        // Arrange
+        var requestDto = new TestData.TestRequestDto { Name = "Invalid Name" };
+        var problemDetails = CreateProblemDetailsWithMetadata(
+            "Resource update validation failed",
+            new Dictionary<string, object>
+            {
+                ["field"] = "Name",
+                ["code"] = "INVALID_FORMAT",
+                ["expectedFormat"] = "alphanumeric",
+                ["correlationId"] = "put-123",
+            }
+        );
         _mockHttpMessageHandler
-            .SetupRequest(HttpMethod.Post, TestRequestUri)
-            .ReturnsJsonResponse(HttpStatusCode.NotFound, problemDetails);
+            .SetupRequest(HttpMethod.Put, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
+
+        // Act
+        var result = await _httpClient.PutAsJsonSafeAsync<
+            TestData.TestRequestDto,
+            TestData.TestDto
+        >(RelativeTestUri, requestDto, _fakeLogger, FailureMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is BadRequestError);
+
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+        mainError.Reasons.Should().ContainSingle();
+
+        var reasonError = mainError.Reasons[0];
+        reasonError.Message.Should().Be("Resource update validation failed");
+        reasonError.Metadata.Should().ContainKey("field").WhoseValue.Should().Be("Name");
+        reasonError.Metadata.Should().ContainKey("code").WhoseValue.Should().Be("INVALID_FORMAT");
+        reasonError
+            .Metadata.Should()
+            .ContainKey("expectedFormat")
+            .WhoseValue.Should()
+            .Be("alphanumeric");
+        reasonError.Metadata.Should().ContainKey("correlationId").WhoseValue.Should().Be("put-123");
+    }
+
+    [Fact]
+    public async Task PutAsJsonSafeAsync_WithConflictAndMultipleReasons_ReturnsHierarchicalError()
+    {
+        // Arrange
+        var requestDto = new TestData.TestRequestDto { Name = "Conflicting Name" };
+        var nestedReasons = new[]
+        {
+            new Dictionary<string, object>
+            {
+                ["message"] = "Resource version mismatch",
+                ["metadata"] = new Dictionary<string, object>
+                {
+                    ["currentVersion"] = "v2.1",
+                    ["providedVersion"] = "v1.0",
+                    ["resourceId"] = "resource-456",
+                },
+            },
+            new Dictionary<string, object>
+            {
+                ["message"] = "Concurrent modification detected",
+                ["metadata"] = new Dictionary<string, object>
+                {
+                    ["lastModified"] = "2024-01-15T10:30:00Z",
+                    ["modifiedBy"] = "user-789",
+                },
+            },
+        };
+
+        var problemDetails = CreateProblemDetailsWithReasons(
+            "Resource update conflict",
+            nestedReasons
+        );
         _mockHttpMessageHandler
-            .SetupRequest(HttpMethod.Patch, TestRequestUri)
+            .SetupRequest(HttpMethod.Put, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.Conflict, problemDetails);
+
+        // Act
+        var result = await _httpClient.PutAsJsonSafeAsync<
+            TestData.TestRequestDto,
+            TestData.TestDto
+        >(RelativeTestUri, requestDto, _fakeLogger, FailureMessage);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is ConflictError);
+
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+
+        var reasonError = mainError.Reasons[0];
+        reasonError.Message.Should().Be("Resource update conflict");
+        reasonError.Reasons.Should().HaveCount(2);
+
+        var versionError = reasonError.Reasons[0];
+        versionError.Message.Should().Be("Resource version mismatch");
+        versionError.Metadata.Should().ContainKey("currentVersion").WhoseValue.Should().Be("v2.1");
+        versionError.Metadata.Should().ContainKey("providedVersion").WhoseValue.Should().Be("v1.0");
+        versionError
+            .Metadata.Should()
+            .ContainKey("resourceId")
+            .WhoseValue.Should()
+            .Be("resource-456");
+
+        var concurrencyError = reasonError.Reasons[1];
+        concurrencyError.Message.Should().Be("Concurrent modification detected");
+        concurrencyError
+            .Metadata.Should()
+            .ContainKey("lastModified")
+            .WhoseValue.Should()
+            .Be("2024-01-15T10:30:00Z");
+        concurrencyError
+            .Metadata.Should()
+            .ContainKey("modifiedBy")
+            .WhoseValue.Should()
+            .Be("user-789");
+    }
+
+    [Fact]
+    public async Task PutAsJsonSafeAsync_WithNotFoundError_ReturnsNotFoundError()
+    {
+        // Arrange
+        var requestDto = new TestData.TestRequestDto { Name = "Nonexistent Resource" };
+        var problemDetails = CreateBasicProblemDetails("Resource not found for update");
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Put, TestRequestUri)
             .ReturnsJsonResponse(HttpStatusCode.NotFound, problemDetails);
 
         // Act
-        var stringResult = await _httpClient.GetFromJsonSafeAsync<string>(
-            RelativeTestUri,
-            _fakeLogger,
-            FailureMessage
-        );
-        var intResult = await _httpClient.PostAsJsonSafeAsync<TestData.TestRequestDto, int>(
-            RelativeTestUri,
-            requestDto,
-            _fakeLogger,
-            FailureMessage
-        );
-        var objectResult = await _httpClient.PatchAsJsonSafeAsync<TestData.TestRequestDto, object>(
-            RelativeTestUri,
-            requestDto,
-            _fakeLogger,
-            FailureMessage
-        );
+        var result = await _httpClient.PutAsJsonSafeAsync<
+            TestData.TestRequestDto,
+            TestData.TestDto
+        >(RelativeTestUri, requestDto, _fakeLogger, FailureMessage);
 
         // Assert
-        stringResult.Should().NotBeNull();
-        stringResult.IsFailed.Should().BeTrue();
-        stringResult.Errors.Should().ContainSingle(error => error is NotFoundError);
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error is NotFoundError);
 
-        intResult.Should().NotBeNull();
-        intResult.IsFailed.Should().BeTrue();
-        intResult.Errors.Should().ContainSingle(error => error is NotFoundError);
+        var mainError = result.Errors[0];
+        mainError.Message.Should().Be(FailureMessage);
+        mainError.Reasons.Should().ContainSingle();
+        mainError.Reasons[0].Message.Should().Be("Resource not found for update");
 
-        objectResult.Should().NotBeNull();
-        objectResult.IsFailed.Should().BeTrue();
-        objectResult.Errors.Should().ContainSingle(error => error is NotFoundError);
+        // Verify that LogUnsuccessfulHttpResponse was called
+        _fakeLogger.VerifyWasCalled(LogLevel.Warning, "Resource not found for update");
     }
 
     #endregion
