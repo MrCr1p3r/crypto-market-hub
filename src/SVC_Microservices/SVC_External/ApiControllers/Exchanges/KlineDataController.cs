@@ -10,7 +10,7 @@ namespace SVC_External.ApiControllers.Exchanges;
 /// Controller for handling exchanges kline data operations.
 /// </summary>
 [ApiController]
-[Route("exchanges/kline-data")]
+[Route("exchanges/kline")]
 public class KlineDataController(IKlineDataService klineDataService) : ControllerBase
 {
     private readonly IKlineDataService _klineDataService = klineDataService;
@@ -43,7 +43,7 @@ public class KlineDataController(IKlineDataService klineDataService) : Controlle
     [HttpPost("query/bulk")]
     [Consumes("application/json")]
     [Produces("application/json")]
-    [ProducesResponseType(typeof(Dictionary<int, IEnumerable<KlineData>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<KlineDataResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetFirstSuccessfulKlineDataPerCoin(
         [FromBody] KlineDataBatchRequest request
