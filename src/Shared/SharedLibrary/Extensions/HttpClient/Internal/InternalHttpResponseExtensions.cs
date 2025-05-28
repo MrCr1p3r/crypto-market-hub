@@ -28,6 +28,17 @@ public static class InternalHttpResponseExtensions
     ) => Result.Fail<T>(await response.ToErrorAsync(failureMessage));
 
     /// <summary>
+    /// Creates a failed Result with an appropriate error based on the HTTP response.
+    /// </summary>
+    /// <param name="response">The HTTP response message.</param>
+    /// <param name="failureMessage">A context-specific message describing the operation that failed.</param>
+    /// <returns>A failed Result with an appropriate error.</returns>
+    public static async Task<Result> ToFailedResultAsync(
+        this HttpResponseMessage response,
+        string failureMessage
+    ) => Result.Fail(await response.ToErrorAsync(failureMessage));
+
+    /// <summary>
     /// Maps an unsuccessful HTTP response to an appropriate FluentResults error.
     /// </summary>
     /// <param name="response">The HTTP response message.</param>
