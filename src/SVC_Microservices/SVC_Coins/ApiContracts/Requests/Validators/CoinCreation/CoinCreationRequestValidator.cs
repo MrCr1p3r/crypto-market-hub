@@ -15,7 +15,7 @@ public class CoinCreationRequestValidator : AbstractValidator<CoinCreationReques
             .WithMessage("Main coin symbol is required.")
             .MaximumLength(50)
             .WithMessage("Main coin symbol must not exceed 50 characters.")
-            .Must(symbol => symbol.Equals(symbol.ToUpper(), StringComparison.Ordinal))
+            .Must(symbol => symbol.Equals(symbol.ToUpperInvariant(), StringComparison.Ordinal))
             .WithMessage("Main coin symbol '{PropertyValue}' must be uppercase.");
 
         RuleFor(request => request.Name)

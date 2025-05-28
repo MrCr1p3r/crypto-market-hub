@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Transactions;
 using FluentResults;
 using SharedLibrary.Enums;
@@ -390,7 +391,7 @@ public partial class CoinsService(
         )
         {
             coinEntity.MarketCapUsd = request.MarketCapUsd;
-            coinEntity.PriceUsd = request.PriceUsd?.ToString();
+            coinEntity.PriceUsd = request.PriceUsd?.ToString(CultureInfo.InvariantCulture);
             coinEntity.PriceChangePercentage24h = request.PriceChangePercentage24h;
             return coinEntity;
         }
