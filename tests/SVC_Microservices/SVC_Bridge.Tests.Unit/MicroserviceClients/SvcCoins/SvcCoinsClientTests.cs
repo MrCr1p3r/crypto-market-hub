@@ -65,7 +65,8 @@ public class SvcCoinsClientTests
         var result = await _client.GetAllCoins();
 
         // Assert
-        result.Should().BeEquivalentTo(expectedCoins);
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedCoins);
     }
 
     [Fact]
@@ -80,22 +81,26 @@ public class SvcCoinsClientTests
         var result = await _client.GetAllCoins();
 
         // Assert
-        result.Should().BeEmpty();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
     }
 
     [Fact]
-    public async Task GetAllCoins_OnServerError_ThrowsHttpRequestException()
+    public async Task GetAllCoins_OnServerError_ReturnsFailedResult()
     {
         // Arrange
+        var problemDetails = _fixture.Create<ProblemDetails>();
         _httpMessageHandlerMock
             .SetupRequest(HttpMethod.Get, _ => true)
-            .ReturnsResponse(HttpStatusCode.InternalServerError, "oops");
+            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
 
-        // Act & Assert
-        await FluentActions
-            .Invoking(_client.GetAllCoins)
-            .Should()
-            .ThrowAsync<HttpRequestException>();
+        // Act
+        var result = await _client.GetAllCoins();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<InternalError>();
     }
 
     [Fact]

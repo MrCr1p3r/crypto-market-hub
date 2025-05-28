@@ -16,8 +16,12 @@ public class SvcCoinsClient(IHttpClientFactory httpClientFactory, ILogger<SvcCoi
     private readonly ILogger<SvcCoinsClient> _logger = logger;
 
     /// <inheritdoc />
-    public async Task<IEnumerable<Coin>> GetAllCoins() =>
-        await _httpClient.GetFromJsonAsync<IEnumerable<Coin>>(BaseUrl) ?? [];
+    public async Task<Result<IEnumerable<Coin>>> GetAllCoins() =>
+        await _httpClient.GetFromJsonSafeAsync<IEnumerable<Coin>>(
+            BaseUrl,
+            _logger,
+            "Failed to get all coins."
+        );
 
     /// <inheritdoc />
     public async Task<Result<IEnumerable<Coin>>> UpdateCoinsMarketData(

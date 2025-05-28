@@ -31,7 +31,18 @@ public class KlineDataService(
     public async Task<Result<IEnumerable<KlineDataResponse>>> UpdateKlineData()
     {
         // Step 1: Get all coins from the coins service
-        var coins = await _svcCoinsClient.GetAllCoins();
+        var coinsResult = await _svcCoinsClient.GetAllCoins();
+        if (coinsResult.IsFailed)
+        {
+            return Result.Fail(
+                new InternalError(
+                    "Failed to retrieve coins from coins service.",
+                    reasons: coinsResult.Errors
+                )
+            );
+        }
+
+        var coins = coinsResult.Value;
 
         // Step 2: Map coins to kline data requests
         var klineDataRequest = Mapping.ToKlineDataBatchRequest(coins);

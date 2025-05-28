@@ -145,6 +145,21 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         result!.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task UpdateCoinsMarketData_WhenSvcCoinsFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.GetAllCoinsError
+        );
+
+        // Act
+        var response = await Client.PostAsync("/bridge/coins/market-data", null);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
     private static class WireMockMappings
     {
         public static class SvcCoins
@@ -227,6 +242,29 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
                                 title = "Bad Request",
                                 status = 400,
                                 detail = "Validation failed",
+                            }
+                        ),
+                    },
+                };
+
+            public static MappingModel GetAllCoinsError =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/coins" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 500,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(
+                            new
+                            {
+                                type = "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1",
+                                title = "Internal Server Error",
+                                status = 500,
+                                detail = "External service unavailable",
                             }
                         ),
                     },

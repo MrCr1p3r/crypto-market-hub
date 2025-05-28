@@ -41,7 +41,7 @@ public class KlineDataServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.BitcoinAndEthereumCoinsWithTradingPairs);
+            .ReturnsAsync(Result.Ok(TestData.BitcoinAndEthereumCoinsWithTradingPairs));
 
         _mockSvcExternalClient
             .Setup(client => client.GetKlineData(It.IsAny<KlineDataBatchRequest>()))
@@ -94,10 +94,44 @@ public class KlineDataServiceTests
     }
 
     [Fact]
+    public async Task UpdateKlineData_WhenGetAllCoinsFails_ShouldReturnFailureResult()
+    {
+        // Arrange
+        var coinsServiceError = new GenericErrors.InternalError("Coins service unavailable");
+
+        _mockSvcCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Fail(coinsServiceError));
+
+        // Act
+        var result = await _klineDataService.UpdateKlineData();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .Contain(error =>
+                error.Message.Contains("Failed to retrieve coins from coins service")
+            );
+
+        // Check that the original error is nested as a reason within the InternalError
+        var internalError = result.Errors.OfType<GenericErrors.InternalError>().First();
+        internalError.Reasons.Should().Contain(coinsServiceError);
+
+        // Verify only GetAllCoins was called
+        _mockSvcCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
+        _mockSvcCoinsClient.VerifyNoOtherCalls();
+        _mockSvcExternalClient.VerifyNoOtherCalls();
+        _mockSvcKlineClient.VerifyNoOtherCalls();
+    }
+
+    [Fact]
     public async Task UpdateKlineData_WhenNoCoinsExist_ShouldReturnEmptyResult()
     {
         // Arrange
-        _mockSvcCoinsClient.Setup(client => client.GetAllCoins()).ReturnsAsync([]);
+        _mockSvcCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Ok(Enumerable.Empty<Coin>()));
 
         // Act
         var result = await _klineDataService.UpdateKlineData();
@@ -118,7 +152,7 @@ public class KlineDataServiceTests
         // Arrange
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.CoinsWithNoTradingPairs);
+            .ReturnsAsync(Result.Ok(TestData.CoinsWithNoTradingPairs));
 
         // Act
         var result = await _klineDataService.UpdateKlineData();
@@ -142,7 +176,7 @@ public class KlineDataServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.SingleBitcoinCoinWithTradingPair);
+            .ReturnsAsync(Result.Ok(TestData.SingleBitcoinCoinWithTradingPair));
 
         _mockSvcExternalClient
             .Setup(client => client.GetKlineData(It.IsAny<KlineDataBatchRequest>()))
@@ -182,7 +216,7 @@ public class KlineDataServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.SingleBitcoinCoinWithTradingPair);
+            .ReturnsAsync(Result.Ok(TestData.SingleBitcoinCoinWithTradingPair));
 
         _mockSvcExternalClient
             .Setup(client => client.GetKlineData(It.IsAny<KlineDataBatchRequest>()))
@@ -229,7 +263,7 @@ public class KlineDataServiceTests
 
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.MixedCoinsWithAndWithoutTradingPairs);
+            .ReturnsAsync(Result.Ok(TestData.MixedCoinsWithAndWithoutTradingPairs));
 
         _mockSvcExternalClient
             .Setup(client => client.GetKlineData(It.IsAny<KlineDataBatchRequest>()))
@@ -276,7 +310,7 @@ public class KlineDataServiceTests
         // Arrange
         _mockSvcCoinsClient
             .Setup(client => client.GetAllCoins())
-            .ReturnsAsync(TestData.SingleBitcoinCoinWithTradingPair);
+            .ReturnsAsync(Result.Ok(TestData.SingleBitcoinCoinWithTradingPair));
 
         _mockSvcExternalClient
             .Setup(client => client.GetKlineData(It.IsAny<KlineDataBatchRequest>()))
