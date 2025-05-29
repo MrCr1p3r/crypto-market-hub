@@ -1,3 +1,4 @@
+using CryptoChartAnalyzer.ServiceDefaults;
 using GUI_Crypto.Clients;
 using GUI_Crypto.Clients.Interfaces;
 using GUI_Crypto.ViewModels.Factories;
@@ -86,6 +87,6 @@ app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.Run();
+await app.RunAsync();
 
 public partial class Program { }
