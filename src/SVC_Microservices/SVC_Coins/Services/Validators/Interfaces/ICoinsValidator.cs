@@ -20,6 +20,16 @@ public interface ICoinsValidator
     Task<Result> ValidateCoinCreationRequests(IEnumerable<CoinCreationRequest> requests);
 
     /// <summary>
+    /// Validates a collection of quote coin creation requests.
+    /// </summary>
+    /// <param name="requests">Collection of quote coin creation requests to validate.</param>
+    /// <returns>
+    /// Success: Empty success result.
+    /// Failure: List of validation errors.
+    /// </returns>
+    Task<Result> ValidateQuoteCoinCreationRequests(IEnumerable<QuoteCoinCreationRequest> requests);
+
+    /// <summary>
     /// Validates market data update requests.
     /// </summary>
     /// <param name="requests">Collection of coin market data update requests to validate.</param>

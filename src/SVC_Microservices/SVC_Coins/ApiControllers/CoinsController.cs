@@ -60,6 +60,28 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     }
 
     /// <summary>
+    /// Creates multiple new quote coins.
+    /// </summary>
+    /// <param name="quoteCoins">The collection of quote coin creation requests.</param>
+    /// <returns>A collection of created quote coins.</returns>
+    /// <response code="200">The quote coins were successfully created.</response>
+    /// <response code="400">One or more validation errors occurred.</response>
+    /// <response code="500">Internal error occurred during quote coins creating operation.</response>
+    [HttpPost("quote")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(typeof(IEnumerable<TradingPairCoinQuote>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> CreateQuoteCoins(
+        [FromBody] IEnumerable<QuoteCoinCreationRequest> quoteCoins
+    )
+    {
+        var result = await _coinsService.CreateQuoteCoins(quoteCoins);
+        return result.ToActionResult(this);
+    }
+
+    /// <summary>
     /// Updates the market data for multiple coins.
     /// </summary>
     /// <param name="requests">Collection of coin market data update requests.</param>

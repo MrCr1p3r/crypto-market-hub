@@ -86,6 +86,8 @@ public partial class CoinsService(
 
         // TransactionScope has issues with entity's properties population,
         // so I query inserted coins separately afterwards.
+        // Update(29.05.2025): Perhaps the issue lied in the wrong implementation of
+        // InsertCoins repository method. Needs to be reviewed.
         var symbolNamePairs = newCoins.Select(Mapping.ToSymbolNamePair);
         var insertedCoins = await _coinsRepository.GetCoinsBySymbolNamePairs(symbolNamePairs);
         return insertedCoins;
@@ -118,6 +120,23 @@ public partial class CoinsService(
             insertedCoinIds
         );
         return insertedCoinsWithRelations;
+    }
+
+    /// <inheritdoc />
+    public async Task<Result<IEnumerable<TradingPairCoinQuote>>> CreateQuoteCoins(
+        IEnumerable<QuoteCoinCreationRequest> requests
+    )
+    {
+        var validationResult = await _coinsValidator.ValidateQuoteCoinCreationRequests(requests);
+        if (validationResult.IsFailed)
+        {
+            return Result.Fail(validationResult.Errors);
+        }
+
+        var newCoins = requests.Select(Mapping.ToCoinEntity);
+        var insertedCoins = await _coinsRepository.InsertCoins(newCoins);
+
+        return Result.Ok(insertedCoins.Select(Mapping.ToTradingPairCoinQuote));
     }
 
     /// <inheritdoc />
@@ -300,6 +319,16 @@ public partial class CoinsService(
             };
 
         private static CoinsEntity ToCoinEntity(CoinCreationCoinQuote coinNew) =>
+            new()
+            {
+                Symbol = coinNew.Symbol,
+                Name = coinNew.Name,
+                IdCoinGecko = coinNew.IdCoinGecko,
+                IsFiat = coinNew.Category == CoinCategory.Fiat,
+                IsStablecoin = coinNew.Category == CoinCategory.Stablecoin,
+            };
+
+        public static CoinsEntity ToCoinEntity(QuoteCoinCreationRequest coinNew) =>
             new()
             {
                 Symbol = coinNew.Symbol,

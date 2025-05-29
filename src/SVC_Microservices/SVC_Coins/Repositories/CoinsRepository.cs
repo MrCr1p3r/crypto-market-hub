@@ -81,9 +81,10 @@ public class CoinsRepository(CoinsDbContext context) : ICoinsRepository
     /// <inheritdoc />
     public async Task<IEnumerable<CoinsEntity>> InsertCoins(IEnumerable<CoinsEntity> coins)
     {
-        await _context.Coins.AddRangeAsync(coins);
+        var newCoins = coins.ToList();
+        await _context.Coins.AddRangeAsync(newCoins);
         await _context.SaveChangesAsync();
-        return coins;
+        return newCoins;
     }
 
     /// <inheritdoc />

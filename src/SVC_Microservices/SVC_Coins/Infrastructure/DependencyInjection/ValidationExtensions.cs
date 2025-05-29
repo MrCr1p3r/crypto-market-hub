@@ -2,6 +2,7 @@ using FluentValidation;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 using SVC_Coins.ApiContracts.Requests.Validators.CoinCreation;
 using SVC_Coins.ApiContracts.Requests.Validators.CoinMarketDataUpdate;
+using SVC_Coins.ApiContracts.Requests.Validators.QuoteCoinCreation;
 using SVC_Coins.ApiContracts.Requests.Validators.TradingPairCreation;
 
 namespace SVC_Coins.Infrastructure.DependencyInjection;
@@ -22,6 +23,7 @@ public static class ValidationExtensions
         services.AddValidatorsFromAssemblyContaining<CoinCreationRequestsValidator>();
         services.AddValidatorsFromAssemblyContaining<CoinMarketDataUpdateRequestsValidator>();
         services.AddValidatorsFromAssemblyContaining<TradingPairCreationRequestsValidator>();
+        services.AddValidatorsFromAssemblyContaining<QuoteCoinCreationRequestsValidator>();
 
         // Enable auto-validation for MVC controllers
         services.AddFluentValidationAutoValidation();
