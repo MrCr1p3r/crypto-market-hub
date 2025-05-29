@@ -49,7 +49,7 @@ public static class FluentResultsExtensions
             Status = statusCode,
             Detail = error.Message,
             Instance = controller.HttpContext?.Request.Path.Value ?? "context-unavailable",
-            Extensions = extensions,
+            Extensions = extensions.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value),
         };
 
         return ToCorrectObjectResult(controller, error, problemDetails);
@@ -96,9 +96,9 @@ public static class FluentResultsExtensions
             _ => "https://datatracker.ietf.org/doc/html/rfc9110",
         };
 
-    private static Dictionary<string, object?> BuildProblemDetailsExtensions(IError error)
+    private static Dictionary<string, object> BuildProblemDetailsExtensions(IError error)
     {
-        var extensions = new Dictionary<string, object?>();
+        var extensions = new Dictionary<string, object>();
 
         extensions.AddMetadataAndReasonsFrom(error);
 
@@ -106,7 +106,7 @@ public static class FluentResultsExtensions
     }
 
     private static void AddMetadataAndReasonsFrom(
-        this Dictionary<string, object?> extensions,
+        this Dictionary<string, object> extensions,
         IError error
     )
     {
@@ -121,9 +121,9 @@ public static class FluentResultsExtensions
         }
     }
 
-    private static object BuildReasonObject(IError reason)
+    private static Dictionary<string, object> BuildReasonObject(IError reason)
     {
-        var reasonDto = new Dictionary<string, object?>() { ["message"] = reason.Message };
+        var reasonDto = new Dictionary<string, object>() { ["message"] = reason.Message };
 
         reasonDto.AddMetadataAndReasonsFrom(reason);
 

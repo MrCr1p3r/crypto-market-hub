@@ -33,21 +33,4 @@ public static class HttpLoggingExtensions //TODO: Source Generator Logging
             errorContent
         );
     }
-
-    public static void LogUnsuccessfulHttpResponse(
-        this ILogger logger,
-        int errorCode,
-        string reasonPhrase,
-        string requestUri
-    )
-    {
-        var errorMessage = $"Request to '{requestUri}' failed.";
-
-        logger.LogWarning(
-            "{ErrorMessage} Status Code: {StatusCode}, Reason: {ReasonPhrase}",
-            errorMessage,
-            errorCode,
-            reasonPhrase
-        );
-    }
 }
