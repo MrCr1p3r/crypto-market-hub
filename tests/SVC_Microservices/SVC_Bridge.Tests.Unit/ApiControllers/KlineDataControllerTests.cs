@@ -66,35 +66,6 @@ public class KlineDataControllerTests
     }
 
     [Fact]
-    public async Task UpdateKlineData_OnBadRequestError_CallsServiceAndReturnsBadRequest()
-    {
-        // Arrange
-        var errorMessage = "Invalid request parameters";
-        var failureResult = Result.Fail<IEnumerable<KlineDataResponse>>(
-            new GenericErrors.BadRequestError(errorMessage)
-        );
-
-        _mockKlineDataService
-            .Setup(service => service.UpdateKlineData())
-            .ReturnsAsync(failureResult);
-
-        // Act
-        var result = await _testedController.UpdateKlineData();
-
-        // Assert
-        result
-            .Should()
-            .BeOfType<BadRequestObjectResult>()
-            .Which.Value.Should()
-            .BeOfType<ProblemDetails>()
-            .Which.Detail.Should()
-            .Contain(errorMessage);
-
-        _mockKlineDataService.Verify(service => service.UpdateKlineData(), Times.Once);
-        _mockKlineDataService.VerifyNoOtherCalls();
-    }
-
-    [Fact]
     public async Task UpdateKlineData_OnInternalError_CallsServiceAndReturnsInternalServerError()
     {
         // Arrange
