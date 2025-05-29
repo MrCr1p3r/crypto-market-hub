@@ -52,6 +52,7 @@ builder.Services.AddScoped<ISvcKlineClient, SvcKlineClient>();
 
 builder.Services.AddScoped<ICoinsService, CoinsService>();
 builder.Services.AddScoped<IKlineDataService, KlineDataService>();
+builder.Services.AddScoped<ITradingPairsService, TradingPairsService>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();

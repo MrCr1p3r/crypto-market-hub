@@ -180,4 +180,222 @@ public class SvcCoinsClientTests
         result.Errors.Should().HaveCount(1);
         result.Errors[0].Should().BeOfType<InternalError>();
     }
+
+    #region CreateQuoteCoins Tests
+
+    [Fact]
+    public async Task CreateQuoteCoins_CallsCorrectUrlWithCorrectBody()
+    {
+        // Arrange
+        var expectedQuoteCoins = _fixture.CreateMany<TradingPairCoinQuote>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedQuoteCoins);
+
+        var expectedBody = _fixture.CreateMany<QuoteCoinCreationRequest>();
+        var expectedUrl = "https://example.com/coins/quote";
+
+        // Act
+        await _client.CreateQuoteCoins(expectedBody);
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(HttpMethod.Post, expectedUrl);
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_OnSuccess_ReturnsSuccessWithListOfCreatedQuoteCoins()
+    {
+        // Arrange
+        var expectedQuoteCoins = _fixture.CreateMany<TradingPairCoinQuote>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedQuoteCoins);
+
+        var expectedBody = _fixture.CreateMany<QuoteCoinCreationRequest>();
+
+        // Act
+        var result = await _client.CreateQuoteCoins(expectedBody);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedQuoteCoins);
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_OnClientError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = _fixture.Create<ProblemDetails>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
+
+        var expectedBody = _fixture.CreateMany<QuoteCoinCreationRequest>();
+
+        // Act
+        var result = await _client.CreateQuoteCoins(expectedBody);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<BadRequestError>();
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_OnServerError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = _fixture.Create<ProblemDetails>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Post, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
+
+        var expectedBody = _fixture.CreateMany<QuoteCoinCreationRequest>();
+
+        // Act
+        var result = await _client.CreateQuoteCoins(expectedBody);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<InternalError>();
+    }
+
+    #endregion
+
+    #region ReplaceTradingPairs Tests
+
+    [Fact]
+    public async Task ReplaceTradingPairs_CallsCorrectUrlWithCorrectBody()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Put, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
+
+        var expectedBody = _fixture.CreateMany<TradingPairCreationRequest>();
+        var expectedUrl = "https://example.com/coins/trading-pairs";
+
+        // Act
+        await _client.ReplaceTradingPairs(expectedBody);
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(HttpMethod.Put, expectedUrl);
+    }
+
+    [Fact]
+    public async Task ReplaceTradingPairs_OnSuccess_ReturnsSuccessWithListOfCoins()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Put, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
+
+        var expectedBody = _fixture.CreateMany<TradingPairCreationRequest>();
+
+        // Act
+        var result = await _client.ReplaceTradingPairs(expectedBody);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedCoins);
+    }
+
+    [Fact]
+    public async Task ReplaceTradingPairs_OnClientError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = _fixture.Create<ProblemDetails>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Put, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
+
+        var expectedBody = _fixture.CreateMany<TradingPairCreationRequest>();
+
+        // Act
+        var result = await _client.ReplaceTradingPairs(expectedBody);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<BadRequestError>();
+    }
+
+    [Fact]
+    public async Task ReplaceTradingPairs_OnServerError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = _fixture.Create<ProblemDetails>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Put, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
+
+        var expectedBody = _fixture.CreateMany<TradingPairCreationRequest>();
+
+        // Act
+        var result = await _client.ReplaceTradingPairs(expectedBody);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<InternalError>();
+    }
+
+    #endregion
+
+    #region DeleteUnreferencedCoins Tests
+
+    [Fact]
+    public async Task DeleteUnreferencedCoins_CallsCorrectUrl()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Delete, url => true)
+            .ReturnsResponse(HttpStatusCode.NoContent);
+
+        var expectedUrl = "https://example.com/coins/unreferenced";
+
+        // Act
+        await _client.DeleteUnreferencedCoins();
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(HttpMethod.Delete, expectedUrl);
+    }
+
+    [Fact]
+    public async Task DeleteUnreferencedCoins_OnSuccess_ReturnsSuccessResult()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Delete, url => true)
+            .ReturnsResponse(HttpStatusCode.NoContent);
+
+        // Act
+        var result = await _client.DeleteUnreferencedCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task DeleteUnreferencedCoins_OnServerError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = _fixture.Create<ProblemDetails>();
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Delete, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
+
+        // Act
+        var result = await _client.DeleteUnreferencedCoins();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<InternalError>();
+    }
+
+    #endregion
 }
