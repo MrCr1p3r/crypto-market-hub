@@ -516,6 +516,129 @@ public class CoinsServiceTests
         _coinsRepositoryMock.Verify(repo => repo.DeleteAllCoinsWithRelations(), Times.Once);
     }
 
+    [Fact]
+    public async Task CreateQuoteCoins_Always_CallsValidationOnce()
+    {
+        // Arrange
+        var requests = TestData.ValidQuoteCoinCreationRequests;
+
+        _coinsValidatorMock
+            .Setup(validator =>
+                validator.ValidateQuoteCoinCreationRequests(
+                    It.IsAny<IEnumerable<QuoteCoinCreationRequest>>()
+                )
+            )
+            .ReturnsAsync(Result.Ok());
+
+        // Act
+        await _testedService.CreateQuoteCoins(requests);
+
+        // Assert
+        _coinsValidatorMock.Verify(
+            validator => validator.ValidateQuoteCoinCreationRequests(requests),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenValidationFails_ReturnsFailureResult()
+    {
+        // Arrange
+        var validationFailureResult = Result.Fail(
+            new GenericErrors.BadRequestError("Quote coin validation failed")
+        );
+
+        _coinsValidatorMock
+            .Setup(validator =>
+                validator.ValidateQuoteCoinCreationRequests(
+                    It.IsAny<IEnumerable<QuoteCoinCreationRequest>>()
+                )
+            )
+            .ReturnsAsync(validationFailureResult);
+
+        // Act
+        var result = await _testedService.CreateQuoteCoins(TestData.ValidQuoteCoinCreationRequests);
+
+        // Assert
+        result.Should().BeEquivalentTo(validationFailureResult);
+        _coinsRepositoryMock.VerifyNoOtherCalls();
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenValidRequest_InsertsCoinsAndReturnsCreatedCoins()
+    {
+        // Arrange
+        var requests = TestData.ValidQuoteCoinCreationRequests;
+
+        // Setup validation
+        _coinsValidatorMock
+            .Setup(validator => validator.ValidateQuoteCoinCreationRequests(requests))
+            .ReturnsAsync(Result.Ok());
+
+        // Setup repository calls
+        _coinsRepositoryMock
+            .Setup(repo => repo.InsertCoins(It.IsAny<IEnumerable<CoinsEntity>>()))
+            .ReturnsAsync(TestData.InsertedQuoteCoinsWithIds);
+
+        // Act
+        var result = await _testedService.CreateQuoteCoins(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(TestData.ExpectedCreatedQuoteCoinsResult);
+
+        // Verify repository calls
+        _coinsRepositoryMock.Verify(
+            repo => repo.InsertCoins(Its.EquivalentTo(TestData.NewQuoteCoinEntitiesFromRequests)),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenEmptyRequest_ReturnsEmptyResult()
+    {
+        // Arrange
+        var emptyRequests = Enumerable.Empty<QuoteCoinCreationRequest>();
+
+        _coinsValidatorMock
+            .Setup(validator => validator.ValidateQuoteCoinCreationRequests(emptyRequests))
+            .ReturnsAsync(Result.Ok());
+
+        _coinsRepositoryMock
+            .Setup(repo => repo.InsertCoins(It.IsAny<IEnumerable<CoinsEntity>>()))
+            .ReturnsAsync([]);
+
+        // Act
+        var result = await _testedService.CreateQuoteCoins(emptyRequests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenSingleQuoteCoin_CreatesAndReturnsCorrectly()
+    {
+        // Arrange
+        var singleRequest = new[] { TestData.SingleQuoteCoinCreationRequest };
+
+        _coinsValidatorMock
+            .Setup(validator => validator.ValidateQuoteCoinCreationRequests(singleRequest))
+            .ReturnsAsync(Result.Ok());
+
+        _coinsRepositoryMock
+            .Setup(repo => repo.InsertCoins(It.IsAny<IEnumerable<CoinsEntity>>()))
+            .ReturnsAsync([TestData.SingleInsertedQuoteCoin]);
+
+        // Act
+        var result = await _testedService.CreateQuoteCoins(singleRequest);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo([TestData.ExpectedSingleQuoteCoinResult]);
+        result.Value.Should().HaveCount(1);
+    }
+
     private static class TestData
     {
         public static readonly IEnumerable<CoinsEntity> CoinEntities =
@@ -1015,6 +1138,101 @@ public class CoinsServiceTests
                 PriceUsd = 4000m.ToString(),
                 PriceChangePercentage24h = -0.5m,
                 TradingPairs = [],
+            },
+        ];
+
+        public static readonly IEnumerable<QuoteCoinCreationRequest> ValidQuoteCoinCreationRequests =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+            },
+            new()
+            {
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> InsertedQuoteCoinsWithIds =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+            },
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+            },
+        ];
+
+        public static readonly IEnumerable<TradingPairCoinQuote> ExpectedCreatedQuoteCoinsResult =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+            },
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+            },
+        ];
+
+        public static readonly QuoteCoinCreationRequest SingleQuoteCoinCreationRequest = new()
+        {
+            Symbol = "BTC",
+            Name = "Bitcoin",
+            IdCoinGecko = "bitcoin",
+        };
+
+        public static readonly CoinsEntity SingleInsertedQuoteCoin = new()
+        {
+            Id = 1,
+            Symbol = "BTC",
+            Name = "Bitcoin",
+            IdCoinGecko = "bitcoin",
+        };
+
+        public static readonly TradingPairCoinQuote ExpectedSingleQuoteCoinResult = new()
+        {
+            Id = 1,
+            Symbol = "BTC",
+            Name = "Bitcoin",
+            IdCoinGecko = "bitcoin",
+        };
+
+        public static readonly IEnumerable<CoinsEntity> NewQuoteCoinEntitiesFromRequests =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+                IsFiat = false,
+                IsStablecoin = false,
+            },
+            new()
+            {
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+                IsFiat = false,
+                IsStablecoin = false,
             },
         ];
     }

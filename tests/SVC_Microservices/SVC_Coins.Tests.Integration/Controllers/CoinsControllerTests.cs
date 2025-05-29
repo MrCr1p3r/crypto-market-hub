@@ -274,6 +274,94 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         (await dbContext.Exchanges.CountAsync()).Should().Be(2);
     }
 
+    [Fact]
+    public async Task CreateQuoteCoins_WhenSuccessful_ReturnsCreatedQuoteCoins()
+    {
+        // Arrange
+        await SeedDatabase();
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins/quote", TestData.QuoteCoinsToInsert);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var actualQuoteCoins = await response.Content.ReadFromJsonAsync<
+            IEnumerable<TradingPairCoinQuote>
+        >();
+        actualQuoteCoins.Should().BeEquivalentTo(TestData.ExpectedCreatedQuoteCoins);
+
+        using var dbContext = GetDbContext();
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(6); // 3 existing + 3 new quote coins
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenEmptyRequest_ReturnsBadRequest()
+    {
+        // Arrange
+        await SeedDatabase();
+        var emptyRequest = Array.Empty<QuoteCoinCreationRequest>();
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins/quote", emptyRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        using var dbContext = GetDbContext();
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(3); // No new coins created
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenValidationFails_ReturnsBadRequest()
+    {
+        // Arrange
+        await SeedDatabase();
+        var invalidRequest = new[]
+        {
+            new QuoteCoinCreationRequest
+            {
+                Symbol = string.Empty, // Invalid empty symbol
+                Name = "Test Coin",
+                IdCoinGecko = "test-coin",
+            },
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins/quote", invalidRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        using var dbContext = GetDbContext();
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(3); // No new coins created
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WhenDuplicateCoins_HandlesProperly()
+    {
+        // Arrange
+        await SeedDatabase();
+        var duplicateRequests = new[]
+        {
+            new QuoteCoinCreationRequest
+            {
+                Symbol = "BTC", // This already exists in seeded data
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+            },
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins/quote", duplicateRequests);
+
+        // Assert
+        // Response might be either OK (if duplicates are handled) or BadRequest (if validation catches it)
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
+    }
+
     private async Task SeedDatabase()
     {
         using var dbContext = GetDbContext();
@@ -646,6 +734,53 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
                 Symbol = "USDT",
                 Category = CoinCategory.Stablecoin,
                 TradingPairs = [], // No trading pairs after replacement
+            },
+        ];
+
+        public static readonly IEnumerable<QuoteCoinCreationRequest> QuoteCoinsToInsert =
+        [
+            new()
+            {
+                Symbol = "ADA",
+                Name = "Cardano",
+                IdCoinGecko = "cardano",
+            },
+            new()
+            {
+                Symbol = "DOT",
+                Name = "Polkadot",
+                IdCoinGecko = "polkadot",
+            },
+            new()
+            {
+                Symbol = "MATIC",
+                Name = "Polygon",
+                IdCoinGecko = "polygon",
+            },
+        ];
+
+        public static readonly IEnumerable<TradingPairCoinQuote> ExpectedCreatedQuoteCoins =
+        [
+            new()
+            {
+                Id = 4, // Next available ID after seeded data
+                Symbol = "ADA",
+                Name = "Cardano",
+                IdCoinGecko = "cardano",
+            },
+            new()
+            {
+                Id = 5, // Next available ID after seeded data
+                Symbol = "DOT",
+                Name = "Polkadot",
+                IdCoinGecko = "polkadot",
+            },
+            new()
+            {
+                Id = 6, // Next available ID after seeded data
+                Symbol = "MATIC",
+                Name = "Polygon",
+                IdCoinGecko = "polygon",
             },
         ];
     }

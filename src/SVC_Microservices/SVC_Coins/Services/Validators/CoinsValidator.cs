@@ -8,7 +8,6 @@ using SVC_Coins.Services.Validators.Interfaces;
 
 namespace SVC_Coins.Services.Validators;
 
-/// <inheritdoc/>
 /// <summary>
 /// Validator for coin-related data.
 /// </summary>
@@ -20,6 +19,7 @@ public class CoinsValidator(
     private readonly ICoinsRepository _coinsRepository = coinsRepository;
     private readonly IExchangesRepository _exchangesRepository = exchangesRepository;
 
+    /// <inheritdoc />
     public async Task<Result> ValidateCoinCreationRequests(
         IEnumerable<CoinCreationRequest> requests
     )
@@ -113,6 +113,39 @@ public class CoinsValidator(
         return tradingPairsExchanges.Where(exchange => !validExchangeIds.Contains((int)exchange));
     }
 
+    /// <inheritdoc />
+    public async Task<Result> ValidateQuoteCoinCreationRequests(
+        IEnumerable<QuoteCoinCreationRequest> requests
+    )
+    {
+        var errorMessages = new List<string>();
+
+        // Duplicate coins validation
+        var duplicateCoins = await GetDuplicateQuoteCoins(requests);
+        if (duplicateCoins.Any())
+        {
+            errorMessages.Add(
+                $"The following quote coins already exist in the database: {string.Join(", ", duplicateCoins)}"
+            );
+        }
+
+        return errorMessages.Count > 0
+            ? Result.Fail(new GenericErrors.BadRequestError(string.Join("\n\n", errorMessages)))
+            : Result.Ok();
+    }
+
+    private async Task<IEnumerable<string>> GetDuplicateQuoteCoins(
+        IEnumerable<QuoteCoinCreationRequest> requests
+    )
+    {
+        var quoteCoinPairs = requests.Select(Mapping.ToCoinSymbolNamePair);
+
+        var duplicateCoins = await _coinsRepository.GetCoinsBySymbolNamePairs(quoteCoinPairs);
+
+        return duplicateCoins.Select(coin => $"{coin.Name} ({coin.Symbol})");
+    }
+
+    /// <inheritdoc />
     public async Task<Result> ValidateMarketDataUpdateRequests(
         IEnumerable<CoinMarketDataUpdateRequest> requests
     )
@@ -136,5 +169,8 @@ public class CoinsValidator(
 
         public static CoinSymbolNamePair ToCoinSymbolNamePair(CoinCreationCoinQuote coinQuote) =>
             new() { Symbol = coinQuote.Symbol, Name = coinQuote.Name };
+
+        public static CoinSymbolNamePair ToCoinSymbolNamePair(QuoteCoinCreationRequest quoteCoin) =>
+            new() { Symbol = quoteCoin.Symbol, Name = quoteCoin.Name };
     }
 }

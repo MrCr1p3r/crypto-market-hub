@@ -158,6 +158,90 @@ public class CoinsControllerTests
     }
 
     [Fact]
+    public async Task CreateQuoteCoins_OnSuccess_CallsServiceAndReturnsOk()
+    {
+        // Arrange
+        var requests = _fixture.CreateMany<QuoteCoinCreationRequest>(3).ToList();
+        var createdQuoteCoins = _fixture.CreateMany<TradingPairCoinQuote>(3);
+        var successResult = Result.Ok(createdQuoteCoins);
+
+        _mockCoinsService
+            .Setup(service =>
+                service.CreateQuoteCoins(It.IsAny<IEnumerable<QuoteCoinCreationRequest>>())
+            )
+            .ReturnsAsync(successResult);
+
+        // Act
+        var result = await _testedController.CreateQuoteCoins(requests);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(createdQuoteCoins);
+
+        _mockCoinsService.Verify(service => service.CreateQuoteCoins(requests), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_OnFailure_CallsServiceAndReturnsBadRequest()
+    {
+        // Arrange
+        var requests = _fixture.CreateMany<QuoteCoinCreationRequest>(3).ToList();
+        var errorMessage = "Quote coin validation failed";
+        var failureResult = Result.Fail<IEnumerable<TradingPairCoinQuote>>(
+            new GenericErrors.BadRequestError(errorMessage)
+        );
+
+        _mockCoinsService
+            .Setup(service =>
+                service.CreateQuoteCoins(It.IsAny<IEnumerable<QuoteCoinCreationRequest>>())
+            )
+            .ReturnsAsync(failureResult);
+
+        // Act
+        var result = await _testedController.CreateQuoteCoins(requests);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<BadRequestObjectResult>()
+            .Which.Value.Should()
+            .BeOfType<ProblemDetails>()
+            .Which.Detail.Should()
+            .Contain(errorMessage);
+
+        _mockCoinsService.Verify(service => service.CreateQuoteCoins(requests), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateQuoteCoins_WithEmptyRequest_CallsServiceAndReturnsOk()
+    {
+        // Arrange
+        var emptyRequests = Enumerable.Empty<QuoteCoinCreationRequest>();
+        var successResult = Result.Ok(Enumerable.Empty<TradingPairCoinQuote>());
+
+        _mockCoinsService
+            .Setup(service =>
+                service.CreateQuoteCoins(It.IsAny<IEnumerable<QuoteCoinCreationRequest>>())
+            )
+            .ReturnsAsync(successResult);
+
+        // Act
+        var result = await _testedController.CreateQuoteCoins(emptyRequests);
+
+        // Assert
+        result
+            .Should()
+            .BeOfType<OkObjectResult>()
+            .Which.Value.Should()
+            .BeEquivalentTo(Enumerable.Empty<TradingPairCoinQuote>());
+
+        _mockCoinsService.Verify(service => service.CreateQuoteCoins(emptyRequests), Times.Once);
+    }
+
+    [Fact]
     public async Task UpdateMarketData_OnSuccess_CallsServiceAndReturnsOk()
     {
         // Arrange

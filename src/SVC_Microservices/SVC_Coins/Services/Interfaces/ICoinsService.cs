@@ -36,6 +36,18 @@ public interface ICoinsService
     );
 
     /// <summary>
+    /// Creates multiple new quote coins.
+    /// </summary>
+    /// <param name="requests">The collection of requests with the new quote coin data.</param>
+    /// <returns>
+    /// Success: A collection of created quote coins.
+    /// Failure: A collection of occurred errors.
+    /// </returns>
+    Task<Result<IEnumerable<TradingPairCoinQuote>>> CreateQuoteCoins(
+        IEnumerable<QuoteCoinCreationRequest> requests
+    );
+
+    /// <summary>
     /// Updates the market data of multiple coins in the system.
     /// </summary>
     /// <param name="requests">The collection of request models for updating the market data of multiple coins.</param>

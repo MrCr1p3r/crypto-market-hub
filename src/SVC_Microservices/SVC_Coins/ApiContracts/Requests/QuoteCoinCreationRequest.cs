@@ -1,0 +1,32 @@
+using SharedLibrary.Enums;
+
+namespace SVC_Coins.ApiContracts.Requests;
+
+/// <summary>
+/// Represents a request for the creation of a new quote coin.
+/// </summary>
+public record QuoteCoinCreationRequest
+{
+    /// <summary>
+    /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin). Is always uppercase.
+    /// </summary>
+    public required string Symbol { get; set; }
+
+    /// <summary>
+    /// Full name of the cryptocurrency (e.g., "Bitcoin").
+    /// </summary>
+    public required string Name { get; set; }
+
+    /// <summary>
+    /// Category of the coin.
+    /// </summary>
+    /// <remarks>
+    /// Null if this coin is a regular coin/token.
+    /// </remarks>
+    public CoinCategory? Category { get; set; }
+
+    /// <summary>
+    /// Id of the coin in the CoinGecko API.
+    /// </summary>
+    public string? IdCoinGecko { get; set; }
+}

@@ -249,6 +249,80 @@ public class CoinsValidatorTests
         result.Errors[0].Should().BeOfType<GenericErrors.NotFoundError>();
     }
 
+    [Fact]
+    public async Task ValidateQuoteCoinCreationRequests_WhenRequestIsValid_ReturnsOk()
+    {
+        // Arrange
+        var requests = TestData.ValidQuoteCoinCreationRequests;
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync([]); // No duplicates
+
+        // Act
+        var result = await _validator.ValidateQuoteCoinCreationRequests(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateQuoteCoinCreationRequests_WhenDuplicateCoinsExist_ReturnsFail()
+    {
+        // Arrange
+        var requests = TestData.QuoteCoinCreationRequestsWithExistingCoin;
+        var existingUsdt = TestData.UsdtEntity;
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(
+                    It.Is<IEnumerable<CoinSymbolNamePair>>(coinPairs =>
+                        coinPairs.Any(pair => pair.Symbol == "USDT")
+                    )
+                )
+            )
+            .ReturnsAsync([existingUsdt]);
+
+        // Act
+        var result = await _validator.ValidateQuoteCoinCreationRequests(requests);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .ContainSingle(error =>
+                error.Message.Contains(existingUsdt.Name)
+                && error.Message.Contains(existingUsdt.Symbol)
+            );
+        result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
+    }
+
+    [Fact]
+    public async Task ValidateQuoteCoinCreationRequests_WhenMultipleDuplicateCoinsExist_ReturnsFailWithAllDuplicates()
+    {
+        // Arrange
+        var requests = TestData.QuoteCoinCreationRequestsWithMultipleDuplicates;
+        var existingCoins = new[] { TestData.UsdtEntity, TestData.BtcEntity };
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync(existingCoins);
+
+        // Act
+        var result = await _validator.ValidateQuoteCoinCreationRequests(requests);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        var errorMessage = result.Errors[0].Message;
+        errorMessage.Should().Contain("USDT");
+        errorMessage.Should().Contain("BTC");
+        result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
+    }
+
     private static class TestData
     {
         public static readonly Exchange InvalidExchange = (Exchange)999;
@@ -424,6 +498,53 @@ public class CoinsValidatorTests
         [
             new ExchangesEntity { Id = 1, Name = "Binance" },
             new ExchangesEntity { Id = 2, Name = "Bybit" },
+        ];
+
+        public static readonly IEnumerable<QuoteCoinCreationRequest> ValidQuoteCoinCreationRequests =
+        [
+            new()
+            {
+                Symbol = "DOT",
+                Name = "Polkadot",
+                Category = null,
+                IdCoinGecko = "polkadot",
+            },
+            new()
+            {
+                Symbol = "ADA",
+                Name = "Cardano",
+                Category = null,
+                IdCoinGecko = "cardano",
+            },
+        ];
+
+        public static readonly IEnumerable<QuoteCoinCreationRequest> QuoteCoinCreationRequestsWithExistingCoin =
+        [
+            new()
+            {
+                Symbol = "USDT",
+                Name = "Tether",
+                Category = CoinCategory.Stablecoin,
+                IdCoinGecko = "tether",
+            },
+        ];
+
+        public static readonly IEnumerable<QuoteCoinCreationRequest> QuoteCoinCreationRequestsWithMultipleDuplicates =
+        [
+            new()
+            {
+                Symbol = "USDT",
+                Name = "Tether",
+                Category = CoinCategory.Stablecoin,
+                IdCoinGecko = "tether",
+            },
+            new()
+            {
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                Category = null,
+                IdCoinGecko = "bitcoin",
+            },
         ];
     }
 }
