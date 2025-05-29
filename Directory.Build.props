@@ -1,19 +1,12 @@
 <Project>
   <PropertyGroup>
-    <!-- Enable central package management -->
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    
-    <!-- Ensure all projects use the same .NET version -->
     <TargetFramework>net8.0</TargetFramework>
-    
-    <!-- Common properties for all projects -->
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    
-    <!-- Enable nullable reference types -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors> <!-- TODO: set true? -->
-    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- <TreatWarningsAsErrors>true</TreatWarningsAsErrors> -->
   </PropertyGroup>
   
   <ItemGroup>
