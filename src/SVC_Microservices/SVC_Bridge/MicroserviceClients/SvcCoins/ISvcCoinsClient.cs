@@ -29,4 +29,37 @@ public interface ISvcCoinsClient
     Task<Result<IEnumerable<Coin>>> UpdateCoinsMarketData(
         IEnumerable<CoinMarketDataUpdateRequest> requests
     );
+
+    /// <summary>
+    /// Creates multiple new quote coins.
+    /// </summary>
+    /// <param name="quoteCoins">The collection of quote coin creation requests.</param>
+    /// <returns>
+    /// Success: A collection of created quote coins.
+    /// Failure: An error that occurred during the creation of the quote coins.
+    /// </returns>
+    Task<Result<IEnumerable<TradingPairCoinQuote>>> CreateQuoteCoins(
+        IEnumerable<QuoteCoinCreationRequest> quoteCoins
+    );
+
+    /// <summary>
+    /// Replaces all existing trading pairs with the provided ones.
+    /// </summary>
+    /// <param name="requests">The collection of trading pair creation requests.</param>
+    /// <returns>
+    /// Success: A collection of all coins with the new trading pairs.
+    /// Failure: An error that occurred during the replacement of trading pairs.
+    /// </returns>
+    Task<Result<IEnumerable<Coin>>> ReplaceTradingPairs(
+        IEnumerable<TradingPairCreationRequest> requests
+    );
+
+    /// <summary>
+    /// Deletes all coins that are neither referenced as a base nor a quote coin in any trading pair.
+    /// </summary>
+    /// <returns>
+    /// Success: Operation completed successfully.
+    /// Failure: An error that occurred during the deletion of unreferenced coins.
+    /// </returns>
+    Task<Result> DeleteUnreferencedCoins();
 }

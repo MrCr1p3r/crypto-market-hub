@@ -5,6 +5,7 @@ using Moq.Contrib.HttpClient;
 using SVC_Bridge.MicroserviceClients.SvcExternal;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 using static SharedLibrary.Errors.GenericErrors;
 
@@ -355,6 +356,113 @@ public class SvcExternalClientTests
 
         // Act
         var result = await _client.GetKlineData(request);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<InternalError>();
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_CallsCorrectUrl()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
+
+        // Act
+        await _client.GetAllSpotCoins();
+
+        // Assert
+        _httpMessageHandlerMock.VerifyRequest(
+            HttpMethod.Get,
+            "https://example.com/exchanges/coins/spot"
+        );
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_OnSuccess_ReturnsSuccessWithListOfCoins()
+    {
+        // Arrange
+        var expectedCoins = _fixture.CreateMany<Coin>(5).ToList();
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedCoins);
+        result.Value.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_OnSuccess_ReturnsEmptyList()
+    {
+        // Arrange
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, url => true)
+            .ReturnsJsonResponse(HttpStatusCode.OK, new List<Coin>());
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_OnClientError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+            Title = "Bad Request",
+            Status = 400,
+            Detail = "Invalid request for spot coins.",
+            Instance = "/exchanges/coins/spot",
+        };
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().HaveCount(1);
+        result.Errors[0].Should().BeOfType<BadRequestError>();
+    }
+
+    [Fact]
+    public async Task GetAllSpotCoins_OnServerError_ReturnsFailWithErrorsInside()
+    {
+        // Arrange
+        var problemDetails = new ProblemDetails
+        {
+            Type = "https://tools.ietf.org/html/rfc7231#section-6.6.1",
+            Title = "Internal Server Error",
+            Status = 500,
+            Detail = "An error occurred while processing the spot coins request.",
+            Instance = "/exchanges/coins/spot",
+        };
+
+        _httpMessageHandlerMock
+            .SetupRequest(HttpMethod.Get, _ => true)
+            .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
+
+        // Act
+        var result = await _client.GetAllSpotCoins();
 
         // Assert
         result.IsFailed.Should().BeTrue();

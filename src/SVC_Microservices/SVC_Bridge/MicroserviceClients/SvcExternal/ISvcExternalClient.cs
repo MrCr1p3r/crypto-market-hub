@@ -1,6 +1,7 @@
 using FluentResults;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace SVC_Bridge.MicroserviceClients.SvcExternal;
@@ -32,4 +33,13 @@ public interface ISvcExternalClient
     /// Failure: An error that occured during the retrieval of the kline data.
     /// </returns>
     Task<Result<IEnumerable<KlineDataResponse>>> GetKlineData(KlineDataBatchRequest request);
+
+    /// <summary>
+    /// Retrieves all spot coins from all available exchanges.
+    /// </summary>
+    /// <returns>
+    /// Success: Collection of all active spot coins from all exchanges.
+    /// Failure: An error that occurred during the retrieval of the spot coins.
+    /// </returns>
+    Task<Result<IEnumerable<Coin>>> GetAllSpotCoins();
 }

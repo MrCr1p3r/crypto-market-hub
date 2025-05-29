@@ -2,6 +2,7 @@ using FluentResults;
 using SharedLibrary.Extensions.HttpClient.Internal;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
+using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace SVC_Bridge.MicroserviceClients.SvcExternal;
@@ -37,4 +38,12 @@ public class SvcExternalClient(
             KlineDataBatchRequest,
             IEnumerable<KlineDataResponse>
         >("exchanges/kline/query/bulk", request, logger, "Failed to retrieve kline data.");
+
+    /// <inheritdoc />
+    public async Task<Result<IEnumerable<Coin>>> GetAllSpotCoins() =>
+        await _httpClient.GetFromJsonSafeAsync<IEnumerable<Coin>>(
+            "exchanges/coins/spot",
+            logger,
+            "Failed to retrieve all spot coins."
+        );
 }

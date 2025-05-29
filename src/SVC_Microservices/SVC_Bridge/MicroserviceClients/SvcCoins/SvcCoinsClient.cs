@@ -31,4 +31,30 @@ public class SvcCoinsClient(IHttpClientFactory httpClientFactory, ILogger<SvcCoi
             IEnumerable<CoinMarketDataUpdateRequest>,
             IEnumerable<Coin>
         >($"{BaseUrl}/market-data", requests, _logger, "Failed to update coins market data.");
+
+    /// <inheritdoc />
+    public async Task<Result<IEnumerable<TradingPairCoinQuote>>> CreateQuoteCoins(
+        IEnumerable<QuoteCoinCreationRequest> quoteCoins
+    ) =>
+        await _httpClient.PostAsJsonSafeAsync<
+            IEnumerable<QuoteCoinCreationRequest>,
+            IEnumerable<TradingPairCoinQuote>
+        >($"{BaseUrl}/quote", quoteCoins, _logger, "Failed to create quote coins.");
+
+    /// <inheritdoc />
+    public async Task<Result<IEnumerable<Coin>>> ReplaceTradingPairs(
+        IEnumerable<TradingPairCreationRequest> requests
+    ) =>
+        await _httpClient.PutAsJsonSafeAsync<
+            IEnumerable<TradingPairCreationRequest>,
+            IEnumerable<Coin>
+        >($"{BaseUrl}/trading-pairs", requests, _logger, "Failed to replace trading pairs.");
+
+    /// <inheritdoc />
+    public async Task<Result> DeleteUnreferencedCoins() =>
+        await _httpClient.DeleteSafeAsync(
+            $"{BaseUrl}/unreferenced",
+            _logger,
+            "Failed to delete unreferenced coins."
+        );
 }
