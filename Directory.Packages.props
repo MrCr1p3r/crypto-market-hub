@@ -1,7 +1,8 @@
 <Project>
     <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     </PropertyGroup>
+    
     <ItemGroup>
         <!-- ASP.NET Core & Extensions -->
         <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="8.0.13" />

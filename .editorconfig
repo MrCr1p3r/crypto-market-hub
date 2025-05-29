@@ -61,3 +61,9 @@ dotnet_diagnostic.SA1623.severity = none
 dotnet_diagnostic.SA1201.severity = none
 # SA1515: Single-line comment should be preceded by blank line
 dotnet_diagnostic.SA1515.severity = none
+# IDE0055: Fix formatting
+dotnet_diagnostic.IDE0055.severity = none
+# S6580: Use a format provider when parsing date and time
+dotnet_diagnostic.S6580.severity = none
+# CS1591: Missing XML comment for publicly visible type or member
+dotnet_diagnostic.CS1591.severity = none
