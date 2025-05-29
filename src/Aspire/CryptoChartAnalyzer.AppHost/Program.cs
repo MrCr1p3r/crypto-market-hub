@@ -27,4 +27,4 @@ builder
     .WithReference(externalBuilder)
     .WithReference(bridgeBuilder);
 
-builder.Build().Run();
+await builder.Build().RunAsync();
