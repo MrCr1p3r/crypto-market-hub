@@ -68,35 +68,6 @@ public class CoinsControllerTests
     }
 
     [Fact]
-    public async Task UpdateCoinsMarketData_OnBadRequestError_CallsServiceAndReturnsBadRequest()
-    {
-        // Arrange
-        var errorMessage = "Invalid request parameters";
-        var failureResult = Result.Fail<IEnumerable<CoinMarketData>>(
-            new GenericErrors.BadRequestError(errorMessage)
-        );
-
-        _mockCoinsService
-            .Setup(service => service.UpdateCoinsMarketData())
-            .ReturnsAsync(failureResult);
-
-        // Act
-        var result = await _testedController.UpdateCoinsMarketData();
-
-        // Assert
-        result
-            .Should()
-            .BeOfType<BadRequestObjectResult>()
-            .Which.Value.Should()
-            .BeOfType<ProblemDetails>()
-            .Which.Detail.Should()
-            .Contain(errorMessage);
-
-        _mockCoinsService.Verify(service => service.UpdateCoinsMarketData(), Times.Once);
-        _mockCoinsService.VerifyNoOtherCalls();
-    }
-
-    [Fact]
     public async Task UpdateCoinsMarketData_OnInternalError_CallsServiceAndReturnsInternalServerError()
     {
         // Arrange

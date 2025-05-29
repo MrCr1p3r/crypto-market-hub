@@ -19,12 +19,10 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     /// </summary>
     /// <returns>A collection of updated coin market data.</returns>
     /// <response code="200">Market data successfully updated for all coins.</response>
-    /// <response code="400">Invalid request parameters.</response>
     /// <response code="500">Internal error occurred during market data update operation.</response>
     [HttpPost("market-data")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<CoinMarketData>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateCoinsMarketData()
     {

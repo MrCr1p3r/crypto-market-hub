@@ -19,12 +19,10 @@ public class KlineDataController(IKlineDataService klineDataService) : Controlle
     /// </summary>
     /// <returns>A collection of updated kline data grouped by trading pairs.</returns>
     /// <response code="200">Kline data successfully updated for all trading pairs.</response>
-    /// <response code="400">Invalid request parameters.</response>
     /// <response code="500">Internal error occurred during kline data update operation.</response>
     [HttpPost]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<KlineDataResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateKlineData()
     {

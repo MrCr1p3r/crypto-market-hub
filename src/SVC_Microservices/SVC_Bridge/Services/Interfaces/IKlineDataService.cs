@@ -9,7 +9,7 @@ namespace SVC_Bridge.Services.Interfaces;
 public interface IKlineDataService
 {
     /// <summary>
-    /// Updates the kline data for all coins in the system.
+    /// Updates the kline data for all coins in the system using kline data from external sources.
     /// </summary>
     /// <returns>
     /// A Result object indicating success or containing errors if the operation failed.
