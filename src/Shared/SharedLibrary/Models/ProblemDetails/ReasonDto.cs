@@ -1,4 +1,4 @@
-namespace SharedLibrary.Models;
+namespace SharedLibrary.Models.ProblemDetails;
 
 /// <summary>
 /// Represents a reason in the problem details.

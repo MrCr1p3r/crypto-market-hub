@@ -5,7 +5,7 @@ using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Exceptions;
-using SharedLibrary.Models;
+using SharedLibrary.Models.ProblemDetails;
 using static SharedLibrary.Errors.GenericErrors;
 
 namespace SharedLibrary.Extensions.HttpClient.Internal;
