@@ -31,7 +31,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -69,7 +69,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -87,7 +87,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -103,7 +103,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -123,7 +123,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -146,7 +146,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -172,7 +172,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -194,7 +194,7 @@ public class TradingPairsControllerTests(CustomWebApplicationFactory factory)
         );
 
         // Act
-        var response = await Client.PutAsync("/bridge/trading-pairs", null);
+        var response = await Client.PostAsync("/bridge/trading-pairs", null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
