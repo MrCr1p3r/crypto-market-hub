@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SVC_Kline.ApiContracts.Requests;
 using SVC_Kline.ApiContracts.Responses;
@@ -78,29 +79,35 @@ public class KlineDataRepository(KlineDataDbContext context) : IKlineDataReposit
                     KlineData = group.Select(ToKlineData),
                 });
 
-        public static KlineData ToKlineData(KlineDataEntity klineDataEntity) =>
-            new()
+        public static KlineData ToKlineData(KlineDataEntity klineDataEntity)
+        {
+            var ic = CultureInfo.InvariantCulture;
+            return new()
             {
                 OpenTime = klineDataEntity.OpenTime,
-                OpenPrice = decimal.Parse(klineDataEntity.OpenPrice),
-                HighPrice = decimal.Parse(klineDataEntity.HighPrice),
-                LowPrice = decimal.Parse(klineDataEntity.LowPrice),
-                ClosePrice = decimal.Parse(klineDataEntity.ClosePrice),
-                Volume = decimal.Parse(klineDataEntity.Volume),
+                OpenPrice = decimal.Parse(klineDataEntity.OpenPrice, ic),
+                HighPrice = decimal.Parse(klineDataEntity.HighPrice, ic),
+                LowPrice = decimal.Parse(klineDataEntity.LowPrice, ic),
+                ClosePrice = decimal.Parse(klineDataEntity.ClosePrice, ic),
+                Volume = decimal.Parse(klineDataEntity.Volume, ic),
                 CloseTime = klineDataEntity.CloseTime,
             };
+        }
 
-        public static KlineDataEntity ToKlineDataEntity(KlineDataCreationRequest klineDataNew) =>
-            new()
+        public static KlineDataEntity ToKlineDataEntity(KlineDataCreationRequest klineDataNew)
+        {
+            var ic = CultureInfo.InvariantCulture;
+            return new()
             {
                 IdTradingPair = klineDataNew.IdTradingPair,
                 OpenTime = klineDataNew.OpenTime,
-                OpenPrice = klineDataNew.OpenPrice.ToString(),
-                HighPrice = klineDataNew.HighPrice.ToString(),
-                LowPrice = klineDataNew.LowPrice.ToString(),
-                ClosePrice = klineDataNew.ClosePrice.ToString(),
-                Volume = klineDataNew.Volume.ToString(),
+                OpenPrice = klineDataNew.OpenPrice.ToString(ic),
+                HighPrice = klineDataNew.HighPrice.ToString(ic),
+                LowPrice = klineDataNew.LowPrice.ToString(ic),
+                ClosePrice = klineDataNew.ClosePrice.ToString(ic),
+                Volume = klineDataNew.Volume.ToString(ic),
                 CloseTime = klineDataNew.CloseTime,
             };
+        }
     }
 }
