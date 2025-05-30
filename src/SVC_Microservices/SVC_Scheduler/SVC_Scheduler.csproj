@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+    <PackageReference Include="Swashbuckle.AspNetCore"/>
+    <PackageReference Include="Coravel" />
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\SharedLibrary\SharedLibrary.csproj" />
+    <ProjectReference Include="..\..\Aspire\CryptoChartAnalyzer.ServiceDefaults\CryptoChartAnalyzer.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+</Project>
