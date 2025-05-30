@@ -301,6 +301,121 @@ public class InternalHttpClientExtensionsTests
 
     #endregion
 
+    #region PostSafeAsync Tests
+
+    [Fact]
+    public async Task PostSafeAsync_ReturnsOkResultWithContent()
+    {
+        // Arrange
+        var expectedResponse = new TestData.TestDto { Id = 1, Name = "Test Response" };
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Post, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.OK, expectedResponse);
+
+        // Act
+        var result = await _httpClient.PostSafeAsync<TestData.TestDto>(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(expectedResponse);
+
+        // Verify no logs were written for successful case
+        _fakeLogger.VerifyNoLogsWritten();
+    }
+
+    [Fact]
+    public async Task PostSafeAsync_ContentDeserializesToNull_ReturnsFailedDeserializationResult()
+    {
+        // Arrange
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Post, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.OK, (object?)null);
+
+        // Act
+        var result = await _httpClient.PostSafeAsync<TestData.TestDto>(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .ContainSingle(error =>
+                error.Message.Contains("was null or could not be deserialized")
+            );
+
+        // Verify no logs were written for deserialization failure (not an HTTP error)
+        _fakeLogger.VerifyNoLogsWritten();
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.Conflict)]
+    [InlineData(HttpStatusCode.InternalServerError)]
+    public async Task PostSafeAsync_UnsuccessfulResponse_ReturnsFailedResultAndLogsError(
+        HttpStatusCode statusCode
+    )
+    {
+        // Arrange
+        var problemDetails = CreateBasicProblemDetails("Post operation failed");
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Post, TestRequestUri)
+            .ReturnsJsonResponse(statusCode, problemDetails);
+
+        // Act
+        var result = await _httpClient.PostSafeAsync<TestData.TestDto>(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsFailed.Should().BeTrue();
+        result.Errors.Should().ContainSingle(error => error.Message.Contains(FailureMessage));
+
+        // Verify HTTP error was logged
+        _fakeLogger.VerifyWasCalled(LogLevel.Warning, "Post operation failed");
+    }
+
+    [Fact]
+    public async Task PostSafeAsync_EmptyJsonObject_ReturnsOkResultWithDefaultProperties()
+    {
+        // Arrange
+        _mockHttpMessageHandler
+            .SetupRequest(HttpMethod.Post, TestRequestUri)
+            .ReturnsJsonResponse(HttpStatusCode.OK, new { });
+
+        // Act
+        var result = await _httpClient.PostSafeAsync<TestData.TestDto>(
+            RelativeTestUri,
+            _fakeLogger,
+            FailureMessage
+        );
+
+        // Assert
+        result.Should().NotBeNull();
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().NotBeNull();
+        result.Value.Id.Should().Be(0);
+        result.Value.Name.Should().BeNull();
+
+        // Verify no logs were written for successful case
+        _fakeLogger.VerifyNoLogsWritten();
+    }
+
+    #endregion
+
     #region PatchAsJsonSafeAsync Tests
 
     [Fact]
