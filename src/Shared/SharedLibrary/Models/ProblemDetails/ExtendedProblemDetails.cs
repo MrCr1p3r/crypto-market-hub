@@ -1,12 +1,11 @@
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
 
-namespace SharedLibrary.Models;
+namespace SharedLibrary.Models.ProblemDetails;
 
 /// <summary>
 /// Extended ProblemDetails that provides strongly-typed access to metadata and reasons.
 /// </summary>
-public class ExtendedProblemDetails : ProblemDetails
+public class ExtendedProblemDetails : Microsoft.AspNetCore.Mvc.ProblemDetails
 {
     /// <summary>
     /// Gets or sets the metadata associated with this problem.
@@ -27,7 +26,7 @@ public class ExtendedProblemDetails : ProblemDetails
     /// Initializes a new instance of the <see cref="ExtendedProblemDetails"/> class from a regular ProblemDetails.
     /// </summary>
     /// <param name="problemDetails">The source ProblemDetails.</param>
-    public ExtendedProblemDetails(ProblemDetails problemDetails)
+    public ExtendedProblemDetails(Microsoft.AspNetCore.Mvc.ProblemDetails problemDetails)
     {
         Type = problemDetails.Type;
         Title = problemDetails.Title;
