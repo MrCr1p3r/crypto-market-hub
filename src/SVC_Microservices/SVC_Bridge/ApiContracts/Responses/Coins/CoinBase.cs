@@ -38,7 +38,7 @@ public abstract class CoinBase
     /// <summary>
     /// The market capitalization in USD.
     /// </summary>
-    public int? MarketCapUsd { get; init; }
+    public long? MarketCapUsd { get; init; }
 
     /// <summary>
     /// The current price in USD.

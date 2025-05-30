@@ -20,7 +20,7 @@ public class TradingPairsController(ITradingPairsService tradingPairsService) : 
     /// <returns>A collection of coins with updated trading pairs.</returns>
     /// <response code="200">Trading pairs were successfully updated.</response>
     /// <response code="500">Internal error occurred during trading pairs update operation.</response>
-    [HttpPut]
+    [HttpPost]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<Coin>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
