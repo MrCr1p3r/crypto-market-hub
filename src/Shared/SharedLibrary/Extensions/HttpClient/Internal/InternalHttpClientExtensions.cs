@@ -62,6 +62,31 @@ public static class InternalHttpClientExtensions
     }
 
     /// <summary>
+    /// Performs an HTTP POST request to the specified endpoint without request data
+    /// and deserializes the JSON response into the given type while handling errors
+    /// gracefully.
+    /// </summary>
+    /// <typeparam name="TResponse">The type into which the JSON payload of the response is deserialized.</typeparam>
+    /// <param name="client">The HttpClient instance used for making the request.</param>
+    /// <param name="requestUri">The URI of the HTTP POST request.</param>
+    /// <param name="logger">The logger instance for logging errors.</param>
+    /// <param name="failureMessage">A custom failure message.</param>
+    /// <returns>
+    /// Success: Result with the deserialized object.
+    /// Failure: Failure message.
+    /// </returns>
+    public static async Task<Result<TResponse>> PostSafeAsync<TResponse>(
+        this System.Net.Http.HttpClient client,
+        string requestUri,
+        ILogger logger,
+        string failureMessage
+    )
+    {
+        var response = await client.PostAsync(requestUri, null);
+        return await ProcessHttpResponseAsync<TResponse>(response, logger, failureMessage);
+    }
+
+    /// <summary>
     /// Performs an HTTP PUT request with a JSON payload to the specified endpoint
     /// and deserializes the JSON response into the given type while handling errors
     /// gracefully.
