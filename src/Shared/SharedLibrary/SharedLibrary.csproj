@@ -13,6 +13,7 @@
     <PackageReference Include="FluentResults" />
     <PackageReference Include="WireMock.Net" />
     <PackageReference Include="ZiggyCreatures.FusionCache" />
+    <PackageReference Include="RabbitMQ.Client" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,9 @@ var builder = DistributedApplication.CreateBuilder(args);
 // Add Redis
 var redis = builder.AddRedis("redis");
 
+// Add RabbitMQ with management UI enabled
+var rabbitmq = builder.AddRabbitMQ("rabbitmq").WithManagementPlugin();
+
 // Add Service microservices
 var coinsBuilder = builder.AddProject<Projects.SVC_Coins>("svc-coins");
 
@@ -19,12 +22,20 @@ var bridgeBuilder = builder
     .WithReference(klineBuilder)
     .WithReference(externalBuilder);
 
+builder
+    .AddProject<Projects.SVC_Scheduler>("svc-scheduler")
+    .WithReference(bridgeBuilder)
+    .WithReference(rabbitmq)
+    .WaitFor(rabbitmq);
+
 // Add GUI microservice
 builder
     .AddProject<Projects.GUI_Crypto>("gui-crypto")
     .WithReference(coinsBuilder)
     .WithReference(klineBuilder)
     .WithReference(externalBuilder)
-    .WithReference(bridgeBuilder);
+    .WithReference(bridgeBuilder)
+    .WithReference(rabbitmq)
+    .WaitFor(rabbitmq);
 
 await builder.Build().RunAsync();
