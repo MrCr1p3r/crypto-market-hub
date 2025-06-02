@@ -75,7 +75,7 @@ public class CoinsValidator(
     {
         var requestsArray = requests.ToArray();
 
-        var main = requestsArray.Select(Mapping.ToCoinSymbolNamePair);
+        var main = requestsArray.Where(r => r.Id is null).Select(Mapping.ToCoinSymbolNamePair);
         var quotes = requestsArray
             .SelectMany(r => r.TradingPairs)
             .Select(tp => tp.CoinQuote)
@@ -89,13 +89,18 @@ public class CoinsValidator(
         IEnumerable<CoinCreationRequest> requests
     )
     {
-        var quoteCoinsIds = requests
+        var requestsArray = requests.ToArray();
+
+        var quoteCoinsIds = requestsArray.Select(request => request.Id).OfType<int>();
+
+        var tradingPairsQuoteCoinIds = requestsArray
             .SelectMany(request => request.TradingPairs)
             .Select(tradingPair => tradingPair.CoinQuote.Id)
-            .OfType<int>()
-            .ToHashSet();
+            .OfType<int>();
 
-        var missingCoinIds = await _coinsRepository.GetMissingCoinIds(quoteCoinsIds);
+        var allQuoteCoinIds = quoteCoinsIds.Concat(tradingPairsQuoteCoinIds).ToHashSet();
+
+        var missingCoinIds = await _coinsRepository.GetMissingCoinIds(allQuoteCoinIds);
         return missingCoinIds;
     }
 

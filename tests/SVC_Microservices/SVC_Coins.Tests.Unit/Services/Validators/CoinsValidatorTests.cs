@@ -323,6 +323,121 @@ public class CoinsValidatorTests
         result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
     }
 
+    [Fact]
+    public async Task ValidateCoinCreationRequests_WhenMainCoinHasExistingId_ReturnsOk()
+    {
+        // Arrange
+        var requests = TestData.RequestWithMainCoinExistingId;
+        var quoteCoinIds = new HashSet<int> { 1 }; // ID from the main coin
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync([]); // No symbol/name duplicates
+        _coinsRepositoryMock.Setup(repo => repo.GetMissingCoinIds(quoteCoinIds)).ReturnsAsync([]); // Main coin ID exists
+
+        // Act
+        var result = await _validator.ValidateCoinCreationRequests(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ValidateCoinCreationRequests_WhenMainCoinHasNonExistingId_ReturnsFail()
+    {
+        // Arrange
+        const int nonExistingMainCoinId = 777;
+        var requests = TestData.GetRequestWithMainCoinNonExistingId(nonExistingMainCoinId);
+        var expectedCheckedIds = new HashSet<int> { nonExistingMainCoinId };
+        var missingIds = new HashSet<int> { nonExistingMainCoinId };
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync([]); // No symbol/name duplicates
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetMissingCoinIds(expectedCheckedIds))
+            .ReturnsAsync(missingIds); // Main coin ID doesn't exist
+
+        // Act
+        var result = await _validator.ValidateCoinCreationRequests(requests);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .ContainSingle(error => error.Message.Contains(nonExistingMainCoinId.ToString()));
+        result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
+    }
+
+    [Fact]
+    public async Task ValidateCoinCreationRequests_WhenMixedMainCoinIds_ReturnsFailForNonExistingIds()
+    {
+        // Arrange
+        const int existingMainCoinId = 1;
+        const int nonExistingMainCoinId = 888;
+        var requests = TestData.GetRequestWithMixedMainCoinIds(
+            existingMainCoinId,
+            nonExistingMainCoinId
+        );
+        var expectedCheckedIds = new HashSet<int> { existingMainCoinId, nonExistingMainCoinId };
+        var missingIds = new HashSet<int> { nonExistingMainCoinId }; // Only non-existing ID is missing
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync([]); // No symbol/name duplicates
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetMissingCoinIds(expectedCheckedIds))
+            .ReturnsAsync(missingIds);
+
+        // Act
+        var result = await _validator.ValidateCoinCreationRequests(requests);
+
+        // Assert
+        result.IsFailed.Should().BeTrue();
+        result
+            .Errors.Should()
+            .ContainSingle(error =>
+                error.Message.Contains(nonExistingMainCoinId.ToString())
+                && !error.Message.Contains(existingMainCoinId.ToString())
+            );
+        result.Errors[0].Should().BeOfType<GenericErrors.BadRequestError>();
+    }
+
+    [Fact]
+    public async Task ValidateCoinCreationRequests_WhenMainCoinIdAndQuoteCoinIdBothProvided_ValidatesBothIds()
+    {
+        // Arrange
+        const int existingMainCoinId = 1;
+        const int existingQuoteCoinId = 2;
+        var requests = TestData.GetRequestWithBothMainAndQuoteCoinIds(
+            existingMainCoinId,
+            existingQuoteCoinId
+        );
+        var expectedCheckedIds = new HashSet<int> { existingMainCoinId, existingQuoteCoinId };
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync([]); // No symbol/name duplicates
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetMissingCoinIds(expectedCheckedIds))
+            .ReturnsAsync([]); // Both IDs exist
+
+        // Act
+        var result = await _validator.ValidateCoinCreationRequests(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _coinsRepositoryMock.Verify(repo => repo.GetMissingCoinIds(expectedCheckedIds), Times.Once);
+    }
+
     private static class TestData
     {
         public static readonly Exchange InvalidExchange = (Exchange)999;
@@ -546,5 +661,86 @@ public class CoinsValidatorTests
                 IdCoinGecko = "bitcoin",
             },
         ];
+
+        public static readonly IEnumerable<CoinCreationRequest> RequestWithMainCoinExistingId =
+        [
+            new()
+            {
+                Id = 1, // Existing coin ID to convert from quote to main
+                Symbol = "ETH",
+                Name = "Ethereum",
+                Category = null,
+                IdCoinGecko = "ethereum",
+                TradingPairs = [],
+            },
+        ];
+
+        public static IEnumerable<CoinCreationRequest> GetRequestWithMainCoinNonExistingId(
+            int nonExistingId
+        ) =>
+            [
+                new()
+                {
+                    Id = nonExistingId, // Non-existing coin ID
+                    Symbol = "ETH",
+                    Name = "Ethereum",
+                    Category = null,
+                    IdCoinGecko = "ethereum",
+                    TradingPairs = [],
+                },
+            ];
+
+        public static IEnumerable<CoinCreationRequest> GetRequestWithMixedMainCoinIds(
+            int existingId,
+            int nonExistingId
+        ) =>
+            [
+                new()
+                {
+                    Id = existingId, // Existing coin ID
+                    Symbol = "BTC",
+                    Name = "Bitcoin",
+                    Category = null,
+                    IdCoinGecko = "bitcoin",
+                    TradingPairs = [],
+                },
+                new()
+                {
+                    Id = nonExistingId, // Non-existing coin ID
+                    Symbol = "ETH",
+                    Name = "Ethereum",
+                    Category = null,
+                    IdCoinGecko = "ethereum",
+                    TradingPairs = [],
+                },
+            ];
+
+        public static IEnumerable<CoinCreationRequest> GetRequestWithBothMainAndQuoteCoinIds(
+            int mainCoinId,
+            int quoteCoinId
+        ) =>
+            [
+                new()
+                {
+                    Id = mainCoinId, // Main coin with existing ID
+                    Symbol = "BTC",
+                    Name = "Bitcoin",
+                    Category = null,
+                    IdCoinGecko = "bitcoin",
+                    TradingPairs =
+                    [
+                        new()
+                        {
+                            CoinQuote = new CoinCreationCoinQuote
+                            {
+                                Id = quoteCoinId, // Quote coin with existing ID
+                                Symbol = "-",
+                                Name = "-",
+                            },
+                            Exchanges = [Exchange.Binance],
+                        },
+                    ],
+                },
+            ];
     }
 }

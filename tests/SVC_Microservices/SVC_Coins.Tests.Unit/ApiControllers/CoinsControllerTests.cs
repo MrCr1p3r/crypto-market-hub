@@ -5,7 +5,7 @@ using SVC_Coins.ApiContracts.Requests;
 using SVC_Coins.ApiContracts.Requests.CoinCreation;
 using SVC_Coins.ApiContracts.Responses;
 using SVC_Coins.ApiControllers;
-using SVC_Coins.Services.Interfaces;
+using SVC_Coins.Services;
 
 namespace SVC_Coins.Tests.Unit.ApiControllers;
 

@@ -9,7 +9,6 @@ using SVC_Coins.ApiContracts.Responses;
 using SVC_Coins.Domain.Entities;
 using SVC_Coins.Domain.ValueObjects;
 using SVC_Coins.Repositories.Interfaces;
-using SVC_Coins.Services.Interfaces;
 using SVC_Coins.Services.Validators.Interfaces;
 
 namespace SVC_Coins.Services;
@@ -288,12 +287,17 @@ public partial class CoinsService(
                 .Where(kvp => requestPairs.Contains(kvp.Key))
                 .Select(kvp => kvp.Value);
 
-            return insertedMainCoinIds;
+            var requestsWithMainCoinExistingId = requests
+                .Where(request => request.Id is not null)
+                .Select(request => request.Id)
+                .OfType<int>();
+
+            return insertedMainCoinIds.Concat(requestsWithMainCoinExistingId);
         }
 
         public static IEnumerable<CoinsEntity> ToNewCoins(IEnumerable<CoinCreationRequest> requests)
         {
-            var mainCoins = requests.Select(ToCoinEntity);
+            var mainCoins = requests.Where(request => request.Id is null).Select(ToCoinEntity);
 
             var quoteCoins = requests
                 .SelectMany(request => request.TradingPairs)
@@ -396,7 +400,7 @@ public partial class CoinsService(
         ) =>
             new()
             {
-                IdCoinMain = symbolNameToCoinIdMap[(request.Symbol, request.Name)],
+                IdCoinMain = request.Id ?? symbolNameToCoinIdMap[(request.Symbol, request.Name)],
                 IdCoinQuote =
                     tradingPair.CoinQuote.Id
                     ?? symbolNameToCoinIdMap[
