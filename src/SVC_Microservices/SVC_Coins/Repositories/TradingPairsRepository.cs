@@ -58,10 +58,8 @@ public class TradingPairsRepository(CoinsDbContext context) : ITradingPairsRepos
     }
 
     /// <inheritdoc />
-    public async Task DeleteTradingPairsForIdCoin(int idCoin) =>
-        await _context
-            .TradingPairs.Where(tp => tp.IdCoinMain == idCoin || tp.IdCoinQuote == idCoin)
-            .ExecuteDeleteAsync();
+    public async Task DeleteMainCoinTradingPairs(int idCoin) =>
+        await _context.TradingPairs.Where(tp => tp.IdCoinMain == idCoin).ExecuteDeleteAsync();
 
     private static class Mapping
     {

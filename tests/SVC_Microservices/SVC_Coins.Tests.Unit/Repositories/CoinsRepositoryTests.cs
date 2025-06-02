@@ -486,37 +486,6 @@ public class CoinsRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteCoinById_WhenCoinExists_DeletesCoinFromDatabase()
-    {
-        // Arrange
-        await SeedDatabase();
-        const int coinIdToDelete = 1;
-
-        // Act
-        await _testedRepository.DeleteCoinById(coinIdToDelete);
-
-        // Assert
-        var coinsInDb = await _assertContext.Coins.ToListAsync();
-        coinsInDb.Should().HaveCount(2);
-        coinsInDb.Should().NotContain(c => c.Id == coinIdToDelete);
-    }
-
-    [Fact]
-    public async Task DeleteCoinById_WhenCoinDoesNotExist_DoesNothing()
-    {
-        // Arrange
-        await SeedDatabase();
-        const int nonExistentCoinId = 999;
-
-        // Act
-        await _testedRepository.DeleteCoinById(nonExistentCoinId);
-
-        // Assert
-        var coinsInDb = await _assertContext.Coins.ToListAsync();
-        coinsInDb.Should().HaveCount(3);
-    }
-
-    [Fact]
     public async Task DeleteCoinsNotReferencedByTradingPairs_DeletesCoinsWithoutTradingPairs()
     {
         // Arrange

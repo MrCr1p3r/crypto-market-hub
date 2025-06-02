@@ -365,16 +365,16 @@ public class CoinsControllerTests
         var successResult = Result.Ok();
 
         _mockCoinsService
-            .Setup(service => service.DeleteCoinWithTradingPairs(It.IsAny<int>()))
+            .Setup(service => service.DeleteMainCoin(It.IsAny<int>()))
             .ReturnsAsync(successResult);
 
         // Act
-        var result = await _testedController.DeleteCoin(idCoin);
+        var result = await _testedController.DeleteMainCoin(idCoin);
 
         // Assert
         result.Should().BeOfType<NoContentResult>();
 
-        _mockCoinsService.Verify(service => service.DeleteCoinWithTradingPairs(idCoin), Times.Once);
+        _mockCoinsService.Verify(service => service.DeleteMainCoin(idCoin), Times.Once);
     }
 
     [Fact]
@@ -386,11 +386,11 @@ public class CoinsControllerTests
         var failureResult = Result.Fail(new GenericErrors.NotFoundError(errorMessage));
 
         _mockCoinsService
-            .Setup(service => service.DeleteCoinWithTradingPairs(It.IsAny<int>()))
+            .Setup(service => service.DeleteMainCoin(It.IsAny<int>()))
             .ReturnsAsync(failureResult);
 
         // Act
-        var result = await _testedController.DeleteCoin(idCoin);
+        var result = await _testedController.DeleteMainCoin(idCoin);
 
         // Assert
         result
@@ -401,7 +401,7 @@ public class CoinsControllerTests
             .Which.Detail.Should()
             .Contain(errorMessage);
 
-        _mockCoinsService.Verify(service => service.DeleteCoinWithTradingPairs(idCoin), Times.Once);
+        _mockCoinsService.Verify(service => service.DeleteMainCoin(idCoin), Times.Once);
     }
 
     [Fact]

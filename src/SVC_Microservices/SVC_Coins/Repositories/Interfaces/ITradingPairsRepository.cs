@@ -34,9 +34,9 @@ public interface ITradingPairsRepository
     Task ReplaceAllTradingPairs(IEnumerable<TradingPairsEntity> tradingPairs);
 
     /// <summary>
-    /// Deletes all trading pairs for a given coin ID.
+    /// Deletes all trading pairs where the specified coin is the main coin.
     /// </summary>
-    /// <param name="idCoin">The ID of the coin to delete the trading pairs for.</param>
-    /// <returns>A task, that deletes trading pairs for a given coin ID.</returns>
-    Task DeleteTradingPairsForIdCoin(int idCoin);
+    /// <param name="idCoin">The ID of the main coin to delete the trading pairs for.</param>
+    /// <returns>A task, that deletes trading pairs where the specified coin is the main coin.</returns>
+    Task DeleteMainCoinTradingPairs(int idCoin);
 }

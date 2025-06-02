@@ -208,7 +208,7 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task DeleteCoin_WhenSuccessful_ReturnsNoContent()
+    public async Task DeleteMainCoin_WhenSuccessful_DeletesMainCoinTradingPairsAndCleansUpOrphans()
     {
         // Arrange
         await SeedDatabase();
@@ -220,13 +220,58 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         using var dbContext = GetDbContext();
+
+        // Verify BTC is completely removed since it's not referenced as quote coin in any remaining trading pairs
         var coinsList = await dbContext.Coins.ToListAsync();
         coinsList.Should().HaveCount(2);
         coinsList.Should().NotContain(coin => coin.Id == TestData.BtcId);
+        coinsList.Should().Contain(coin => coin.Id == TestData.EthId);
+        coinsList.Should().Contain(coin => coin.Id == TestData.UsdtId);
+
+        // Verify only ETH/USDT trading pair remains (BTC/USDT and BTC/ETH were deleted)
+        var tradingPairsList = await dbContext.TradingPairs.ToListAsync();
+        tradingPairsList.Should().HaveCount(1);
+        tradingPairsList[0].IdCoinMain.Should().Be(TestData.EthId);
+        tradingPairsList[0].IdCoinQuote.Should().Be(TestData.UsdtId);
     }
 
     [Fact]
-    public async Task DeleteCoin_WhenCoinDoesNotExist_ReturnsNotFound()
+    public async Task DeleteMainCoin_WhenCoinIsAlsoQuoteCoin_OnlyDeletesMainCoinTradingPairs()
+    {
+        // Arrange
+        await SeedDatabaseWithMixedCoinRoles();
+
+        // Act - Delete ETH which is both main coin (ETH/USDT) and quote coin (BTC/ETH)
+        var response = await Client.DeleteAsync($"/coins/{TestData.EthId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var dbContext = GetDbContext();
+
+        // ETH should still exist because it's referenced as quote coin in BTC/ETH
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(3); // All coins should remain
+        coinsList.Should().Contain(coin => coin.Id == TestData.BtcId);
+        coinsList.Should().Contain(coin => coin.Id == TestData.EthId);
+        coinsList.Should().Contain(coin => coin.Id == TestData.UsdtId);
+
+        // Only ETH/USDT trading pair should be deleted, BTC/ETH and BTC/USDT should remain
+        var tradingPairsList = await dbContext.TradingPairs.ToListAsync();
+        tradingPairsList.Should().HaveCount(2);
+        tradingPairsList
+            .Should()
+            .Contain(tp => tp.IdCoinMain == TestData.BtcId && tp.IdCoinQuote == TestData.EthId);
+        tradingPairsList
+            .Should()
+            .Contain(tp => tp.IdCoinMain == TestData.BtcId && tp.IdCoinQuote == TestData.UsdtId);
+        tradingPairsList
+            .Should()
+            .NotContain(tp => tp.IdCoinMain == TestData.EthId && tp.IdCoinQuote == TestData.UsdtId);
+    }
+
+    [Fact]
+    public async Task DeleteMainCoin_WhenCoinDoesNotExist_ReturnsNotFound()
     {
         // Arrange
         var nonExistentId = int.MaxValue;
@@ -236,6 +281,29 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteMainCoin_WhenCoinHasNoMainCoinTradingPairs_OnlyCleansUpIfOrphaned()
+    {
+        // Arrange
+        await SeedDatabase();
+
+        // Act - Delete USDT which is only used as quote coin, not main coin
+        var response = await Client.DeleteAsync($"/coins/{TestData.UsdtId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var dbContext = GetDbContext();
+
+        // USDT should still exist because it's referenced as quote coin
+        var coinsList = await dbContext.Coins.ToListAsync();
+        coinsList.Should().HaveCount(3); // All coins should remain
+
+        // All trading pairs should remain since no main coin trading pairs were deleted
+        var tradingPairsList = await dbContext.TradingPairs.ToListAsync();
+        tradingPairsList.Should().HaveCount(3);
     }
 
     [Fact]
@@ -410,6 +478,67 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
         var ethUsdtPair = new TradingPairsEntity
         {
             IdCoinMain = ethCoin.Id,
+            CoinMain = ethCoin,
+            IdCoinQuote = usdtCoin.Id,
+            CoinQuote = usdtCoin,
+            Exchanges = [binanceExchange],
+        };
+        dbContext.TradingPairs.AddRange(btcUsdtPair, btcEthPair, ethUsdtPair);
+
+        // 4. Save all changes in a single transaction
+        await dbContext.SaveChangesAsync();
+    }
+
+#pragma warning disable S4144 // Methods should not have identical implementations
+    private async Task SeedDatabaseWithMixedCoinRoles()
+#pragma warning restore S4144 // Methods should not have identical implementations
+    {
+        using var dbContext = GetDbContext();
+
+        // 1. Create and Add Exchange Entities
+        var binanceExchange = new ExchangesEntity { Name = "Binance" };
+        var bybitExchange = new ExchangesEntity { Name = "Bybit" };
+        dbContext.Exchanges.AddRange(binanceExchange, bybitExchange);
+
+        // 2. Create and Add Coin Entities
+        var btcCoin = new CoinsEntity
+        {
+            Name = "Bitcoin",
+            Symbol = "BTC",
+            IdCoinGecko = "coingecko-bitcoin",
+            MarketCapUsd = 1000000000,
+            PriceUsd = "50000",
+            PriceChangePercentage24h = -10,
+        };
+        var ethCoin = new CoinsEntity { Name = "Ethereum", Symbol = "ETH" };
+        var usdtCoin = new CoinsEntity
+        {
+            Name = "Tether",
+            Symbol = "USDT",
+            IsStablecoin = true,
+        };
+        dbContext.Coins.AddRange(btcCoin, ethCoin, usdtCoin);
+
+        // 3. Create trading pairs where ETH is both main and quote coin
+        var btcUsdtPair = new TradingPairsEntity
+        {
+            IdCoinMain = btcCoin.Id,
+            CoinMain = btcCoin,
+            IdCoinQuote = usdtCoin.Id,
+            CoinQuote = usdtCoin,
+            Exchanges = [binanceExchange, bybitExchange],
+        };
+        var btcEthPair = new TradingPairsEntity
+        {
+            IdCoinMain = btcCoin.Id,
+            CoinMain = btcCoin,
+            IdCoinQuote = ethCoin.Id, // ETH as quote coin
+            CoinQuote = ethCoin,
+            Exchanges = [binanceExchange],
+        };
+        var ethUsdtPair = new TradingPairsEntity
+        {
+            IdCoinMain = ethCoin.Id, // ETH as main coin
             CoinMain = ethCoin,
             IdCoinQuote = usdtCoin.Id,
             CoinQuote = usdtCoin,
