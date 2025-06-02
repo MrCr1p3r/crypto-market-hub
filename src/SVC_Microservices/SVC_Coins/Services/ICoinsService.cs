@@ -72,14 +72,15 @@ public interface ICoinsService
     );
 
     /// <summary>
-    /// Deletes a coin from the system.
+    /// Downgrades the specified coin from main coin to quote coin by deleting its trading pairs
+    /// and removes it completely from the system if it is not referenced by any trading pairs.
     /// </summary>
-    /// <param name="idCoin">The ID of the coin to delete.</param>
+    /// <param name="idCoin">The ID of the main coin to delete.</param>
     /// <returns>
     /// Success: A result representing the outcome of the operation.
     /// Failure: A collection of occurred errors.
     /// </returns>
-    Task<Result> DeleteCoinWithTradingPairs(int idCoin);
+    Task<Result> DeleteMainCoin(int idCoin);
 
     /// <summary>
     /// Deletes all coins that are neither referenced as a main nor a quote coin in any trading pair.

@@ -181,17 +181,36 @@ public class TradingPairsRepositoryTests : IDisposable
     }
 
     [Fact]
-    public async Task DeleteTradingPairsForIdCoin_DeletesPairsForCoin()
+    public async Task DeleteMainCoinTradingPairs_DeletesOnlyMainCoinPairs()
     {
         // Arrange
         await SeedDatabase(addTradingPairs: true);
 
         // Act
-        await _testedRepository.DeleteTradingPairsForIdCoin(1);
+        await _testedRepository.DeleteMainCoinTradingPairs(1);
 
         // Assert
         var tradingPairsInDb = await _actContext.TradingPairs.ToListAsync();
-        tradingPairsInDb.Should().BeEmpty();
+        // Should only delete the trading pair where coin 1 is the main coin (BTC/ETH)
+        // The trading pair where coin 1 is the quote coin (ETH/BTC) should remain
+        tradingPairsInDb.Should().HaveCount(1);
+        tradingPairsInDb[0].IdCoinMain.Should().Be(2);
+        tradingPairsInDb[0].IdCoinQuote.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task DeleteMainCoinTradingPairs_WhenCoinIsOnlyQuoteCoin_DeletesNoPairs()
+    {
+        // Arrange
+        await SeedDatabase(addTradingPairs: true);
+
+        // Act
+        await _testedRepository.DeleteMainCoinTradingPairs(3); // USDT is only used as quote coin
+
+        // Assert
+        var tradingPairsInDb = await _actContext.TradingPairs.ToListAsync();
+        // No trading pairs should be deleted since coin 3 (USDT) is not a main coin in any pair
+        tradingPairsInDb.Should().HaveCount(2);
     }
 
     private async Task SeedDatabase(bool addTradingPairs = false)

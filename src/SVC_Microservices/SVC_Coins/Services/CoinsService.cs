@@ -211,7 +211,7 @@ public partial class CoinsService(
     }
 
     /// <inheritdoc />
-    public async Task<Result> DeleteCoinWithTradingPairs(int idCoin)
+    public async Task<Result> DeleteMainCoin(int idCoin)
     {
         var coinExists = await _coinsRepository.CheckCoinExists(idCoin);
         if (!coinExists)
@@ -223,8 +223,8 @@ public partial class CoinsService(
 
         using var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        await _tradingPairsRepository.DeleteTradingPairsForIdCoin(idCoin);
-        await _coinsRepository.DeleteCoinById(idCoin);
+        await _tradingPairsRepository.DeleteMainCoinTradingPairs(idCoin);
+        await _coinsRepository.DeleteCoinsNotReferencedByTradingPairs();
 
         transaction.Complete();
 

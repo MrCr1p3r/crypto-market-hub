@@ -450,7 +450,7 @@ public class CoinsServiceTests
     }
 
     [Fact]
-    public async Task DeleteCoinWithTradingPairs_WhenCoinDoesNotExist_ReturnsNotFoundFailure()
+    public async Task DeleteMainCoin_WhenCoinDoesNotExist_ReturnsNotFoundFailure()
     {
         // Arrange
         const int nonExistingId = 99;
@@ -458,7 +458,7 @@ public class CoinsServiceTests
         _coinsRepositoryMock.Setup(repo => repo.CheckCoinExists(nonExistingId)).ReturnsAsync(false);
 
         // Act
-        var result = await _testedService.DeleteCoinWithTradingPairs(nonExistingId);
+        var result = await _testedService.DeleteMainCoin(nonExistingId);
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -472,14 +472,14 @@ public class CoinsServiceTests
     }
 
     [Fact]
-    public async Task DeleteCoinWithTradingPairs_WhenCoinExists_DeletesCoinAndPairsAndReturnsOk()
+    public async Task DeleteMainCoin_WhenCoinExists_DeletesMainCoinPairsAndCleansUpOrphans()
     {
         // Arrange
         const int existingId = 1;
         _coinsRepositoryMock.Setup(repo => repo.CheckCoinExists(existingId)).ReturnsAsync(true);
 
         // Act
-        var result = await _testedService.DeleteCoinWithTradingPairs(existingId);
+        var result = await _testedService.DeleteMainCoin(existingId);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -487,10 +487,13 @@ public class CoinsServiceTests
         // Verify that necessary repository calls are made
         _coinsRepositoryMock.Verify(repo => repo.CheckCoinExists(existingId), Times.Once);
         _tradingPairsRepositoryMock.Verify(
-            repo => repo.DeleteTradingPairsForIdCoin(existingId),
+            repo => repo.DeleteMainCoinTradingPairs(existingId),
             Times.Once
         );
-        _coinsRepositoryMock.Verify(repo => repo.DeleteCoinById(existingId), Times.Once);
+        _coinsRepositoryMock.Verify(
+            repo => repo.DeleteCoinsNotReferencedByTradingPairs(),
+            Times.Once
+        );
     }
 
     [Fact]

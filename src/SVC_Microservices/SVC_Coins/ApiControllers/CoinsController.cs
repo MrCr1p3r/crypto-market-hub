@@ -126,21 +126,21 @@ public class CoinsController(ICoinsService coinsService) : ControllerBase
     }
 
     /// <summary>
-    /// Deletes a coin from the system.
+    /// Deletes a main coin from the system.
     /// </summary>
-    /// <param name="idCoin">The ID of the coin that should be deleted.</param>
+    /// <param name="idCoin">The ID of the main coin to delete.</param>
     /// <returns>A status indicating the result of the operation.</returns>
-    /// <response code="204">The coin was successfully deleted.</response>
+    /// <response code="204">The main coin trading pairs were successfully deleted and cleanup completed.</response>
     /// <response code="404">The coin was not found in the database.</response>
-    /// <response code="500">Internal error occurred during coin deletion operation.</response>
+    /// <response code="500">Internal error occurred during main coin deletion operation.</response>
     [HttpDelete("{idCoin}")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> DeleteCoin([FromRoute] int idCoin)
+    public async Task<IActionResult> DeleteMainCoin([FromRoute] int idCoin)
     {
-        var result = await _coinsService.DeleteCoinWithTradingPairs(idCoin);
+        var result = await _coinsService.DeleteMainCoin(idCoin);
         return result.ToActionResult(this);
     }
 

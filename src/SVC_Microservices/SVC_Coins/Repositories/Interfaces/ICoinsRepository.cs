@@ -64,13 +64,6 @@ public interface ICoinsRepository
     Task<IEnumerable<CoinsEntity>> UpdateCoins(IEnumerable<CoinsEntity> coins);
 
     /// <summary>
-    /// Deletes a coin from the database by its ID.
-    /// </summary>
-    /// <param name="idCoin">The ID of the coin to delete.</param>
-    /// <returns>A task, that deletes the coin.</returns>
-    Task DeleteCoinById(int idCoin);
-
-    /// <summary>
     /// Deletes all coins from the database that are neither referenced as a main
     /// nor a quote coin in any trading pair.
     /// </summary>
