@@ -639,6 +639,135 @@ public class CoinsServiceTests
         result.Value.Should().HaveCount(1);
     }
 
+    [Fact]
+    public async Task CreateCoinsWithTradingPairs_WhenMainCoinHasExistingId_SkipsInsertionForThatCoin()
+    {
+        // Arrange
+        var requests = TestData.CoinCreationRequestsWithExistingMainCoinId;
+
+        _coinsValidatorMock
+            .Setup(validator => validator.ValidateCoinCreationRequests(requests))
+            .ReturnsAsync(Result.Ok());
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync(TestData.InsertedCoinsForExistingMainIdScenario);
+        _exchangesRepositoryMock
+            .Setup(repo => repo.GetAllExchanges())
+            .ReturnsAsync(TestData.Exchanges);
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(TestData.FinalCoinsWithExistingMainId);
+
+        // Act
+        var result = await _testedService.CreateCoinsWithTradingPairs(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(TestData.ExpectedResultForExistingMainId);
+
+        // Verify only new coins are inserted (not the one with existing ID)
+        _coinsRepositoryMock.Verify(
+            repo => repo.InsertCoins(Its.EquivalentTo(TestData.NewCoinsForExistingMainIdScenario)),
+            Times.Once
+        );
+        _coinsRepositoryMock.Verify(
+            repo =>
+                repo.GetCoinsBySymbolNamePairs(
+                    Its.EquivalentTo(TestData.SymbolNamePairsForExistingMainIdScenario)
+                ),
+            Times.Once
+        );
+        _tradingPairsRepositoryMock.Verify(
+            repo =>
+                repo.InsertTradingPairs(
+                    Its.EquivalentTo(TestData.TradingPairsForExistingMainIdScenario)
+                ),
+            Times.Once
+        );
+        _coinsRepositoryMock.Verify(
+            repo =>
+                repo.GetCoinsByIdsWithRelations(
+                    Its.EquivalentTo(TestData.ExpectedMainCoinIdsWithExisting)
+                ),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task CreateCoinsWithTradingPairs_WhenMixedMainCoinIds_HandlesCorrectly()
+    {
+        // Arrange
+        var requests = TestData.CoinCreationRequestsWithMixedMainCoinIds;
+
+        _coinsValidatorMock
+            .Setup(validator => validator.ValidateCoinCreationRequests(requests))
+            .ReturnsAsync(Result.Ok());
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync(TestData.InsertedCoinsForMixedScenario);
+        _exchangesRepositoryMock
+            .Setup(repo => repo.GetAllExchanges())
+            .ReturnsAsync(TestData.Exchanges);
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(TestData.FinalCoinsWithMixedMainIds);
+
+        // Act
+        var result = await _testedService.CreateCoinsWithTradingPairs(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(TestData.ExpectedResultForMixedMainIds);
+
+        // Verify only coins without IDs are inserted
+        _coinsRepositoryMock.Verify(
+            repo => repo.InsertCoins(Its.EquivalentTo(TestData.NewCoinsForMixedScenario)),
+            Times.Once
+        );
+    }
+
+    [Fact]
+    public async Task CreateCoinsWithTradingPairs_WhenAllMainCoinsHaveExistingIds_InsertsOnlyQuoteCoins()
+    {
+        // Arrange
+        var requests = TestData.CoinCreationRequestsWithAllExistingMainCoinIds;
+
+        _coinsValidatorMock
+            .Setup(validator => validator.ValidateCoinCreationRequests(requests))
+            .ReturnsAsync(Result.Ok());
+
+        _coinsRepositoryMock
+            .Setup(repo =>
+                repo.GetCoinsBySymbolNamePairs(It.IsAny<IEnumerable<CoinSymbolNamePair>>())
+            )
+            .ReturnsAsync(TestData.InsertedQuoteCoinsForAllExistingMainIds);
+        _exchangesRepositoryMock
+            .Setup(repo => repo.GetAllExchanges())
+            .ReturnsAsync(TestData.Exchanges);
+        _coinsRepositoryMock
+            .Setup(repo => repo.GetCoinsByIdsWithRelations(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(TestData.FinalCoinsForAllExistingMainIds);
+
+        // Act
+        var result = await _testedService.CreateCoinsWithTradingPairs(requests);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEquivalentTo(TestData.ExpectedResultForAllExistingMainIds);
+
+        // Verify only quote coins are inserted (no main coins since they all have existing IDs)
+        _coinsRepositoryMock.Verify(
+            repo => repo.InsertCoins(Its.EquivalentTo(TestData.OnlyQuoteCoinsForInsertion)),
+            Times.Once
+        );
+    }
+
     private static class TestData
     {
         public static readonly IEnumerable<CoinsEntity> CoinEntities =
@@ -1233,6 +1362,433 @@ public class CoinsServiceTests
                 IdCoinGecko = "ethereum",
                 IsFiat = false,
                 IsStablecoin = false,
+            },
+        ];
+
+        public static readonly IEnumerable<CoinCreationRequest> CoinCreationRequestsWithExistingMainCoinId =
+        [
+            new()
+            {
+                Id = 1, // Existing main coin ID
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "DOGE", Name = "Dogecoin" }, // New quote coin
+                        Exchanges = [Exchange.Binance],
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "ETH", // New main coin (no ID)
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new()
+                        {
+                            Id = 2, // Existing quote coin
+                            Symbol = "USDT",
+                            Name = "Tether",
+                        },
+                        Exchanges = [Exchange.Bybit],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> NewCoinsForExistingMainIdScenario =
+        [
+            new()
+            {
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+            },
+            new() { Symbol = "DOGE", Name = "Dogecoin" },
+        ];
+
+        public static readonly IEnumerable<CoinSymbolNamePair> SymbolNamePairsForExistingMainIdScenario =
+        [
+            new() { Symbol = "ETH", Name = "Ethereum" },
+            new() { Symbol = "DOGE", Name = "Dogecoin" },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> InsertedCoinsForExistingMainIdScenario =
+        [
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+            },
+            new()
+            {
+                Id = 4,
+                Symbol = "DOGE",
+                Name = "Dogecoin",
+            },
+        ];
+
+        public static readonly IEnumerable<int> ExpectedMainCoinIdsWithExisting = [1, 3]; // Existing BTC (1) + New ETH (3)
+
+        public static readonly IEnumerable<TradingPairsEntity> TradingPairsForExistingMainIdScenario =
+        [
+            new()
+            {
+                IdCoinMain = 1, // Existing BTC
+                IdCoinQuote = 4, // New DOGE
+                Exchanges = [Exchanges.First(e => e.Id == 1)],
+            },
+            new()
+            {
+                IdCoinMain = 3, // New ETH
+                IdCoinQuote = 2, // Existing USDT
+                Exchanges = [Exchanges.First(e => e.Id == 2)],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> FinalCoinsWithExistingMainId =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 101,
+                        IdCoinMain = 1,
+                        IdCoinQuote = 4,
+                        CoinQuote = new()
+                        {
+                            Id = 4,
+                            Symbol = "DOGE",
+                            Name = "Dogecoin",
+                        },
+                        Exchanges = [Exchanges.First(e => e.Id == 1)],
+                    },
+                ],
+            },
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 102,
+                        IdCoinMain = 3,
+                        IdCoinQuote = 2,
+                        CoinQuote = new()
+                        {
+                            Id = 2,
+                            Symbol = "USDT",
+                            Name = "Tether",
+                            IsStablecoin = true,
+                        },
+                        Exchanges = [Exchanges.First(e => e.Id == 2)],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<Coin> ExpectedResultForExistingMainId =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                IdCoinGecko = "bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 101,
+                        CoinQuote = new()
+                        {
+                            Id = 4,
+                            Symbol = "DOGE",
+                            Name = "Dogecoin",
+                        },
+                        Exchanges = [Exchange.Binance],
+                    },
+                ],
+            },
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                IdCoinGecko = "ethereum",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 102,
+                        CoinQuote = new()
+                        {
+                            Id = 2,
+                            Symbol = "USDT",
+                            Name = "Tether",
+                            Category = CoinCategory.Stablecoin,
+                        },
+                        Exchanges = [Exchange.Bybit],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinCreationRequest> CoinCreationRequestsWithMixedMainCoinIds =
+        [
+            new()
+            {
+                Id = 1, // Existing main coin
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs = [],
+            },
+            new()
+            {
+                Id = 2, // Another existing main coin
+                Symbol = "USDT",
+                Name = "Tether",
+                TradingPairs = [],
+            },
+            new()
+            {
+                Symbol = "ETH", // New main coin
+                Name = "Ethereum",
+                TradingPairs = [],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> NewCoinsForMixedScenario =
+        [
+            new() { Symbol = "ETH", Name = "Ethereum" },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> InsertedCoinsForMixedScenario =
+        [
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> FinalCoinsWithMixedMainIds =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs = [],
+            },
+            new()
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                IsStablecoin = true,
+                TradingPairs = [],
+            },
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                TradingPairs = [],
+            },
+        ];
+
+        public static readonly IEnumerable<Coin> ExpectedResultForMixedMainIds =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs = [],
+            },
+            new()
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                Category = CoinCategory.Stablecoin,
+                TradingPairs = [],
+            },
+            new()
+            {
+                Id = 3,
+                Symbol = "ETH",
+                Name = "Ethereum",
+                TradingPairs = [],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinCreationRequest> CoinCreationRequestsWithAllExistingMainCoinIds =
+        [
+            new()
+            {
+                Id = 1, // Existing main coin
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "ADA", Name = "Cardano" }, // New quote coin
+                        Exchanges = [Exchange.Binance],
+                    },
+                ],
+            },
+            new()
+            {
+                Id = 2, // Another existing main coin
+                Symbol = "USDT",
+                Name = "Tether",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new() { Symbol = "DOT", Name = "Polkadot" }, // New quote coin
+                        Exchanges = [Exchange.Bybit],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> OnlyQuoteCoinsForInsertion =
+        [
+            new() { Symbol = "ADA", Name = "Cardano" },
+            new() { Symbol = "DOT", Name = "Polkadot" },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> InsertedQuoteCoinsForAllExistingMainIds =
+        [
+            new()
+            {
+                Id = 4,
+                Symbol = "ADA",
+                Name = "Cardano",
+            },
+            new()
+            {
+                Id = 5,
+                Symbol = "DOT",
+                Name = "Polkadot",
+            },
+        ];
+
+        public static readonly IEnumerable<CoinsEntity> FinalCoinsForAllExistingMainIds =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 101,
+                        IdCoinMain = 1,
+                        IdCoinQuote = 4,
+                        CoinQuote = new()
+                        {
+                            Id = 4,
+                            Symbol = "ADA",
+                            Name = "Cardano",
+                        },
+                        Exchanges = [Exchanges.First(e => e.Id == 1)],
+                    },
+                ],
+            },
+            new()
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                IsStablecoin = true,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 102,
+                        IdCoinMain = 2,
+                        IdCoinQuote = 5,
+                        CoinQuote = new()
+                        {
+                            Id = 5,
+                            Symbol = "DOT",
+                            Name = "Polkadot",
+                        },
+                        Exchanges = [Exchanges.First(e => e.Id == 2)],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<Coin> ExpectedResultForAllExistingMainIds =
+        [
+            new()
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 101,
+                        CoinQuote = new()
+                        {
+                            Id = 4,
+                            Symbol = "ADA",
+                            Name = "Cardano",
+                        },
+                        Exchanges = [Exchange.Binance],
+                    },
+                ],
+            },
+            new()
+            {
+                Id = 2,
+                Symbol = "USDT",
+                Name = "Tether",
+                Category = CoinCategory.Stablecoin,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        Id = 102,
+                        CoinQuote = new()
+                        {
+                            Id = 5,
+                            Symbol = "DOT",
+                            Name = "Polkadot",
+                        },
+                        Exchanges = [Exchange.Bybit],
+                    },
+                ],
             },
         ];
     }

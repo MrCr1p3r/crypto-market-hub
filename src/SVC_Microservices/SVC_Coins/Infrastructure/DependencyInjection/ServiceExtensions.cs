@@ -1,5 +1,4 @@
 using SVC_Coins.Services;
-using SVC_Coins.Services.Interfaces;
 using SVC_Coins.Services.Validators;
 using SVC_Coins.Services.Validators.Interfaces;
 

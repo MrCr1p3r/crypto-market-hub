@@ -3,7 +3,7 @@ using SVC_Coins.ApiContracts.Requests;
 using SVC_Coins.ApiContracts.Requests.CoinCreation;
 using SVC_Coins.ApiContracts.Responses;
 
-namespace SVC_Coins.Services.Interfaces;
+namespace SVC_Coins.Services;
 
 /// <summary>
 /// Contract for coins-related business operations.

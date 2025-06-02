@@ -10,6 +10,7 @@ public record CoinCreationCoinQuote : CoinCreationCoinBase
     /// </summary>
     /// <remarks>
     /// If not provided, this quote coin will be added to the database.
+    /// If provided, it will be used for trading pair creation.
     /// </remarks>
     public int? Id { get; set; }
 }
