@@ -1,6 +1,6 @@
 using SharedLibrary.Enums;
 
-namespace SVC_Scheduler.SvcBridgeClient.Responses.Coins;
+namespace SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.Coins;
 
 /// <summary>
 /// Represents a trading pair.

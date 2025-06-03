@@ -2,12 +2,13 @@ using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Testing;
 using Moq.Contrib.HttpClient;
-using SVC_Scheduler.SvcBridgeClient.Responses;
-using SVC_Scheduler.SvcBridgeClient.Responses.Coins;
-using SVC_Scheduler.SvcBridgeClient.Responses.KlineData;
+using SVC_Scheduler.MicroserviceClients.SvcBridge;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.Coins;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.KlineData;
 using static SharedLibrary.Errors.GenericErrors;
 
-namespace SVC_Scheduler.Tests.Unit.SvcBridgeClient;
+namespace SVC_Scheduler.Tests.Unit.MicroserviceClients.SvcBridge;
 
 /// <summary>
 /// Unit tests for SvcBridgeClient class.
@@ -16,9 +17,9 @@ public class SvcBridgeClientTests
 {
     private readonly IFixture _fixture;
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
-    private readonly FakeLogger<SVC_Scheduler.SvcBridgeClient.SvcBridgeClient> _logger;
+    private readonly FakeLogger<SvcBridgeClient> _logger;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly SVC_Scheduler.SvcBridgeClient.SvcBridgeClient _client;
+    private readonly SvcBridgeClient _client;
 
     public SvcBridgeClientTests()
     {
@@ -33,12 +34,9 @@ public class SvcBridgeClientTests
             .Setup(factory => factory.CreateClient("SvcBridgeClient"))
             .Returns(httpClient);
 
-        _logger = new FakeLogger<SVC_Scheduler.SvcBridgeClient.SvcBridgeClient>();
+        _logger = new FakeLogger<SvcBridgeClient>();
 
-        _client = new SVC_Scheduler.SvcBridgeClient.SvcBridgeClient(
-            _httpClientFactoryMock.Object,
-            _logger
-        );
+        _client = new SvcBridgeClient(_httpClientFactoryMock.Object, _logger);
     }
 
     #region UpdateCoinsMarketData Tests

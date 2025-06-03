@@ -1,4 +1,4 @@
-namespace SVC_Scheduler.SvcBridgeClient.Responses.KlineData;
+namespace SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.KlineData;
 
 /// <summary>
 /// The response for a Kline data request.

@@ -1,11 +1,11 @@
 using FluentResults;
 using SharedLibrary.Constants;
 using SharedLibrary.Messaging;
-using SVC_Scheduler.Jobs.Base;
-using SVC_Scheduler.SvcBridgeClient;
-using SVC_Scheduler.SvcBridgeClient.Responses.Coins;
+using SVC_Scheduler.Jobs.UpdateJobs.Base;
+using SVC_Scheduler.MicroserviceClients.SvcBridge;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.Coins;
 
-namespace SVC_Scheduler.Jobs;
+namespace SVC_Scheduler.Jobs.UpdateJobs;
 
 /// <summary>
 /// Scheduled job that updates trading pairs for all coins.

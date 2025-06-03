@@ -3,7 +3,8 @@ using CryptoChartAnalyzer.ServiceDefaults;
 using RabbitMQ.Client;
 using SharedLibrary.Infrastructure;
 using SVC_Scheduler.Infrastructure.DependencyInjection;
-using SVC_Scheduler.Jobs;
+using SVC_Scheduler.Jobs.CacheWarmup;
+using SVC_Scheduler.Jobs.UpdateJobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,19 +47,31 @@ app.Services.UseScheduler(scheduler =>
     scheduler
         .Schedule<MarketDataUpdateJob>()
         .EveryThirtySeconds()
-        .PreventOverlapping("MarketDataUpdate");
+        .PreventOverlapping("MarketDataUpdate")
+        .PreventOverlapping("CoinGeckoLock");
 
     // Kline Data Update Job - Every minute
     scheduler
         .Schedule<KlineDataUpdateJob>()
         .EveryMinute()
-        .PreventOverlapping("GlobalDataUpdateLock");
+        .PreventOverlapping("KlineDataUpdate")
+        .PreventOverlapping("TradingPairsKlineLock");
+
+    // Spot Coins Cache Warmup Job - Every 2 minutes
+    scheduler
+        .Schedule<SpotCoinsCacheWarmupJob>()
+        .Cron("*/2 * * * *")
+        .RunOnceAtStart()
+        .PreventOverlapping("SpotCoinsCacheWarmup")
+        .PreventOverlapping("CoinGeckoLock");
 
     // Trading Pairs Update Job - Every 30 minutes
     scheduler
         .Schedule<TradingPairsUpdateJob>()
         .EveryMinute()
-        .PreventOverlapping("GlobalDataUpdateLock");
+        .PreventOverlapping("TradingPairsUpdate")
+        .PreventOverlapping("TradingPairsKlineLock")
+        .PreventOverlapping("CoinGeckoLock");
 });
 
 await app.RunAsync();
