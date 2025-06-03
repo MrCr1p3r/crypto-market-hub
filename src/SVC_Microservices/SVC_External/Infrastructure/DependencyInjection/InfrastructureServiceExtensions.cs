@@ -35,7 +35,9 @@ public static class InfrastructureServiceExtensions
             .AddFusionCache()
             .WithDefaultEntryOptions(options =>
             {
-                options.Duration = TimeSpan.FromMinutes(5);
+                options.Duration = TimeSpan.FromMinutes(15);
+                // Start eager refresh after ≈9 minutes (60% of 15 minutes)
+                options.EagerRefreshThreshold = 0.60f;
             })
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
             .WithRegisteredDistributedCache()
