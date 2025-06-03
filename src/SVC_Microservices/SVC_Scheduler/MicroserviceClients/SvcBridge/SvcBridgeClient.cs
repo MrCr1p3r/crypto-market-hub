@@ -1,10 +1,10 @@
 using FluentResults;
 using SharedLibrary.Extensions.HttpClient.Internal;
-using SVC_Scheduler.SvcBridgeClient.Responses;
-using SVC_Scheduler.SvcBridgeClient.Responses.Coins;
-using SVC_Scheduler.SvcBridgeClient.Responses.KlineData;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.Coins;
+using SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.KlineData;
 
-namespace SVC_Scheduler.SvcBridgeClient;
+namespace SVC_Scheduler.MicroserviceClients.SvcBridge;
 
 /// <summary>
 /// Implements interactions with SVC_Bridge microservice.

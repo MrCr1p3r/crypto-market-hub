@@ -3,8 +3,10 @@ using RabbitMQ.Client;
 using SharedLibrary.Infrastructure;
 using SharedLibrary.Messaging;
 using SVC_Scheduler.Infrastructure.Messaging;
-using SVC_Scheduler.Jobs;
-using SVC_Scheduler.SvcBridgeClient;
+using SVC_Scheduler.Jobs.CacheWarmup;
+using SVC_Scheduler.Jobs.UpdateJobs;
+using SVC_Scheduler.MicroserviceClients.SvcBridge;
+using SVC_Scheduler.MicroserviceClients.SvcExternal;
 
 namespace SVC_Scheduler.Infrastructure.DependencyInjection;
 
@@ -28,6 +30,7 @@ public static class InfrastructureServiceExtensions
         services.AddTransient<MarketDataUpdateJob>();
         services.AddTransient<KlineDataUpdateJob>();
         services.AddTransient<TradingPairsUpdateJob>();
+        services.AddTransient<SpotCoinsCacheWarmupJob>();
 
         return services;
     }
@@ -63,13 +66,15 @@ public static class InfrastructureServiceExtensions
     )
     {
         services.AddSvcBridgeHttpClient(configuration);
+        services.AddSvcExternalHttpClient(configuration);
 
         return services;
     }
 
     public static IServiceCollection AddMicroserviceClients(this IServiceCollection services)
     {
-        services.AddScoped<ISvcBridgeClient, SvcBridgeClient.SvcBridgeClient>();
+        services.AddScoped<ISvcBridgeClient, SvcBridgeClient>();
+        services.AddScoped<ISvcExternalClient, SvcExternalClient>();
 
         return services;
     }
@@ -85,6 +90,25 @@ public static class InfrastructureServiceExtensions
             {
                 var baseUrl =
                     configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
+                client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = TimeSpan.FromMinutes(5);
+            }
+        );
+
+        return services;
+    }
+
+    private static IServiceCollection AddSvcExternalHttpClient(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        services.AddHttpClient(
+            "SvcExternalClient",
+            client =>
+            {
+                var baseUrl =
+                    configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
                 client.BaseAddress = new Uri(baseUrl);
                 client.Timeout = TimeSpan.FromMinutes(5);
             }

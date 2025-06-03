@@ -5,7 +5,7 @@ using SharedLibrary.Constants;
 using SharedLibrary.Messaging;
 using SharedLibrary.Models.Messaging;
 
-namespace SVC_Scheduler.Jobs.Base;
+namespace SVC_Scheduler.Jobs.UpdateJobs.Base;
 
 /// <summary>
 /// Abstract base class for scheduled jobs that provides common functionality like

@@ -67,3 +67,6 @@ dotnet_diagnostic.IDE0055.severity = none
 dotnet_diagnostic.S6580.severity = none
 # CS1591: Missing XML comment for publicly visible type or member
 dotnet_diagnostic.CS1591.severity = none
+
+# LOGGEN036: A value being logged doesn't have an effective way to be converted into a string
+dotnet_diagnostic.LOGGEN036.severity = none

@@ -1,4 +1,4 @@
-namespace SVC_Scheduler.Jobs.Base;
+namespace SVC_Scheduler.Jobs.UpdateJobs.Base;
 
 /// <summary>
 /// Source-generated logging methods for BaseScheduledJob.

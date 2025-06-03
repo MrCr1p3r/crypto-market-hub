@@ -1,4 +1,4 @@
-namespace SVC_Scheduler.SvcBridgeClient.Responses;
+namespace SVC_Scheduler.MicroserviceClients.SvcBridge.Responses;
 
 /// <summary>
 /// Contains the market data of a coin.
