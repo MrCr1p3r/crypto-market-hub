@@ -4,4 +4,6 @@ export interface KlineData {
     highPrice: number;
     lowPrice: number;
     closePrice: number;
+    volume: number;
+    closeTime: number;
 }

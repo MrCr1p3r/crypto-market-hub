@@ -10,19 +10,32 @@
     <link rel="stylesheet" href="~/GUI_Crypto.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body>
+<body class="bg-dark text-light">
+    <!-- Full Page Loading Overlay -->
+    <div id="fullPageOverlay" class="position-fixed w-100 h-100 d-none" 
+         style="background: rgba(0,0,0,0.7); z-index: 9999; top: 0; left: 0; display: flex; align-items: center; justify-content: center;">
+        <div class="text-center text-light">
+            <div class="spinner-border mb-2" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>Processing Import...</div>
+        </div>
+    </div>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3" 
+            style="background-color: #2e294e;">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Overview" asp-action="Overview">Crypto Chart Analyzer</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                <a class="navbar-brand text-white" asp-area="" asp-controller="overview">
+                    Crypto Chart Analyzer</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Overview" asp-action="Overview">Overview</a>
+                            <a class="nav-link text-white" asp-area="" asp-controller="overview">Overview</a>
                         </li>
                     </ul>
                 </div>

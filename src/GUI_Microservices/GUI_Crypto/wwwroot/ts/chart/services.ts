@@ -1,17 +1,16 @@
 import { KlineDataRequest } from './interfaces/kline-data-request';
 import { KlineData } from './interfaces/kline-data';
 
-export async function fetchKlineData(
-    request: KlineDataRequest
-): Promise<KlineData[]> {
-    const params = new URLSearchParams({
-        CoinMainSymbol: request.coinMainSymbol,
-        CoinQuoteSymbol: request.coinQuoteSymbol,
-        Interval: request.interval,
-        StartTime: request.startTime,
-        EndTime: request.endTime
+export async function fetchKlineData(request: KlineDataRequest): Promise<KlineData[]> {
+    const response = await fetch(`/chart/klines/query`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
     });
-
-    const response = await fetch(`/chart/klines?${params}`);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch kline data: ${response.statusText}`);
+    }
     return response.json();
 }

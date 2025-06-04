@@ -3,15 +3,25 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "clean": "rimraf wwwroot/js",
     "build": "webpack",
-    "watch": "webpack --watch"
+    "watch": "webpack --watch",
+    "lint": "eslint \"wwwroot/ts/**/*.ts\"",
+    "lint:fix": "eslint \"wwwroot/ts/**/*.ts\" --fix",
+    "format": "prettier --write \"**/*.{ts,json,css,scss,md}\""
   },
   "devDependencies": {
     "@types/bootstrap": "^5.2.10",
     "@types/jquery": "^3.5.32",
     "@types/toastr": "^2.1.43",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "ts-loader": "^9.5.2",
     "typescript": "^5.7.3",
@@ -20,9 +30,13 @@
   },
   "dependencies": {
     "@tanstack/table-core": "^8.20.5",
+    "@types/d3": "^7.4.3",
+    "@types/sortablejs": "^1.15.8",
     "apexcharts": "^4.3.0",
     "bootstrap": "^5.3.3",
+    "d3": "^7.9.0",
     "date-fns": "^4.1.0",
+    "sortablejs": "^1.15.6",
     "toastr": "^2.1.4"
   },
   "author": "",

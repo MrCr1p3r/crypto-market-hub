@@ -11,26 +11,26 @@ export function renderChart(
             {
                 data: klineData.map((k) => ({
                     x: new Date(k.openTime),
-                    y: [k.openPrice, k.highPrice, k.lowPrice, k.closePrice]
-                }))
-            }
+                    y: [k.openPrice, k.highPrice, k.lowPrice, k.closePrice],
+                })),
+            },
         ],
         chart: {
             type: 'candlestick',
-            height: 400
+            height: 400,
         },
         title: {
             text: coinSymbol + ' Price',
-            align: 'left'
+            align: 'left',
         },
         xaxis: {
-            type: 'datetime'
+            type: 'datetime',
         },
         tooltip: {
             x: {
-                format: 'yyyy-MM-dd HH:mm:ss'
-            }
-        }
+                format: 'yyyy-MM-dd HH:mm:ss',
+            },
+        },
     };
 
     const chartInstance = new ApexCharts(chartContainer, options);
@@ -38,13 +38,10 @@ export function renderChart(
     return chartInstance;
 }
 
-export async function rerenderChart(
-    chartInstance: ApexCharts,
-    klineData: KlineData[]
-) {
+export async function rerenderChart(chartInstance: ApexCharts, klineData: KlineData[]) {
     const updatedSeries = klineData.map((k: KlineData) => ({
         x: new Date(k.openTime),
-        y: [k.openPrice, k.highPrice, k.lowPrice, k.closePrice]
+        y: [k.openPrice, k.highPrice, k.lowPrice, k.closePrice],
     }));
 
     chartInstance.updateSeries([{ data: updatedSeries }]);

@@ -1,174 +1,899 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using FluentAssertions;
-using GUI_Crypto.Models.Input;
+using GUI_Crypto.ApiContracts.Requests.CoinCreation;
+using GUI_Crypto.ApiContracts.Responses.CandidateCoin;
+using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 using GUI_Crypto.Tests.Integration.Factories;
-using SVC_External.Models.Output;
-using WireMock.Matchers;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
+using WireMock.Admin.Mappings;
 
 namespace GUI_Crypto.Tests.Integration.Controllers;
 
-public class OverviewControllerTests : IClassFixture<CustomWebApplicationFactory>
+public class OverviewControllerTests(CustomWebApplicationFactory factory)
+    : BaseIntegrationTest(factory),
+        IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly HttpClient _client;
-    private readonly CustomWebApplicationFactory _factory;
-
-    public OverviewControllerTests(CustomWebApplicationFactory factory)
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-
-        // Setup mock responses
-        _factory
-            .CoinsServiceMock.Given(Request.Create().WithPath("/coins/all").UsingGet())
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody("[]")
-            );
-
-        _factory
-            .KlineServiceMock.Given(Request.Create().WithPath("/kline/all").UsingGet())
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody("{}")
-            );
-    }
+    #region RenderOverview Tests
 
     [Fact]
-    public async Task RenderOverview_ReturnsSuccessStatusCode()
+    public async Task RenderOverview_ShouldReturnSuccessStatusCode()
     {
         // Act
-        var response = await _client.GetAsync("/overview");
+        var response = await Client.GetAsync("/overview");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("text/html");
     }
 
+    #endregion
+
+    #region GetOverviewCoins Tests
+
     [Fact]
-    public async Task GetListedCoins_ReturnsSuccessStatusCodeAndData()
+    public async Task GetOverviewCoins_WithValidData_ShouldReturnOkWithOverviewCoins()
     {
         // Arrange
-        var expectedCoins = new ListedCoins
-        {
-            BinanceCoins = ["BTC", "ETH"],
-            BybitCoins = ["BTC", "USDT"],
-            MexcCoins = ["ETH", "BNB"],
-        };
-
-        _factory
-            .ExternalServiceMock.Given(
-                Request.Create().WithPath("/exchanges/allListedCoins").UsingGet()
-            )
-            .RespondWith(
-                Response
-                    .Create()
-                    .WithStatusCode(200)
-                    .WithHeader("Content-Type", "application/json")
-                    .WithBody(JsonSerializer.Serialize(expectedCoins))
-            );
+        await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.GetAllCoins);
+        await Factory.SvcKlineServerMock.PostMappingAsync(
+            WireMockMappings.SvcKline.GetAllKlineData
+        );
 
         // Act
-        var response = await _client.GetAsync("/listed-coins");
-        var content = await response.Content.ReadFromJsonAsync<ListedCoins>();
+        var response = await Client.GetAsync("/coins");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        content.Should().NotBeNull();
-        content.Should().BeEquivalentTo(expectedCoins);
+        var result = await response.Content.ReadFromJsonAsync<List<OverviewCoin>>();
+
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(2);
+
+        // Verify first coin (Bitcoin)
+        var btcCoin = result!.FirstOrDefault(c => c.Symbol == "BTC");
+        btcCoin.Should().NotBeNull();
+        btcCoin!.Id.Should().Be(1);
+        btcCoin.Name.Should().Be("Bitcoin");
+        btcCoin.IsStablecoin.Should().BeFalse();
+        btcCoin.TradingPair.Should().NotBeNull();
+        btcCoin.KlineData.Should().HaveCount(2);
+
+        // Verify second coin (Ethereum)
+        var ethCoin = result!.FirstOrDefault(c => c.Symbol == "ETH");
+        ethCoin.Should().NotBeNull();
+        ethCoin!.Id.Should().Be(2);
+        ethCoin.Name.Should().Be("Ethereum");
+        ethCoin.IsStablecoin.Should().BeFalse();
+        ethCoin.TradingPair.Should().NotBeNull();
+        ethCoin.KlineData.Should().HaveCount(2);
     }
 
     [Fact]
-    public async Task CreateCoin_WhenSuccessful_ReturnsOk()
+    public async Task GetOverviewCoins_WhenCoinsServiceFails_ShouldReturnInternalServerError()
     {
         // Arrange
-        var coin = new CoinNew
-        {
-            Symbol = "BTC",
-            Name = "Bitcoin",
-            QuoteCoinPriority = 1,
-            IsStablecoin = false,
-        };
-
-        _factory
-            .CoinsServiceMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/coins/insert")
-                    .WithBody(new JsonMatcher(JsonSerializer.Serialize(coin), true))
-                    .UsingPost()
-            )
-            .RespondWith(Response.Create().WithStatusCode(204));
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.GetAllCoinsError
+        );
+        await Factory.SvcKlineServerMock.PostMappingAsync(
+            WireMockMappings.SvcKline.GetAllKlineData
+        );
 
         // Act
-        var response = await _client.PostAsJsonAsync("/coin", coin);
+        var response = await Client.GetAsync("/coins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task GetOverviewCoins_WhenKlineServiceFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.GetAllCoins);
+        await Factory.SvcKlineServerMock.PostMappingAsync(
+            WireMockMappings.SvcKline.GetAllKlineDataError
+        );
+
+        // Act
+        var response = await Client.GetAsync("/coins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task GetOverviewCoins_WithNoCoins_ShouldReturnEmptyCollection()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.GetAllCoinsEmpty
+        );
+        await Factory.SvcKlineServerMock.PostMappingAsync(
+            WireMockMappings.SvcKline.GetAllKlineDataEmpty
+        );
+
+        // Act
+        var response = await Client.GetAsync("/coins");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<OverviewCoin>>();
+
+        result.Should().NotBeNull();
+        result!.Should().BeEmpty();
     }
 
+    #endregion
+
+    #region GetCandidateCoins Tests
+
     [Fact]
-    public async Task CreateCoin_WhenCoinExists_ReturnsConflict()
+    public async Task GetCandidateCoins_WithValidData_ShouldReturnOkWithCandidateCoins()
     {
         // Arrange
-        var coin = new CoinNew
-        {
-            Symbol = "USDT",
-            Name = "Tether",
-            QuoteCoinPriority = 2,
-            IsStablecoin = true,
-        };
-
-        _factory
-            .CoinsServiceMock.Given(
-                Request
-                    .Create()
-                    .WithPath("/coins/insert")
-                    .UsingPost()
-                    .WithBody(new JsonMatcher(JsonSerializer.Serialize(coin), true))
-            )
-            .RespondWith(Response.Create().WithStatusCode(409));
+        await Factory.SvcExternalServerMock.PostMappingAsync(
+            WireMockMappings.SvcExternal.GetAllSpotCoins
+        );
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.GetAllCoinsForCandidates
+        );
 
         // Act
-        var response = await _client.PostAsJsonAsync("/coin", coin);
+        var response = await Client.GetAsync("/candidate-coins");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<CandidateCoin>>();
+
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(2); // ADA and DOT are candidates
+
+        var adaCoin = result!.FirstOrDefault(c => c.Symbol == "ADA");
+        adaCoin.Should().NotBeNull();
+        adaCoin!.Id.Should().BeNull(); // New coin
+        adaCoin.Name.Should().Be("Cardano");
+
+        var dotCoin = result!.FirstOrDefault(c => c.Symbol == "DOT");
+        dotCoin.Should().NotBeNull();
+        dotCoin!.Id.Should().BeNull(); // New coin
+        dotCoin.Name.Should().Be("Polkadot");
     }
 
     [Fact]
-    public async Task DeleteCoin_ReturnsOk()
+    public async Task GetCandidateCoins_WhenExternalServiceFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        await Factory.SvcExternalServerMock.PostMappingAsync(
+            WireMockMappings.SvcExternal.GetAllSpotCoinsError
+        );
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.GetAllCoinsForCandidates
+        );
+
+        // Act
+        var response = await Client.GetAsync("/candidate-coins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task GetCandidateCoins_WhenAllCoinsAlreadyExist_ShouldReturnEmptyCollection()
+    {
+        // Arrange
+        await Factory.SvcExternalServerMock.PostMappingAsync(
+            WireMockMappings.SvcExternal.GetAllSpotCoinsExisting
+        );
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.GetAllCoinsForCandidates
+        );
+
+        // Act
+        var response = await Client.GetAsync("/candidate-coins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<CandidateCoin>>();
+
+        result.Should().NotBeNull();
+        result!.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region CreateCoins Tests
+
+    [Fact]
+    public async Task CreateCoins_WithValidData_ShouldReturnOkWithCreatedCoins()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.CreateCoins);
+
+        var coinCreationRequests = TestData.CoinCreationRequests;
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins", coinCreationRequests);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<OverviewCoin>>();
+
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(2);
+
+        var adaCoin = result!.FirstOrDefault(c => c.Symbol == "ADA");
+        adaCoin.Should().NotBeNull();
+        adaCoin!.Id.Should().Be(3);
+        adaCoin.Name.Should().Be("Cardano");
+
+        var dotCoin = result!.FirstOrDefault(c => c.Symbol == "DOT");
+        dotCoin.Should().NotBeNull();
+        dotCoin!.Id.Should().Be(4);
+        dotCoin.Name.Should().Be("Polkadot");
+    }
+
+    [Fact]
+    public async Task CreateCoins_WhenServiceFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.CreateCoinsError
+        );
+
+        var coinCreationRequests = TestData.CoinCreationRequests;
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins", coinCreationRequests);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    [Fact]
+    public async Task CreateCoins_WithEmptyRequest_ShouldReturnOkWithEmptyCollection()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.CreateCoinsEmpty
+        );
+
+        var emptyRequests = Array.Empty<CoinCreationRequest>();
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/coins", emptyRequests);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<List<OverviewCoin>>();
+
+        result.Should().NotBeNull();
+        result!.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region DeleteMainCoin Tests
+
+    [Fact]
+    public async Task DeleteMainCoin_WithValidId_ShouldReturnNoContent()
     {
         // Arrange
         const int coinId = 1;
-        _factory
-            .CoinsServiceMock.Given(Request.Create().WithPath($"/coins/{coinId}").UsingDelete())
-            .RespondWith(Response.Create().WithStatusCode(200));
+        await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.DeleteMainCoin);
 
         // Act
-        var response = await _client.DeleteAsync($"/coin/{coinId}");
+        var response = await Client.DeleteAsync($"/coins/{coinId}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     [Fact]
-    public async Task GetAllCoins_ReturnsSuccessStatusCodeAndData()
+    public async Task DeleteMainCoin_WhenCoinNotFound_ShouldReturnNotFound()
     {
+        // Arrange
+        const int coinId = 999;
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.DeleteMainCoinNotFound
+        );
+
         // Act
-        var response = await _client.GetAsync("/coins");
-        var content = await response.Content.ReadFromJsonAsync<IEnumerable<object>>();
+        var response = await Client.DeleteAsync($"/coins/{coinId}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        content.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DeleteMainCoin_WhenServiceFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        const int coinId = 1;
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.DeleteMainCoinError
+        );
+
+        // Act
+        var response = await Client.DeleteAsync($"/coins/{coinId}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    #endregion
+
+    #region DeleteAllCoins Tests
+
+    [Fact]
+    public async Task DeleteAllCoins_WithValidRequest_ShouldReturnNoContent()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.DeleteAllCoins);
+
+        // Act
+        var response = await Client.DeleteAsync("/coins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task DeleteAllCoins_WhenServiceFails_ShouldReturnInternalServerError()
+    {
+        // Arrange
+        await Factory.SvcCoinsServerMock.PostMappingAsync(
+            WireMockMappings.SvcCoins.DeleteAllCoinsError
+        );
+
+        // Act
+        var response = await Client.DeleteAsync("/coins");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+    }
+
+    #endregion
+
+    private static class WireMockMappings
+    {
+        public static class SvcCoins
+        {
+            public static MappingModel GetAllCoins =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/coins" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.SvcCoinsResponse),
+                    },
+                };
+
+            public static MappingModel GetAllCoinsError =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/coins" },
+                    Response = new ResponseModel { StatusCode = 500 },
+                };
+
+            public static MappingModel GetAllCoinsEmpty =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/coins" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(Array.Empty<object>()),
+                    },
+                };
+
+            public static MappingModel GetAllCoinsForCandidates =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/coins" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.SvcCoinsExistingCoins),
+                    },
+                };
+
+            public static MappingModel CreateCoins =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["POST"], Path = "/coins" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.SvcCoinsCreatedCoins),
+                    },
+                };
+
+            public static MappingModel CreateCoinsError =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["POST"], Path = "/coins" },
+                    Response = new ResponseModel { StatusCode = 500 },
+                };
+
+            public static MappingModel CreateCoinsEmpty =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["POST"], Path = "/coins" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(Array.Empty<object>()),
+                    },
+                };
+
+            public static MappingModel DeleteMainCoin =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["DELETE"], Path = "/coins/1" },
+                    Response = new ResponseModel { StatusCode = 204 },
+                };
+
+            public static MappingModel DeleteMainCoinNotFound =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["DELETE"], Path = "/coins/999" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 404,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(
+                            new
+                            {
+                                type = "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+                                title = "Not Found",
+                                status = 404,
+                                detail = "Coin with ID 999 not found.",
+                                instance = "/coins/999",
+                            }
+                        ),
+                    },
+                };
+
+            public static MappingModel DeleteMainCoinError =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["DELETE"], Path = "/coins/1" },
+                    Response = new ResponseModel { StatusCode = 500 },
+                };
+
+            public static MappingModel DeleteAllCoins =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["DELETE"], Path = "/coins" },
+                    Response = new ResponseModel { StatusCode = 204 },
+                };
+
+            public static MappingModel DeleteAllCoinsError =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["DELETE"], Path = "/coins" },
+                    Response = new ResponseModel { StatusCode = 500 },
+                };
+        }
+
+        public static class SvcKline
+        {
+            public static MappingModel GetAllKlineData =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/kline" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.SvcKlineResponse),
+                    },
+                };
+
+            public static MappingModel GetAllKlineDataError =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/kline" },
+                    Response = new ResponseModel { StatusCode = 500 },
+                };
+
+            public static MappingModel GetAllKlineDataEmpty =>
+                new()
+                {
+                    Request = new RequestModel { Methods = ["GET"], Path = "/kline" },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(Array.Empty<object>()),
+                    },
+                };
+        }
+
+        public static class SvcExternal
+        {
+            public static MappingModel GetAllSpotCoins =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/exchanges/coins/spot",
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.SvcExternalSpotCoins),
+                    },
+                };
+
+            public static MappingModel GetAllSpotCoinsError =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/exchanges/coins/spot",
+                    },
+                    Response = new ResponseModel { StatusCode = 500 },
+                };
+
+            public static MappingModel GetAllSpotCoinsExisting =>
+                new()
+                {
+                    Request = new RequestModel
+                    {
+                        Methods = ["GET"],
+                        Path = "/exchanges/coins/spot",
+                    },
+                    Response = new ResponseModel
+                    {
+                        StatusCode = 200,
+                        Headers = new Dictionary<string, object>
+                        {
+                            ["Content-Type"] = "application/json",
+                        },
+                        Body = JsonSerializer.Serialize(TestData.SvcExternalExistingSpotCoins),
+                    },
+                };
+        }
+    }
+
+    private static class TestData
+    {
+        public static readonly List<dynamic> SvcCoinsResponse =
+        [
+            new
+            {
+                id = 1,
+                symbol = "BTC",
+                name = "Bitcoin",
+                category = (string?)null,
+                idCoinGecko = "bitcoin",
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        id = 101,
+                        coinQuote = new
+                        {
+                            id = 5,
+                            symbol = "USDT",
+                            name = "Tether",
+                        },
+                        exchanges = new[] { 1 }, // Binance
+                    },
+                },
+            },
+            new
+            {
+                id = 2,
+                symbol = "ETH",
+                name = "Ethereum",
+                category = (string?)null,
+                idCoinGecko = "ethereum",
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        id = 102,
+                        coinQuote = new
+                        {
+                            id = 5,
+                            symbol = "USDT",
+                            name = "Tether",
+                        },
+                        exchanges = new[] { 1 }, // Binance
+                    },
+                },
+            },
+        ];
+
+        public static readonly List<dynamic> SvcKlineResponse =
+        [
+            new
+            {
+                idTradingPair = 101,
+                klineData = new[]
+                {
+                    new
+                    {
+                        openTime = 1640995200000L,
+                        openPrice = 46000.50m,
+                        highPrice = 47000.75m,
+                        lowPrice = 45500.25m,
+                        closePrice = 46800.00m,
+                        volume = 123.456m,
+                        closeTime = 1640998800000L,
+                    },
+                    new
+                    {
+                        openTime = 1640998800000L,
+                        openPrice = 46800.00m,
+                        highPrice = 48000.00m,
+                        lowPrice = 46500.00m,
+                        closePrice = 47500.50m,
+                        volume = 234.567m,
+                        closeTime = 1641002400000L,
+                    },
+                },
+            },
+            new
+            {
+                idTradingPair = 102,
+                klineData = new[]
+                {
+                    new
+                    {
+                        openTime = 1640995200000L,
+                        openPrice = 3000.00m,
+                        highPrice = 3100.00m,
+                        lowPrice = 2900.00m,
+                        closePrice = 3050.00m,
+                        volume = 200.000m,
+                        closeTime = 1640998800000L,
+                    },
+                    new
+                    {
+                        openTime = 1640998800000L,
+                        openPrice = 3050.00m,
+                        highPrice = 3200.00m,
+                        lowPrice = 3000.00m,
+                        closePrice = 3150.00m,
+                        volume = 250.000m,
+                        closeTime = 1641002400000L,
+                    },
+                },
+            },
+        ];
+
+        public static readonly List<dynamic> SvcCoinsExistingCoins =
+        [
+            new
+            {
+                id = 1,
+                symbol = "BTC",
+                name = "Bitcoin",
+                category = (string?)null,
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        id = 101,
+                        coinQuote = new
+                        {
+                            id = 5,
+                            symbol = "USDT",
+                            name = "Tether",
+                        },
+                        exchanges = new[] { 1 }, // Binance
+                    },
+                },
+            },
+            new
+            {
+                id = 2,
+                symbol = "ETH",
+                name = "Ethereum",
+                category = (string?)null,
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        id = 102,
+                        coinQuote = new
+                        {
+                            id = 5,
+                            symbol = "USDT",
+                            name = "Tether",
+                        },
+                        exchanges = new[] { 1 }, // Binance
+                    },
+                },
+            },
+        ];
+
+        public static readonly List<dynamic> SvcExternalSpotCoins =
+        [
+            new
+            {
+                symbol = "BTC",
+                name = "Bitcoin",
+                category = (string?)null,
+                idCoinGecko = "bitcoin",
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        coinQuote = new
+                        {
+                            symbol = "USDT",
+                            name = "Tether",
+                            category = 0, // Stablecoin category
+                            idCoinGecko = "tether",
+                        },
+                        exchangeInfos = new[] { new { exchange = 1 } }, // Binance
+                    },
+                },
+            },
+            new
+            {
+                symbol = "ETH",
+                name = "Ethereum",
+                category = (string?)null,
+                idCoinGecko = "ethereum",
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        coinQuote = new
+                        {
+                            symbol = "USDT",
+                            name = "Tether",
+                            category = 0, // Stablecoin category
+                            idCoinGecko = "tether",
+                        },
+                        exchangeInfos = new[] { new { exchange = 1 } }, // Binance
+                    },
+                },
+            },
+            new
+            {
+                symbol = "ADA",
+                name = "Cardano",
+                category = (string?)null,
+                idCoinGecko = "cardano",
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        coinQuote = new
+                        {
+                            symbol = "USDT",
+                            name = "Tether",
+                            category = 0, // Stablecoin category
+                            idCoinGecko = "tether",
+                        },
+                        exchangeInfos = new[] { new { exchange = 1 } }, // Binance
+                    },
+                },
+            },
+            new
+            {
+                symbol = "DOT",
+                name = "Polkadot",
+                category = (string?)null,
+                idCoinGecko = "polkadot",
+                tradingPairs = new[]
+                {
+                    new
+                    {
+                        coinQuote = new
+                        {
+                            symbol = "USDT",
+                            name = "Tether",
+                            category = 0, // Stablecoin category
+                            idCoinGecko = "tether",
+                        },
+                        exchangeInfos = new[] { new { exchange = 2 } }, // Bybit
+                    },
+                },
+            },
+        ];
+
+        public static readonly List<dynamic> SvcExternalExistingSpotCoins =
+        [
+            new
+            {
+                symbol = "BTC",
+                name = "Bitcoin",
+                category = (string?)null,
+                tradingPairs = Array.Empty<object>(),
+            },
+            new
+            {
+                symbol = "ETH",
+                name = "Ethereum",
+                category = (string?)null,
+                tradingPairs = Array.Empty<object>(),
+            },
+        ];
+
+        public static readonly List<CoinCreationRequest> CoinCreationRequests =
+        [
+            new CoinCreationRequest
+            {
+                Id = null,
+                Symbol = "ADA",
+                Name = "Cardano",
+                Category = null,
+                IdCoinGecko = "cardano",
+                TradingPairs = [],
+            },
+            new CoinCreationRequest
+            {
+                Id = null,
+                Symbol = "DOT",
+                Name = "Polkadot",
+                Category = null,
+                IdCoinGecko = "polkadot",
+                TradingPairs = [],
+            },
+        ];
+
+        public static readonly List<dynamic> SvcCoinsCreatedCoins =
+        [
+            new
+            {
+                id = 3,
+                symbol = "ADA",
+                name = "Cardano",
+                category = (string?)null,
+                tradingPairs = Array.Empty<object>(),
+            },
+            new
+            {
+                id = 4,
+                symbol = "DOT",
+                name = "Polkadot",
+                category = (string?)null,
+                tradingPairs = Array.Empty<object>(),
+            },
+        ];
     }
 }

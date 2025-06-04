@@ -1,8 +1,10 @@
 using CryptoChartAnalyzer.ServiceDefaults;
-using GUI_Crypto.Clients;
-using GUI_Crypto.Clients.Interfaces;
-using GUI_Crypto.ViewModels.Factories;
-using GUI_Crypto.ViewModels.Factories.Interfaces;
+using GUI_Crypto.MicroserviceClients.SvcCoins;
+using GUI_Crypto.MicroserviceClients.SvcExternal;
+using GUI_Crypto.MicroserviceClients.SvcKline;
+using GUI_Crypto.Services;
+using GUI_Crypto.Services.Interfaces;
+using GUI_Crypto.ViewModels;
 using SharedLibrary.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -54,10 +56,15 @@ builder.Services.AddHttpClient(
     }
 );
 
-builder.Services.AddScoped<ISvcBridgeClient, SvcBridgeClient>();
 builder.Services.AddScoped<ISvcCoinsClient, SvcCoinsClient>();
 builder.Services.AddScoped<ISvcExternalClient, SvcExternalClient>();
 builder.Services.AddScoped<ISvcKlineClient, SvcKlineClient>();
+
+// Register new domain-specific services
+builder.Services.AddScoped<IOverviewService, OverviewService>();
+builder.Services.AddScoped<IChartService, ChartService>();
+
+// Keep the view model factory
 builder.Services.AddScoped<ICryptoViewModelFactory, CryptoViewModelFactory>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -76,6 +83,8 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

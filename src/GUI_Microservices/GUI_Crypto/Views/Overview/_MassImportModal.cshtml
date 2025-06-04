@@ -1,0 +1,67 @@
+<!-- Mass Import Modal -->
+<div class="modal fade" id="massImportModal" tabindex="-1" aria-labelledby="massImportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="massImportModalLabel">Mass Coins Import</h5>
+                <button type="button" class="btn-close btn-close-white" id="massImportModalClose" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Import Type Selection -->
+                <div class="form-group mb-4">
+                    <label class="form-label">Import Type</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="importType" id="autoImport" value="auto" checked>
+                        <label class="btn btn-outline-primary" for="autoImport">Auto Import</label>
+                        
+                        <input type="radio" class="btn-check" name="importType" id="manualImport" value="manual">
+                        <label class="btn btn-outline-primary" for="manualImport">Manual Import</label>
+                    </div>
+                </div>
+
+                <!-- Auto Import Settings -->
+                <div id="autoImportSettings">
+                    <div class="form-group mb-3">
+                        <label for="autoImportCoinCount" class="form-label">Number of Coins to Import</label>
+                        <input type="number" class="form-control bg-dark text-light" id="autoImportCoinCount" value="150" min="1" max="1000">
+                    </div>
+                </div>
+
+                <!-- Manual Import Settings -->
+                <div id="manualImportSettings" class="d-none">
+                    <div class="form-group mb-3">
+                        <label for="massImportCoinSearch" class="form-label">Search Coins</label>
+                        <input type="text" class="form-control bg-dark text-light" id="massImportCoinSearch" placeholder="Start typing to search coins...">
+                    </div>
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="text-center my-4 d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2">Loading available coins...</div>
+                    </div>
+                    <!-- Search Results -->
+                    <div id="massImportSearchResults" class="list-group mt-2 mb-3" style="max-height: 200px; overflow-y: auto; scrollbar-width: thin;">
+                        <!-- Search results will be populated here -->
+                    </div>
+                    <!-- Selected Coins -->
+                    <div class="mb-3">
+                        <h6>Selected Coins <span id="selectedCount" class="badge bg-primary">0</span></h6>
+                        <div id="selectedCoinsContainer" style="max-height: 150px; overflow-y: auto;">
+                            <!-- Selected coins will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="progress d-none mb-3" id="importProgress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="startImportBtn">Start Import</button>
+            </div>
+        </div>
+    </div>
+</div>
