@@ -75,3 +75,26 @@ body {
     cursor: pointer;
     background-color: #2c3136 !important;
 }
+
+/* Navbar styles */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.navbar .navbar-brand {
+    color: #a29bfe !important;
+    font-weight: 600;
+}
+
+.navbar .nav-link {
+    color: #ffffff !important;
+    transition: color 0.2s;
+}
+
+.navbar .nav-link:hover {
+    color: #a29bfe !important;
+}
+
+.navbar-toggler {
+    border-color: rgba(162, 155, 254, 0.5);
+}

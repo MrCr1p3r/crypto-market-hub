@@ -1,10 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
@@ -12,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="AutoFixture"/>
     <PackageReference Include="FluentAssertions"/>
+    <PackageReference Include="FluentAssertions.ArgumentMatchers.Moq"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="Moq"/>
     <PackageReference Include="Moq.Contrib.HttpClient"/>

@@ -1,23 +1,38 @@
 @using System.Web
-@model GUI_Crypto.ViewModels.ChartViewModel
+@model GUI_Crypto.ViewModels.Chart.ChartViewModel
+
+@{
+    var selectedTradingPair = Model.Coin.TradingPairs.First(tp => tp.CoinQuote.Symbol == Model.Coin.SelectedQuoteCoinSymbol);
+}
 
 <div class="container">
     <h2 class="text-center py-3 d-flex justify-content-center align-items-center">
         <div class="dropdown">
             <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" id="tradingPairDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <span id="selectedMainCoin">@Model.Coin.Symbol</span>/<span id="selectedQuoteCoin">@Model.Coin.SymbolCoinQuoteCurrent</span>
+                <span id="selectedMainCoin">@Model.Coin.Symbol</span>/<span
+                    id="selectedQuoteCoin">@Model.Coin.SelectedQuoteCoinSymbol</span>
             </button>
             <ul class="dropdown-menu bg-dark" aria-labelledby="tradingPairDropdown">
-                @foreach (var quoteCoin in new[] { "USDT", "USDC", "DAI", "BUSD", "BTC", "ETH", "BNB" })
+                @foreach (var tradingPair in Model.Coin.TradingPairs)
                 {
-                    if (Model.Coin.Symbol == quoteCoin) continue;
-                    <li><a class="dropdown-item text-white @(quoteCoin == Model.Coin.SymbolCoinQuoteCurrent ? "active" : "")" data-quote="@quoteCoin">@Model.Coin.Symbol/@quoteCoin</a></li>
+                    <li><a class="dropdown-item text-white @(tradingPair.CoinQuote.Symbol == Model.Coin.SelectedQuoteCoinSymbol ? "active" : "")"
+                            data-quote="@tradingPair.CoinQuote.Symbol"
+                            data-quote-coin-id="@tradingPair.CoinQuote.Id"
+                            data-quote-coin-name="@tradingPair.CoinQuote.Name"
+                            data-trading-pair-id="@tradingPair.Id"
+                            data-trading-pair-exchanges='@Html.Raw(Json.Serialize(tradingPair.Exchanges))'
+                            >@Model.Coin.Symbol/@tradingPair.CoinQuote.Symbol</a></li>
                 }
             </ul>
         </div>
         <span class="ms-2">Chart</span>
     </h2>
-    <div id="chartData" data-kline-data='@Html.Raw(Json.Serialize(Model.Coin.KlineData))' style="display: none;"></div>
+    <div id="chartData" 
+         data-kline-data='@Html.Raw(Json.Serialize(Model.Coin.KlineData))'
+         data-main-coin-id="@Model.Coin.Id"
+         data-main-coin-name="@Model.Coin.Name"
+         data-main-coin-symbol="@Model.Coin.Symbol"
+         style="display: none;"></div>
     <div class="chart-container row">
         <div class="col-2">
             <label for="timeframeSelect">Select Timeframe:</label>

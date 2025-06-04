@@ -70,3 +70,6 @@ dotnet_diagnostic.CS1591.severity = none
 
 # LOGGEN036: A value being logged doesn't have an effective way to be converted into a string
 dotnet_diagnostic.LOGGEN036.severity = none
+
+# S6967: ModelState.IsValid should be called in controller actions
+dotnet_diagnostic.S6967.severity = none
