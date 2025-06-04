@@ -65,13 +65,13 @@ app.Services.UseScheduler(scheduler =>
         .PreventOverlapping("SpotCoinsCacheWarmup")
         .PreventOverlapping("CoinGeckoLock");
 
-    // Trading Pairs Update Job - Every 30 minutes
-    scheduler
-        .Schedule<TradingPairsUpdateJob>()
-        .EveryMinute()
-        .PreventOverlapping("TradingPairsUpdate")
-        .PreventOverlapping("TradingPairsKlineLock")
-        .PreventOverlapping("CoinGeckoLock");
+    // Trading Pairs Update Job - Every 30 minutes TODO: uncomment when ready
+    // scheduler
+    //     .Schedule<TradingPairsUpdateJob>()
+    //     .EveryThirtyMinutes()
+    //     .PreventOverlapping("TradingPairsUpdate")
+    //     .PreventOverlapping("TradingPairsKlineLock")
+    //     .PreventOverlapping("CoinGeckoLock");
 });
 
 await app.RunAsync();
