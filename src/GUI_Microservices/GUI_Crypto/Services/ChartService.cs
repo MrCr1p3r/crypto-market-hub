@@ -53,7 +53,7 @@ public class ChartService(ISvcCoinsClient coinsClient, ISvcExternalClient extern
     }
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<KlineData>>> GetKlineData(KlineDataRequest request)
+    public async Task<Result<IEnumerable<Kline>>> GetKlineData(KlineDataRequest request)
     {
         var klineRequest = Mapping.ToKlineDataRequest(request);
         var klineDataResult = await _externalClient.GetKlineData(klineRequest);
@@ -133,7 +133,7 @@ public class ChartService(ISvcCoinsClient coinsClient, ISvcExternalClient extern
         /// <summary>
         /// Converts a service client response to an API response.
         /// </summary>
-        public static KlineData ToKlineDataApiResponse(
+        public static Kline ToKlineDataApiResponse(
             SvcExternal.Responses.KlineData.KlineData klineData
         ) =>
             new()

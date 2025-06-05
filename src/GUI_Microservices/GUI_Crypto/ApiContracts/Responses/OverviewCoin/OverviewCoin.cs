@@ -1,37 +1,37 @@
+using SharedLibrary.Enums;
+
 namespace GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 
 /// <summary>
-/// Represents a cryptocurrency model.
+/// Represents a cryptocurrency model for the overview page.
 /// </summary>
-public class OverviewCoin
+public class OverviewCoin : CoinBase
 {
     /// <summary>
-    /// Unique identifier for the coin.
+    /// Category of the coin.
     /// </summary>
-    public required int Id { get; set; }
+    /// <remarks>
+    /// Null if this coin is a regular coin/token.
+    /// </remarks>
+    public CoinCategory? Category { get; set; }
 
     /// <summary>
-    /// Symbol of the cryptocurrency (e.g., "BTC" for Bitcoin).
+    /// The market capitalization in USD.
     /// </summary>
-    public required string Symbol { get; set; }
+    public long? MarketCapUsd { get; init; }
 
     /// <summary>
-    /// Full name of the cryptocurrency (e.g., "Bitcoin").
+    /// The current price in USD.
     /// </summary>
-    public required string Name { get; set; }
+    public string? PriceUsd { get; init; }
 
     /// <summary>
-    /// Indicates if the coin is a stablecoin.
+    /// The price change in percentage over the last 24 hours.
     /// </summary>
-    public required bool IsStablecoin { get; set; }
+    public decimal? PriceChangePercentage24h { get; init; }
 
     /// <summary>
-    /// Trading pair for which kline data is available.
+    /// Kline data for the coin.
     /// </summary>
-    public TradingPair? TradingPair { get; set; }
-
-    /// <summary>
-    /// List of KlineData objects associated with the coin.
-    /// </summary>
-    public IEnumerable<KlineData> KlineData { get; set; } = [];
+    public KlineData? KlineData { get; set; }
 }

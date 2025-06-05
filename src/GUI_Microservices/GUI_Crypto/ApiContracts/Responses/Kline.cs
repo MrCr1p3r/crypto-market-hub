@@ -3,7 +3,7 @@ namespace GUI_Crypto.ApiContracts.Responses;
 /// <summary>
 /// Represents Kline (candlestick) data for a trading pair.
 /// </summary>
-public class KlineData
+public class Kline
 {
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.

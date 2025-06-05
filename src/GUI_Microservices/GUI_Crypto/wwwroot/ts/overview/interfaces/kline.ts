@@ -1,4 +1,4 @@
-export interface KlineData {
+export interface Kline {
     openTime: number;
     openPrice: number;
     highPrice: number;

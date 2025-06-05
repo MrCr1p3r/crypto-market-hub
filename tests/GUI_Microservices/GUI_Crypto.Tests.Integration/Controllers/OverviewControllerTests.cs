@@ -54,18 +54,26 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
         btcCoin.Should().NotBeNull();
         btcCoin!.Id.Should().Be(1);
         btcCoin.Name.Should().Be("Bitcoin");
-        btcCoin.IsStablecoin.Should().BeFalse();
-        btcCoin.TradingPair.Should().NotBeNull();
-        btcCoin.KlineData.Should().HaveCount(2);
+        btcCoin.Category.Should().BeNull(); // Regular cryptocurrency
+        btcCoin.MarketCapUsd.Should().Be(1_200_000_000_000);
+        btcCoin.PriceUsd.Should().Be("50000.00");
+        btcCoin.PriceChangePercentage24h.Should().Be(3.5m);
+        btcCoin.KlineData.Should().NotBeNull();
+        btcCoin.KlineData!.TradingPair.Should().NotBeNull();
+        btcCoin.KlineData.Klines.Should().HaveCount(2);
 
         // Verify second coin (Ethereum)
         var ethCoin = result!.FirstOrDefault(c => c.Symbol == "ETH");
         ethCoin.Should().NotBeNull();
         ethCoin!.Id.Should().Be(2);
         ethCoin.Name.Should().Be("Ethereum");
-        ethCoin.IsStablecoin.Should().BeFalse();
-        ethCoin.TradingPair.Should().NotBeNull();
-        ethCoin.KlineData.Should().HaveCount(2);
+        ethCoin.Category.Should().BeNull(); // Regular cryptocurrency
+        ethCoin.MarketCapUsd.Should().Be(600_000_000_000);
+        ethCoin.PriceUsd.Should().Be("3500.00");
+        ethCoin.PriceChangePercentage24h.Should().Be(-1.2m);
+        ethCoin.KlineData.Should().NotBeNull();
+        ethCoin.KlineData!.TradingPair.Should().NotBeNull();
+        ethCoin.KlineData.Klines.Should().HaveCount(2);
     }
 
     [Fact]
@@ -226,11 +234,19 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
         adaCoin.Should().NotBeNull();
         adaCoin!.Id.Should().Be(3);
         adaCoin.Name.Should().Be("Cardano");
+        adaCoin.Category.Should().BeNull();
+        adaCoin.MarketCapUsd.Should().Be(15_000_000_000);
+        adaCoin.PriceUsd.Should().Be("0.45");
+        adaCoin.PriceChangePercentage24h.Should().Be(5.2m);
 
         var dotCoin = result!.FirstOrDefault(c => c.Symbol == "DOT");
         dotCoin.Should().NotBeNull();
         dotCoin!.Id.Should().Be(4);
         dotCoin.Name.Should().Be("Polkadot");
+        dotCoin.Category.Should().BeNull();
+        dotCoin.MarketCapUsd.Should().Be(8_000_000_000);
+        dotCoin.PriceUsd.Should().Be("7.50");
+        dotCoin.PriceChangePercentage24h.Should().Be(-2.1m);
     }
 
     [Fact]
@@ -604,6 +620,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
                 symbol = "BTC",
                 name = "Bitcoin",
                 category = (string?)null,
+                marketCapUsd = 1_200_000_000_000L,
+                priceUsd = "50000.00",
+                priceChangePercentage24h = 3.5m,
                 idCoinGecko = "bitcoin",
                 tradingPairs = new[]
                 {
@@ -626,6 +645,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
                 symbol = "ETH",
                 name = "Ethereum",
                 category = (string?)null,
+                marketCapUsd = 600_000_000_000L,
+                priceUsd = "3500.00",
+                priceChangePercentage24h = -1.2m,
                 idCoinGecko = "ethereum",
                 tradingPairs = new[]
                 {
@@ -710,6 +732,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
                 symbol = "BTC",
                 name = "Bitcoin",
                 category = (string?)null,
+                marketCapUsd = 1_200_000_000_000L,
+                priceUsd = "50000.00",
+                priceChangePercentage24h = 3.5m,
                 tradingPairs = new[]
                 {
                     new
@@ -731,6 +756,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
                 symbol = "ETH",
                 name = "Ethereum",
                 category = (string?)null,
+                marketCapUsd = 600_000_000_000L,
+                priceUsd = "3500.00",
+                priceChangePercentage24h = -1.2m,
                 tradingPairs = new[]
                 {
                     new
@@ -884,6 +912,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
                 symbol = "ADA",
                 name = "Cardano",
                 category = (string?)null,
+                marketCapUsd = 15_000_000_000L,
+                priceUsd = "0.45",
+                priceChangePercentage24h = 5.2m,
                 tradingPairs = Array.Empty<object>(),
             },
             new
@@ -892,6 +923,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
                 symbol = "DOT",
                 name = "Polkadot",
                 category = (string?)null,
+                marketCapUsd = 8_000_000_000L,
+                priceUsd = "7.50",
+                priceChangePercentage24h = -2.1m,
                 tradingPairs = Array.Empty<object>(),
             },
         ];

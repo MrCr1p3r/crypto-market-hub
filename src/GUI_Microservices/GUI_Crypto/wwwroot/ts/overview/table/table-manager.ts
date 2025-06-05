@@ -23,18 +23,12 @@ export class TableManager {
     private readonly tableBody: HTMLElement;
     private readonly thead: HTMLElement;
     private readonly searchInput: HTMLInputElement;
-    private readonly stablecoinCheckbox: HTMLInputElement;
     private readonly btnConfirmDelete: HTMLButtonElement;
 
     private tableCore: Table<OverviewCoin>;
     private tableState: TableState = {
         sorting: [],
-        columnFilters: [
-            {
-                id: 'isStablecoin',
-                value: false,
-            },
-        ],
+        columnFilters: [],
         globalFilter: '',
         columnVisibility: {},
         columnOrder: [],
@@ -62,7 +56,6 @@ export class TableManager {
         const table = document.getElementById('coinTable');
         const tableBody = document.getElementById('coinTableBody');
         const searchInput = document.getElementById('tableSearch');
-        const stablecoinCheckbox = document.getElementById('showStablecoins');
         const btnConfirmDelete = document.getElementById('confirmDeleteBtn');
         const deleteModalElement = document.getElementById('deleteConfirmModal');
         const thead = document.querySelector('#coinTable thead');
@@ -71,8 +64,6 @@ export class TableManager {
         this.tableBody = tableBody as HTMLElement;
         this.thead = thead as HTMLElement;
         this.searchInput = searchInput as HTMLInputElement;
-        this.stablecoinCheckbox = stablecoinCheckbox as HTMLInputElement;
-        this.stablecoinCheckbox.checked = false;
         this.btnConfirmDelete = btnConfirmDelete as HTMLButtonElement;
         this.deleteModal = new bootstrap.Modal(deleteModalElement!);
 
@@ -98,7 +89,6 @@ export class TableManager {
 
     private setupEventListeners(): void {
         this.searchInput.addEventListener('input', () => this.handleSearch());
-        this.stablecoinCheckbox.addEventListener('change', () => this.handleStablecoinFilter());
         this.thead.addEventListener('click', (event: any) => {
             const header = event.target.closest('th.sortable');
             if (!header) return;
@@ -109,18 +99,6 @@ export class TableManager {
 
     private handleSearch(): void {
         this.tableState.globalFilter = this.searchInput.value.toLowerCase().trim();
-        this.updateTableState();
-    }
-
-    private handleStablecoinFilter(): void {
-        this.tableState.columnFilters = this.stablecoinCheckbox.checked
-            ? []
-            : [
-                  {
-                      id: 'isStablecoin',
-                      value: false,
-                  },
-              ];
         this.updateTableState();
     }
 
@@ -177,13 +155,13 @@ export class TableManager {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'btn btn-sm btn-outline-primary';
-        button.disabled = !row.tradingPair;
+        button.disabled = !row.klineData?.tradingPair;
 
         const iconElement = document.createElement('i');
         iconElement.className = 'fas fa-chart-line';
         button.appendChild(iconElement);
 
-        if (row.tradingPair) {
+        if (row.klineData?.tradingPair) {
             button.addEventListener('click', async () => {
                 try {
                     await openChart(row);
@@ -285,11 +263,11 @@ export class TableManager {
                     chartDiv.className = 'mini-chart not-rendered'; // Add not-rendered class
                     chartDiv.setAttribute(
                         'data-kline-data',
-                        JSON.stringify(row.original.klineData ?? [])
+                        JSON.stringify(row.original.klineData?.klines ?? [])
                     );
                     chartDiv.setAttribute(
                         'data-is-stablecoin',
-                        row.original.isStablecoin.toString()
+                        (row.original.category === 1).toString() // 1 is Stablecoin enum value
                     );
                     td.appendChild(chartDiv);
                     chartsToUpdate.push(chartDiv);
@@ -307,8 +285,34 @@ export class TableManager {
                     td.appendChild(actionsContainer);
                     break;
                 }
+                case 'marketCapUsd': {
+                    const marketCap = value as number | null;
+                    if (marketCap) {
+                        // Format market cap in billions/millions
+                        if (marketCap >= 1_000_000_000) {
+                            td.textContent = `$${(marketCap / 1_000_000_000).toFixed(2)}B`;
+                        } else if (marketCap >= 1_000_000) {
+                            td.textContent = `$${(marketCap / 1_000_000).toFixed(2)}M`;
+                        } else {
+                            td.textContent = `$${marketCap.toLocaleString()}`;
+                        }
+                    } else {
+                        td.textContent = 'N/A';
+                    }
+                    break;
+                }
+                case 'priceChangePercentage24h': {
+                    const priceChange = value as number | null;
+                    if (priceChange !== null) {
+                        td.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
+                        td.className = priceChange >= 0 ? 'text-success' : 'text-danger';
+                    } else {
+                        td.textContent = 'N/A';
+                    }
+                    break;
+                }
                 default:
-                    td.textContent = value?.toString() ?? '';
+                    td.textContent = value?.toString() ?? 'N/A';
             }
 
             rowNew.appendChild(td);

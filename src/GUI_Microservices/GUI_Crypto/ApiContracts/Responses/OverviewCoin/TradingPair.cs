@@ -10,7 +10,7 @@ public class TradingPair
     /// <summary>
     /// Unique identifier for the trading pair.
     /// </summary>
-    public int Id { get; set; }
+    public required int Id { get; set; }
 
     /// <summary>
     /// The data of the quote coin in the trading pair.

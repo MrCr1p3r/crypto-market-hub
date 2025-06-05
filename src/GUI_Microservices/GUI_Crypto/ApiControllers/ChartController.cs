@@ -52,7 +52,7 @@ public class ChartController(IChartService chartService, ICryptoViewModelFactory
     /// <response code="500">Internal server error occured while fetching kline data.</response>
     [HttpPost("klines/query")]
     [Consumes("application/json")]
-    [ProducesResponseType(typeof(IEnumerable<KlineData>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<Kline>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetKlineData([FromBody] KlineDataRequest request)

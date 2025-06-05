@@ -384,7 +384,7 @@ public class ChartServiceTests
             };
 
         // Expected mapped API responses
-        public static readonly KlineData ExpectedFirstKlineData = new()
+        public static readonly Kline ExpectedFirstKlineData = new()
         {
             OpenTime = 1640995200000,
             OpenPrice = 46000.50m,
@@ -395,7 +395,7 @@ public class ChartServiceTests
             CloseTime = 1640998800000,
         };
 
-        public static readonly KlineData ExpectedSecondKlineData = new()
+        public static readonly Kline ExpectedSecondKlineData = new()
         {
             OpenTime = 1640998800000,
             OpenPrice = 46800.00m,

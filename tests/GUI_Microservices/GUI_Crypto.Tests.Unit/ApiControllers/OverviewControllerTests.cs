@@ -495,38 +495,50 @@ public class OverviewControllerTests : IDisposable
                 Id = 1,
                 Symbol = "BTC",
                 Name = "Bitcoin",
-                IsStablecoin = false,
-                TradingPair = new()
+                Category = null,
+                MarketCapUsd = 1_200_000_000_000,
+                PriceUsd = "50000.00",
+                PriceChangePercentage24h = 3.5m,
+                KlineData = new()
                 {
-                    Id = 101,
-                    CoinQuote = new()
+                    TradingPair = new()
                     {
-                        Id = 5,
-                        Symbol = "USDT",
-                        Name = "Tether",
+                        Id = 101,
+                        CoinQuote = new()
+                        {
+                            Id = 5,
+                            Symbol = "USDT",
+                            Name = "Tether",
+                        },
+                        Exchanges = [Exchange.Binance],
                     },
-                    Exchanges = [Exchange.Binance],
+                    Klines = [],
                 },
-                KlineData = [],
             },
             new OverviewCoin
             {
                 Id = 2,
                 Symbol = "ETH",
                 Name = "Ethereum",
-                IsStablecoin = false,
-                TradingPair = new()
+                Category = null,
+                MarketCapUsd = 400_000_000_000,
+                PriceUsd = "3000.00",
+                PriceChangePercentage24h = -1.2m,
+                KlineData = new()
                 {
-                    Id = 102,
-                    CoinQuote = new()
+                    TradingPair = new()
                     {
-                        Id = 5,
-                        Symbol = "USDT",
-                        Name = "Tether",
+                        Id = 102,
+                        CoinQuote = new()
+                        {
+                            Id = 5,
+                            Symbol = "USDT",
+                            Name = "Tether",
+                        },
+                        Exchanges = [Exchange.Binance, Exchange.Bybit],
                     },
-                    Exchanges = [Exchange.Binance, Exchange.Bybit],
+                    Klines = [],
                 },
-                KlineData = [],
             },
         ];
 
@@ -594,18 +606,22 @@ public class OverviewControllerTests : IDisposable
                 Id = 3,
                 Symbol = "ADA",
                 Name = "Cardano",
-                IsStablecoin = false,
-                TradingPair = null,
-                KlineData = [],
+                Category = null,
+                MarketCapUsd = 15_000_000_000,
+                PriceUsd = "0.45",
+                PriceChangePercentage24h = 5.2m,
+                KlineData = null,
             },
             new OverviewCoin
             {
                 Id = 4,
                 Symbol = "DOT",
                 Name = "Polkadot",
-                IsStablecoin = false,
-                TradingPair = null,
-                KlineData = [],
+                Category = null,
+                MarketCapUsd = 8_000_000_000,
+                PriceUsd = "7.50",
+                PriceChangePercentage24h = -2.1m,
+                KlineData = null,
             },
         ];
     }

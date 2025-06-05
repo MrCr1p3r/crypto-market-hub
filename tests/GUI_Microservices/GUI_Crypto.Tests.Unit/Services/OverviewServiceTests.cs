@@ -57,16 +57,24 @@ public class OverviewServiceTests
         overviewCoins[0].Id.Should().Be(1);
         overviewCoins[0].Symbol.Should().Be("BTC");
         overviewCoins[0].Name.Should().Be("Bitcoin");
-        overviewCoins[0].IsStablecoin.Should().BeFalse();
-        overviewCoins[0].TradingPair.Should().NotBeNull();
-        overviewCoins[0].KlineData.Should().HaveCount(2);
+        overviewCoins[0].Category.Should().BeNull();
+        overviewCoins[0].MarketCapUsd.Should().Be(1_200_000_000_000);
+        overviewCoins[0].PriceUsd.Should().Be("50000.00");
+        overviewCoins[0].PriceChangePercentage24h.Should().Be(3.5m);
+        overviewCoins[0].KlineData.Should().NotBeNull();
+        overviewCoins[0].KlineData!.TradingPair.Should().NotBeNull();
+        overviewCoins[0].KlineData!.Klines.Should().HaveCount(2);
 
         overviewCoins[1].Id.Should().Be(2);
         overviewCoins[1].Symbol.Should().Be("ETH");
         overviewCoins[1].Name.Should().Be("Ethereum");
-        overviewCoins[1].IsStablecoin.Should().BeFalse();
-        overviewCoins[1].TradingPair.Should().NotBeNull();
-        overviewCoins[1].KlineData.Should().HaveCount(2);
+        overviewCoins[1].Category.Should().BeNull();
+        overviewCoins[1].MarketCapUsd.Should().Be(400_000_000_000);
+        overviewCoins[1].PriceUsd.Should().Be("3000.00");
+        overviewCoins[1].PriceChangePercentage24h.Should().Be(-1.2m);
+        overviewCoins[1].KlineData.Should().NotBeNull();
+        overviewCoins[1].KlineData!.TradingPair.Should().NotBeNull();
+        overviewCoins[1].KlineData!.Klines.Should().HaveCount(2);
 
         // Verify client calls
         _mockCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
@@ -145,10 +153,8 @@ public class OverviewServiceTests
         result.Value.Should().HaveCount(2);
 
         var overviewCoins = result.Value.ToList();
-        overviewCoins[0].KlineData.Should().BeEmpty();
-        overviewCoins[1].KlineData.Should().BeEmpty();
-        overviewCoins[0].TradingPair.Should().BeNull();
-        overviewCoins[1].TradingPair.Should().BeNull();
+        overviewCoins[0].KlineData.Should().BeNull();
+        overviewCoins[1].KlineData.Should().BeNull();
     }
 
     [Fact]
@@ -174,8 +180,9 @@ public class OverviewServiceTests
         overviewCoin.Id.Should().Be(1);
         overviewCoin.Symbol.Should().Be("BTC");
         overviewCoin.Name.Should().Be("Bitcoin");
-        overviewCoin.TradingPair.Should().NotBeNull();
-        overviewCoin.KlineData.Should().HaveCount(2);
+        overviewCoin.KlineData.Should().NotBeNull();
+        overviewCoin.KlineData!.TradingPair.Should().NotBeNull();
+        overviewCoin.KlineData!.Klines.Should().HaveCount(2);
 
         _mockCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
         _mockKlineClient.Verify(client => client.GetAllKlineData(), Times.Once);
@@ -490,6 +497,9 @@ public class OverviewServiceTests
                 Symbol = "BTC",
                 Name = "Bitcoin",
                 Category = null,
+                MarketCapUsd = 1_200_000_000_000,
+                PriceUsd = "50000.00",
+                PriceChangePercentage24h = 3.5m,
                 IdCoinGecko = "bitcoin",
                 TradingPairs =
                 [
@@ -512,6 +522,9 @@ public class OverviewServiceTests
                 Symbol = "ETH",
                 Name = "Ethereum",
                 Category = null,
+                MarketCapUsd = 400_000_000_000,
+                PriceUsd = "3000.00",
+                PriceChangePercentage24h = -1.2m,
                 IdCoinGecko = "ethereum",
                 TradingPairs =
                 [
@@ -742,6 +755,9 @@ public class OverviewServiceTests
                 Symbol = "BTC",
                 Name = "Bitcoin",
                 Category = null, // Regular cryptocurrency
+                MarketCapUsd = 1_200_000_000_000,
+                PriceUsd = "50000.00",
+                PriceChangePercentage24h = 3.5m,
                 TradingPairs =
                 [
                     new SvcCoins.Responses.TradingPair
@@ -763,6 +779,9 @@ public class OverviewServiceTests
                 Symbol = "ETH",
                 Name = "Ethereum",
                 Category = null, // Regular cryptocurrency
+                MarketCapUsd = 400_000_000_000,
+                PriceUsd = "3000.00",
+                PriceChangePercentage24h = -1.2m,
                 TradingPairs =
                 [
                     new SvcCoins.Responses.TradingPair
@@ -784,6 +803,9 @@ public class OverviewServiceTests
                 Symbol = "USDT",
                 Name = "Tether",
                 Category = CoinCategory.Stablecoin,
+                MarketCapUsd = 90_000_000_000,
+                PriceUsd = "1.00",
+                PriceChangePercentage24h = 0.1m,
                 TradingPairs = [],
             },
         ];
@@ -876,6 +898,9 @@ public class OverviewServiceTests
                 Symbol = "ADA",
                 Name = "Cardano",
                 Category = null,
+                MarketCapUsd = 15_000_000_000,
+                PriceUsd = "0.45",
+                PriceChangePercentage24h = 5.2m,
                 TradingPairs = [],
             },
             new SvcCoins.Responses.Coin
@@ -884,6 +909,9 @@ public class OverviewServiceTests
                 Symbol = "DOT",
                 Name = "Polkadot",
                 Category = null,
+                MarketCapUsd = 8_000_000_000,
+                PriceUsd = "7.50",
+                PriceChangePercentage24h = -2.1m,
                 TradingPairs = [],
             },
         ];
@@ -958,6 +986,9 @@ public class OverviewServiceTests
                 Symbol = "BTC",
                 Name = "Bitcoin",
                 Category = null,
+                MarketCapUsd = 1_200_000_000_000,
+                PriceUsd = "50000.00",
+                PriceChangePercentage24h = 3.5m,
                 TradingPairs =
                 [
                     new SvcCoins.Responses.TradingPair
@@ -979,6 +1010,9 @@ public class OverviewServiceTests
                 Symbol = "ETH",
                 Name = "Ethereum",
                 Category = null,
+                MarketCapUsd = 400_000_000_000,
+                PriceUsd = "3000.00",
+                PriceChangePercentage24h = -1.2m,
                 TradingPairs = [],
             },
         ];

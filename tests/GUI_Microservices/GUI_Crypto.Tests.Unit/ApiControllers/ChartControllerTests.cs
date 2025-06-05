@@ -200,7 +200,7 @@ public class ChartControllerTests : IDisposable
     {
         // Arrange
         var request = TestData.BasicKlineDataRequest;
-        var emptyKlineData = Enumerable.Empty<KlineData>();
+        var emptyKlineData = Enumerable.Empty<Kline>();
 
         _mockChartService
             .Setup(service => service.GetKlineData(It.IsAny<KlineDataRequest>()))
@@ -214,7 +214,7 @@ public class ChartControllerTests : IDisposable
             .Should()
             .BeOfType<OkObjectResult>()
             .Which.Value.Should()
-            .BeEquivalentTo(Array.Empty<KlineData>());
+            .BeEquivalentTo(Array.Empty<Kline>());
 
         _mockChartService.Verify(
             service => service.GetKlineData(Its.EquivalentTo(request)),
@@ -231,7 +231,7 @@ public class ChartControllerTests : IDisposable
 
         _mockChartService
             .Setup(service => service.GetKlineData(It.IsAny<KlineDataRequest>()))
-            .ReturnsAsync(Result.Fail<IEnumerable<KlineData>>(serviceError));
+            .ReturnsAsync(Result.Fail<IEnumerable<Kline>>(serviceError));
 
         // Act
         var result = await _testedController.GetKlineData(request);
@@ -263,7 +263,7 @@ public class ChartControllerTests : IDisposable
 
         _mockChartService
             .Setup(service => service.GetKlineData(It.IsAny<KlineDataRequest>()))
-            .ReturnsAsync(Result.Fail<IEnumerable<KlineData>>(validationError));
+            .ReturnsAsync(Result.Fail<IEnumerable<Kline>>(validationError));
 
         // Act
         var result = await _testedController.GetKlineData(request);
@@ -290,7 +290,7 @@ public class ChartControllerTests : IDisposable
 
         _mockChartService
             .Setup(service => service.GetKlineData(It.IsAny<KlineDataRequest>()))
-            .ReturnsAsync(Result.Fail<IEnumerable<KlineData>>(notFoundError));
+            .ReturnsAsync(Result.Fail<IEnumerable<Kline>>(notFoundError));
 
         // Act
         var result = await _testedController.GetKlineData(request);
@@ -436,9 +436,9 @@ public class ChartControllerTests : IDisposable
             },
         };
 
-        public static readonly IEnumerable<KlineData> BitcoinKlineData =
+        public static readonly IEnumerable<Kline> BitcoinKlineData =
         [
-            new KlineData
+            new Kline
             {
                 OpenTime = 1640995200000,
                 OpenPrice = 46000.50m,
@@ -448,7 +448,7 @@ public class ChartControllerTests : IDisposable
                 Volume = 123.456m,
                 CloseTime = 1640998800000,
             },
-            new KlineData
+            new Kline
             {
                 OpenTime = 1640998800000,
                 OpenPrice = 46800.00m,

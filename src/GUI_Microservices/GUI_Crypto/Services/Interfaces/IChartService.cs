@@ -28,5 +28,5 @@ public interface IChartService
     /// Success: Successfully fetched Kline data.
     /// Failure: An error that occurred during data retrieval.
     /// </returns>
-    Task<Result<IEnumerable<KlineData>>> GetKlineData(KlineDataRequest request);
+    Task<Result<IEnumerable<Kline>>> GetKlineData(KlineDataRequest request);
 }

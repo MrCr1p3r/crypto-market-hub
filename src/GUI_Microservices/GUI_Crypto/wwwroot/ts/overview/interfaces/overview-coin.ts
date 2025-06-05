@@ -1,19 +1,24 @@
-import { KlineData } from './kline-data';
+import { Kline } from './kline';
 import { Exchange } from './shared/exchange';
 
 export interface OverviewCoin {
     id: number;
     symbol: string;
     name: string;
-    isStablecoin: boolean;
-    klineData: KlineData[];
-    tradingPair: {
-        id: number;
-        coinQuote: {
+    category: number | null;
+    marketCapUsd: number | null;
+    priceUsd: string | null;
+    priceChangePercentage24h: number | null;
+    klineData: {
+        tradingPair: {
             id: number;
-            symbol: string;
-            name: string;
+            coinQuote: {
+                id: number;
+                symbol: string;
+                name: string;
+            };
+            exchanges: Exchange[];
         };
-        exchanges: Exchange[];
+        klines: Kline[];
     } | null;
 }

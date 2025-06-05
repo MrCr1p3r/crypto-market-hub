@@ -3,11 +3,6 @@ import { CandidateCoin } from './interfaces/candidate-coin';
 import { CoinCreationRequest } from './interfaces/coin-creation-request';
 import { KlineDataRequest } from './interfaces/kline-data-request';
 
-// @ts-ignore - Ignore type errors for browser APIs
-declare const fetch: any;
-// @ts-ignore - Ignore type errors for browser APIs
-declare const window: any;
-
 export async function fetchCoins(): Promise<OverviewCoin[]> {
     const response = await fetch('/coins');
     if (!response.ok) throw { status: response.status };
@@ -54,24 +49,26 @@ export async function resetDatabase(): Promise<boolean> {
 }
 
 export async function openChart(coin: OverviewCoin): Promise<void> {
-    if (!coin.tradingPair) {
+    const tradingPair = coin.klineData?.tradingPair;
+
+    if (!tradingPair) {
         throw new Error('No trading pair available for this coin');
     }
 
     // Create the request object
     const request: KlineDataRequest = {
-        idTradingPair: coin.tradingPair.id,
+        idTradingPair: tradingPair.id,
         coinMain: {
             id: coin.id,
             symbol: coin.symbol,
             name: coin.name,
         },
         coinQuote: {
-            id: coin.tradingPair.coinQuote.id,
-            symbol: coin.tradingPair.coinQuote.symbol,
-            name: coin.tradingPair.coinQuote.name,
+            id: tradingPair.coinQuote.id,
+            symbol: tradingPair.coinQuote.symbol,
+            name: tradingPair.coinQuote.name,
         },
-        exchanges: coin.tradingPair.exchanges,
+        exchanges: tradingPair.exchanges,
     };
 
     // Send POST request to chart endpoint

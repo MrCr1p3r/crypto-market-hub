@@ -112,7 +112,7 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<KlineData>>();
+        var result = await response.Content.ReadFromJsonAsync<List<Kline>>();
 
         result.Should().NotBeNull();
         result!.Should().HaveCount(2);
@@ -153,7 +153,7 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<KlineData>>();
+        var result = await response.Content.ReadFromJsonAsync<List<Kline>>();
 
         result.Should().NotBeNull();
         result!.Should().BeEmpty();
@@ -191,7 +191,7 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var result = await response.Content.ReadFromJsonAsync<List<KlineData>>();
+        var result = await response.Content.ReadFromJsonAsync<List<Kline>>();
 
         result.Should().NotBeNull();
         result!.Should().HaveCount(1);

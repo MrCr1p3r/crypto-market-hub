@@ -7,7 +7,6 @@ using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.MicroserviceClients.SvcKline;
 using GUI_Crypto.Services.Interfaces;
-using SharedLibrary.Enums;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 
@@ -126,27 +125,28 @@ public class OverviewService(
                 allKlineData.Any(kline => kline.IdTradingPair == tradingPair.Id)
             );
 
-            var coinKlineData = new List<KlineData>();
+            KlineData? klineData = null;
 
             if (currentTradingPair != null)
             {
-                coinKlineData =
-                [
-                    .. allKlineData
-                        .Where(kline => kline.IdTradingPair == currentTradingPair.Id)
-                        .SelectMany(klineResponse =>
-                            klineResponse.KlineData.Select(kline => new KlineData
-                            {
-                                OpenTime = kline.OpenTime,
-                                OpenPrice = kline.OpenPrice,
-                                HighPrice = kline.HighPrice,
-                                LowPrice = kline.LowPrice,
-                                ClosePrice = kline.ClosePrice,
-                                Volume = kline.Volume,
-                                CloseTime = kline.CloseTime,
-                            })
-                        ),
-                ];
+                var klines = allKlineData
+                    .First(response => response.IdTradingPair == currentTradingPair.Id)
+                    .KlineData.Select(kline => new Kline
+                    {
+                        OpenTime = kline.OpenTime,
+                        OpenPrice = kline.OpenPrice,
+                        HighPrice = kline.HighPrice,
+                        LowPrice = kline.LowPrice,
+                        ClosePrice = kline.ClosePrice,
+                        Volume = kline.Volume,
+                        CloseTime = kline.CloseTime,
+                    });
+
+                klineData = new KlineData
+                {
+                    TradingPair = ToTradingPair(currentTradingPair),
+                    Klines = klines,
+                };
             }
 
             return new OverviewCoin
@@ -154,9 +154,11 @@ public class OverviewService(
                 Id = coin.Id,
                 Symbol = coin.Symbol,
                 Name = coin.Name,
-                IsStablecoin = coin.Category == CoinCategory.Stablecoin,
-                TradingPair = currentTradingPair != null ? ToTradingPair(currentTradingPair) : null,
-                KlineData = coinKlineData,
+                Category = coin.Category,
+                MarketCapUsd = coin.MarketCapUsd,
+                PriceUsd = coin.PriceUsd,
+                PriceChangePercentage24h = coin.PriceChangePercentage24h,
+                KlineData = klineData,
             };
         }
 
@@ -276,7 +278,10 @@ public class OverviewService(
                 Id = coin.Id,
                 Symbol = coin.Symbol,
                 Name = coin.Name,
-                IsStablecoin = coin.Category == CoinCategory.Stablecoin,
+                Category = coin.Category,
+                MarketCapUsd = coin.MarketCapUsd,
+                PriceUsd = coin.PriceUsd,
+                PriceChangePercentage24h = coin.PriceChangePercentage24h,
             };
     }
 }
