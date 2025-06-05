@@ -12,7 +12,6 @@ public static class FakeLoggerExtensions
     /// <summary>
     /// Verifies that a log entry with the specified log level and containing the specified message was recorded.
     /// </summary>
-    /// <typeparam name="T">The type of the logger.</typeparam>
     /// <param name="fakeLogger">The fake logger to verify.</param>
     /// <param name="logLevel">The expected log level.</param>
     /// <param name="message">The message substring expected to be in the log entry.</param>

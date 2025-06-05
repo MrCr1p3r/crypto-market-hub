@@ -29,6 +29,7 @@ public static class ExternalHttpResponseExtensions
     /// </summary>
     /// <param name="response">The HTTP response message.</param>
     /// <param name="failureMessage">A context-specific message describing the operation that failed.</param>
+    /// <param name="maxContentLength">The maximum length of the response content to include in the error metadata.</param>
     /// <returns>A FluentResults error appropriate for the HTTP status code.</returns>
     private static async Task<Error> ToErrorAsync(
         this HttpResponseMessage response,

@@ -5,6 +5,13 @@ namespace SharedLibrary.Enums;
 /// </summary>
 public enum CoinCategory
 {
-    Stablecoin,
-    Fiat,
+    /// <summary>
+    /// Stablecoin category.
+    /// </summary>
+    Stablecoin = 1,
+
+    /// <summary>
+    /// Fiat category.
+    /// </summary>
+    Fiat = 2,
 }

@@ -30,7 +30,7 @@ public class GlobalExceptionHandler(
         CancellationToken cancellationToken
     )
     {
-        _logger.LogError(exception, "An unhandled exception occurred.");
+        LogUnhandledException(_logger, exception);
 
         var statusCode = exception switch
         {
@@ -78,4 +78,10 @@ public class GlobalExceptionHandler(
 
         return true;
     }
+
+    private static readonly Action<ILogger, Exception> LogUnhandledException = LoggerMessage.Define(
+        LogLevel.Error,
+        new EventId(1, nameof(LogUnhandledException)),
+        "An unhandled exception occurred."
+    );
 }
