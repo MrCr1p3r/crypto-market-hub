@@ -24,13 +24,13 @@ public class MarketDataProvidersController(ICoinGeckoService coinGeckoService) :
     /// <response code="200">Returns the collection of coin asset information.</response>
     /// <response code="400">If no CoinGecko IDs are provided.</response>
     /// <response code="500">If something went wrong during assets info retrievement.</response>
-    [HttpGet("coingecko/assets-info")]
+    [HttpPost("coingecko/assets-info/query")]
     [Produces("application/json")]
     [ProducesResponseType(typeof(IEnumerable<CoinGeckoAssetInfo>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetCoinGeckoAssetsInfo(
-        [FromQuery] IEnumerable<string> coinGeckoIds
+        [FromBody] IEnumerable<string> coinGeckoIds
     )
     {
         var response = coinGeckoIds.Any()

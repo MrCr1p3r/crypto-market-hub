@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using SharedLibrary.Extensions.Testing;
 using SVC_Bridge.ApiContracts.Responses;
 using SVC_Bridge.Tests.Integration.Factories;
 using WireMock.Admin.Mappings;
@@ -278,9 +277,8 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
                 {
                     Request = new RequestModel
                     {
-                        Methods = ["GET"],
-                        Path = "/market-data-providers/coingecko/assets-info",
-                        Params = [WireMockParamBuilder.WithNotNullOrEmptyMatch("coinGeckoIds")],
+                        Methods = ["POST"],
+                        Path = "/market-data-providers/coingecko/assets-info/query",
                     },
                     Response = new ResponseModel
                     {
@@ -298,9 +296,8 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
                 {
                     Request = new RequestModel
                     {
-                        Methods = ["GET"],
-                        Path = "/market-data-providers/coingecko/assets-info",
-                        Params = [WireMockParamBuilder.WithNotNullOrEmptyMatch("coinGeckoIds")],
+                        Methods = ["POST"],
+                        Path = "/market-data-providers/coingecko/assets-info/query",
                     },
                     Response = new ResponseModel
                     {
@@ -318,9 +315,8 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
                 {
                     Request = new RequestModel
                     {
-                        Methods = ["GET"],
-                        Path = "/market-data-providers/coingecko/assets-info",
-                        Params = [WireMockParamBuilder.WithNotNullOrEmptyMatch("coinGeckoIds")],
+                        Methods = ["POST"],
+                        Path = "/market-data-providers/coingecko/assets-info/query",
                     },
                     Response = new ResponseModel
                     {
@@ -338,8 +334,8 @@ public class CoinsControllerTests(CustomWebApplicationFactory factory)
                 {
                     Request = new RequestModel
                     {
-                        Methods = ["GET"],
-                        Path = "/market-data-providers/coingecko/assets-info",
+                        Methods = ["POST"],
+                        Path = "/market-data-providers/coingecko/assets-info/query",
                     },
                     Response = new ResponseModel
                     {

@@ -22,9 +22,9 @@ public class MarketDataProvidersControllerTests(CustomWebApplicationFactory fact
         );
 
         // Act
-        var queryParams = string.Join("&", coinIds.Select(id => $"coinGeckoIds={id}"));
-        var response = await Client.GetAsync(
-            $"/market-data-providers/coingecko/assets-info?{queryParams}"
+        var response = await Client.PostAsJsonAsync(
+            "/market-data-providers/coingecko/assets-info/query",
+            coinIds
         );
 
         // Assert
@@ -66,11 +66,11 @@ public class MarketDataProvidersControllerTests(CustomWebApplicationFactory fact
         );
 
         var ids = new List<string> { "unknown-coin-id", "unknown-coin-id-2" };
-        var idsQueryParam = string.Join("&", ids.Select(id => $"coinGeckoIds={id}"));
 
         // Act
-        var response = await Client.GetAsync(
-            $"/market-data-providers/coingecko/assets-info?{idsQueryParam}"
+        var response = await Client.PostAsJsonAsync(
+            "/market-data-providers/coingecko/assets-info/query",
+            ids
         );
 
         // Assert
@@ -81,7 +81,10 @@ public class MarketDataProvidersControllerTests(CustomWebApplicationFactory fact
     public async Task GetCoinGeckoAssetsInfo_WithNoIds_ShouldReturnBadRequest()
     {
         // Act
-        var response = await Client.GetAsync("/market-data-providers/coingecko/assets-info");
+        var response = await Client.PostAsJsonAsync(
+            "/market-data-providers/coingecko/assets-info/query",
+            new List<string>()
+        );
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);

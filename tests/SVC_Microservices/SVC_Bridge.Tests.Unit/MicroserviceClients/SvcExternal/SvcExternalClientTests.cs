@@ -45,7 +45,7 @@ public class SvcExternalClientTests
         var expectedAssets = _fixture.CreateMany<CoinGeckoAssetInfo>();
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, url => true)
+            .SetupRequest(HttpMethod.Post, url => true)
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedAssets);
 
         // Act
@@ -53,11 +53,11 @@ public class SvcExternalClientTests
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
-            HttpMethod.Get,
+            HttpMethod.Post,
             request =>
                 request
                     .RequestUri!.ToString()
-                    .Contains("market-data-providers/coingecko/assets-info")
+                    .Contains("market-data-providers/coingecko/assets-info/query")
         );
     }
 
@@ -69,7 +69,7 @@ public class SvcExternalClientTests
         var expectedAssets = _fixture.CreateMany<CoinGeckoAssetInfo>();
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, url => true)
+            .SetupRequest(HttpMethod.Post, url => true)
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedAssets);
 
         // Act
@@ -87,7 +87,7 @@ public class SvcExternalClientTests
         var coinGeckoIds = new[] { "unknown-coin" };
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, url => true)
+            .SetupRequest(HttpMethod.Post, url => true)
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<CoinGeckoAssetInfo>());
 
         // Act
@@ -105,7 +105,7 @@ public class SvcExternalClientTests
         var coinGeckoIds = Array.Empty<string>();
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, url => true)
+            .SetupRequest(HttpMethod.Post, url => true)
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<CoinGeckoAssetInfo>());
 
         // Act
@@ -113,8 +113,8 @@ public class SvcExternalClientTests
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
-            HttpMethod.Get,
-            "https://example.com/market-data-providers/coingecko/assets-info?"
+            HttpMethod.Post,
+            "https://example.com/market-data-providers/coingecko/assets-info/query"
         );
     }
 
@@ -125,7 +125,7 @@ public class SvcExternalClientTests
         var coinGeckoIds = new[] { "bitcoin" };
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, url => true)
+            .SetupRequest(HttpMethod.Post, url => true)
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<CoinGeckoAssetInfo>());
 
         // Act
@@ -133,11 +133,11 @@ public class SvcExternalClientTests
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
-            HttpMethod.Get,
+            HttpMethod.Post,
             request =>
                 request
                     .RequestUri!.ToString()
-                    .Contains("market-data-providers/coingecko/assets-info")
+                    .Contains("market-data-providers/coingecko/assets-info/query")
         );
     }
 
@@ -152,11 +152,11 @@ public class SvcExternalClientTests
             Title = "Bad Request",
             Status = 400,
             Detail = "CoinGecko IDs must be provided.",
-            Instance = "/market-data-providers/coingecko/assets-info",
+            Instance = "/market-data-providers/coingecko/assets-info/query",
         };
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, _ => true)
+            .SetupRequest(HttpMethod.Post, _ => true)
             .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
 
         // Act
@@ -179,11 +179,11 @@ public class SvcExternalClientTests
             Title = "Internal Server Error",
             Status = 500,
             Detail = "An error occurred while processing the request.",
-            Instance = "/market-data-providers/coingecko/assets-info",
+            Instance = "/market-data-providers/coingecko/assets-info/query",
         };
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, _ => true)
+            .SetupRequest(HttpMethod.Post, _ => true)
             .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
 
         // Act
@@ -207,7 +207,7 @@ public class SvcExternalClientTests
         };
 
         _httpMessageHandlerMock
-            .SetupRequest(HttpMethod.Get, url => true)
+            .SetupRequest(HttpMethod.Post, url => true)
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<CoinGeckoAssetInfo>());
 
         // Act
@@ -215,11 +215,11 @@ public class SvcExternalClientTests
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
-            HttpMethod.Get,
+            HttpMethod.Post,
             request =>
                 request
                     .RequestUri!.ToString()
-                    .Contains("market-data-providers/coingecko/assets-info")
+                    .Contains("market-data-providers/coingecko/assets-info/query")
         );
     }
 

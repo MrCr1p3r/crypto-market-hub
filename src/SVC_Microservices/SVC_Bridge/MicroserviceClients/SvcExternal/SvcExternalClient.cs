@@ -22,9 +22,12 @@ public class SvcExternalClient(
         IEnumerable<string> coinGeckoIds
     )
     {
-        var queryString = string.Join("&", coinGeckoIds.Select(id => $"coinGeckoIds={id}"));
-        return await _httpClient.GetFromJsonSafeAsync<IEnumerable<CoinGeckoAssetInfo>>(
-            $"market-data-providers/coingecko/assets-info?{queryString}",
+        return await _httpClient.PostAsJsonSafeAsync<
+            IEnumerable<string>,
+            IEnumerable<CoinGeckoAssetInfo>
+        >(
+            "market-data-providers/coingecko/assets-info/query",
+            coinGeckoIds,
             logger,
             "Failed to retrieve CoinGecko assets info."
         );
