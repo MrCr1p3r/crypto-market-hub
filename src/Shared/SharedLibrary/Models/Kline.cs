@@ -1,9 +1,9 @@
-namespace SVC_Scheduler.MicroserviceClients.SvcBridge.Responses.KlineData;
+namespace SharedLibrary.Models;
 
 /// <summary>
 /// Represents Kline (candlestick) data for a trading pair.
 /// </summary>
-public class KlineData
+public class Kline
 {
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.

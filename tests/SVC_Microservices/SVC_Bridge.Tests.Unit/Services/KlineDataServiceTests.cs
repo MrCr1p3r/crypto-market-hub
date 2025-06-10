@@ -63,10 +63,10 @@ public class KlineDataServiceTests
         var klineDataList = result.Value.ToList();
 
         klineDataList[0].IdTradingPair.Should().Be(tradingPairId1);
-        klineDataList[0].KlineData.Should().HaveCount(2);
+        klineDataList[0].Klines.Should().HaveCount(2);
 
         klineDataList[1].IdTradingPair.Should().Be(tradingPairId2);
-        klineDataList[1].KlineData.Should().HaveCount(2);
+        klineDataList[1].Klines.Should().HaveCount(2);
 
         // Verify client calls
         _mockSvcCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);

@@ -39,14 +39,14 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
         var secondTradingPairData = result!.FirstOrDefault(data => data.IdTradingPair == 2);
 
         firstTradingPairData.Should().NotBeNull();
-        firstTradingPairData!.KlineData.Should().HaveCount(2);
-        firstTradingPairData.KlineData.First().OpenPrice.Should().Be(47000m);
-        firstTradingPairData.KlineData.First().ClosePrice.Should().Be(47500m);
+        firstTradingPairData!.Klines.Should().HaveCount(2);
+        firstTradingPairData.Klines.First().OpenPrice.Should().Be(47000m);
+        firstTradingPairData.Klines.First().ClosePrice.Should().Be(47500m);
 
         secondTradingPairData.Should().NotBeNull();
-        secondTradingPairData!.KlineData.Should().HaveCount(2);
-        secondTradingPairData.KlineData.First().OpenPrice.Should().Be(3700m);
-        secondTradingPairData.KlineData.First().ClosePrice.Should().Be(3750m);
+        secondTradingPairData!.Klines.Should().HaveCount(2);
+        secondTradingPairData.Klines.First().OpenPrice.Should().Be(3700m);
+        secondTradingPairData.Klines.First().ClosePrice.Should().Be(3750m);
     }
 
     [Fact]

@@ -1,5 +1,6 @@
 using FluentResults;
 using SharedLibrary.Enums;
+using SharedLibrary.Models;
 using SVC_Bridge.ApiContracts.Responses.KlineData;
 using SVC_Bridge.MicroserviceClients.SvcCoins;
 using SVC_Bridge.MicroserviceClients.SvcCoins.Contracts.Responses;
@@ -150,7 +151,7 @@ public class KlineDataService(
             svcKlineResponses.Select(response => new KlineDataResponse
             {
                 IdTradingPair = response.IdTradingPair,
-                KlineData = response.KlineData.Select(klineData => new KlineData
+                Klines = response.KlineData.Select(klineData => new Kline
                 {
                     OpenTime = klineData.OpenTime,
                     OpenPrice = klineData.OpenPrice,

@@ -104,7 +104,7 @@ public class KlineDataControllerTests
             new()
             {
                 IdTradingPair = 1,
-                KlineData =
+                Klines =
                 [
                     new()
                     {
@@ -131,7 +131,7 @@ public class KlineDataControllerTests
             new()
             {
                 IdTradingPair = 2,
-                KlineData =
+                Klines =
                 [
                     new()
                     {
@@ -158,7 +158,7 @@ public class KlineDataControllerTests
             new()
             {
                 IdTradingPair = 3,
-                KlineData =
+                Klines =
                 [
                     new()
                     {
