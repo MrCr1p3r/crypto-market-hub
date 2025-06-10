@@ -1,24 +1,22 @@
 import { ModalManager } from './modal-manager';
 import { getElement } from './utils/dom-utils';
+import { initializeOverviewRealtime } from './realtime-init';
+import { TableManager } from './table/table-manager';
 
 export class Overview {
-    private static instance: Overview | null;
     private readonly modalManager: ModalManager;
+    private readonly tableManager: TableManager;
 
     // DOM Elements
     private readonly massImportBtn = getElement('massImportBtn', HTMLButtonElement);
 
-    static {
-        Overview.instance = null;
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!Overview.instance) {
-                Overview.instance = new Overview();
-            }
-        });
-    }
+    constructor() {
+        // Initialize TableManager first so it can receive SignalR events
+        this.tableManager = new TableManager();
 
-    private constructor() {
-        this.modalManager = new ModalManager();
+        // Pass table manager to modal manager to avoid duplicate instances
+        this.modalManager = new ModalManager(this.tableManager);
+
         this.setupEventListeners();
     }
 
@@ -26,4 +24,22 @@ export class Overview {
         // Mass import modal events
         this.massImportBtn.addEventListener('click', () => this.modalManager.showMassImportModal());
     }
+
+    /**
+     * Initialize real-time functionality
+     */
+    public async initializeRealtime(): Promise<void> {
+        await initializeOverviewRealtime(this.tableManager);
+    }
 }
+
+// Initialize when DOM is ready
+let overviewInstance: Overview | null = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!overviewInstance) {
+        overviewInstance = new Overview();
+        // Initialize real-time connection after overview is ready
+        await overviewInstance.initializeRealtime();
+    }
+});

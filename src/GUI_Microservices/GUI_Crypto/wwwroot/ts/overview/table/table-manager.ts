@@ -13,10 +13,12 @@ import {
 } from '@tanstack/table-core';
 
 import { OverviewCoin } from '../interfaces/overview-coin';
+import { CoinMarketData } from '../interfaces/coin-market-data';
 import { columns } from './table-core';
-import { renderMiniCharts } from './mini-chart';
+import { destroyAllChartsForRerender, renderMiniCharts } from './mini-chart';
 import { fetchCoins, deleteCoin, openChart } from '../services';
 import { initializeToastr } from '../../configs/toastr-config';
+import { KlineDataUpdate } from 'realtime/interfaces/kline-signalr';
 
 export class TableManager {
     private readonly table: HTMLTableElement;
@@ -26,6 +28,7 @@ export class TableManager {
     private readonly btnConfirmDelete: HTMLButtonElement;
 
     private tableCore: Table<OverviewCoin>;
+    private currentCoins: OverviewCoin[] = [];
     private tableState: TableState = {
         sorting: [],
         columnFilters: [],
@@ -68,7 +71,7 @@ export class TableManager {
         this.deleteModal = new bootstrap.Modal(deleteModalElement!);
 
         const options: TableOptionsResolved<OverviewCoin> = {
-            data: [],
+            data: this.currentCoins,
             columns,
             getCoreRowModel: getCoreRowModel(),
             getSortedRowModel: getSortedRowModel(),
@@ -89,10 +92,10 @@ export class TableManager {
 
     private setupEventListeners(): void {
         this.searchInput.addEventListener('input', () => this.handleSearch());
-        this.thead.addEventListener('click', (event: any) => {
-            const header = event.target.closest('th.sortable');
+        this.thead.addEventListener('click', (event: MouseEvent) => {
+            const header = (event.target as HTMLElement)?.closest('th.sortable');
             if (!header) return;
-            this.handleSortingChange(header);
+            this.handleSortingChange(header as HTMLElement);
         });
         this.btnConfirmDelete.addEventListener('click', () => this.handleDeleteConfirmation());
     }
@@ -204,18 +207,24 @@ export class TableManager {
                 existingRowsMap.delete(coinId);
 
                 const currentPosition = currentPositions.get(coinId);
-                if (currentPosition === newIndex) return;
+                const needsRepositioning = currentPosition !== newIndex;
 
-                const nextSibling = this.tableBody.children[newIndex] || null;
-                if (nextSibling === rowNew) return;
-                this.tableBody.insertBefore(rowNew, nextSibling);
+                if (needsRepositioning) {
+                    const nextSibling = this.tableBody.children[newIndex] || null;
+                    if (nextSibling !== rowNew) {
+                        this.tableBody.insertBefore(rowNew, nextSibling);
+                    }
+                }
+
+                // Update existing row content with new data
+                this.updateExistingRowContent(row, rowNew);
             } else {
                 rowNew = document.createElement('tr');
                 rowNew.setAttribute('data-coin-id', coinId.toString());
 
                 const nextSibling = this.tableBody.children[newIndex] || null;
                 this.tableBody.insertBefore(rowNew, nextSibling);
-                this.updateRowContent(row, chartsToUpdate, rowNew);
+                this.updateNewRowContent(row, chartsToUpdate, rowNew);
             }
         });
 
@@ -247,7 +256,68 @@ export class TableManager {
         charts.forEach((chart) => observer.observe(chart));
     }
 
-    private updateRowContent(
+    private updateExistingRowContent(
+        row: Row<OverviewCoin>,
+        existingRow: HTMLTableRowElement
+    ): void {
+        // Update only the data-driven cells, not the chart or actions
+        const cells = existingRow.children;
+
+        this.tableCore.getAllColumns().forEach((column, index) => {
+            const td = cells[index] as HTMLTableCellElement;
+            if (!td) return;
+
+            const value = row.getValue(column.id);
+
+            switch (column.id) {
+                case 'chart':
+                case 'actions':
+                    // Skip chart and actions - they don't need real-time updates
+                    break;
+                case 'marketCapUsd': {
+                    const marketCap = value as number | null;
+                    if (marketCap) {
+                        if (marketCap >= 1_000_000_000) {
+                            td.textContent = `$${(marketCap / 1_000_000_000).toFixed(2)}B`;
+                        } else if (marketCap >= 1_000_000) {
+                            td.textContent = `$${(marketCap / 1_000_000).toFixed(2)}M`;
+                        } else {
+                            td.textContent = `$${marketCap.toLocaleString()}`;
+                        }
+                    } else {
+                        td.textContent = 'N/A';
+                    }
+                    break;
+                }
+                case 'price': {
+                    const price = row.original.priceUsd;
+                    if (price) {
+                        const priceNum = parseFloat(price);
+                        td.textContent = `$${priceNum.toFixed(priceNum < 1 ? 6 : 2)}`;
+                    } else {
+                        td.textContent = 'N/A';
+                    }
+                    break;
+                }
+                case 'priceChangePercentage24h': {
+                    const priceChange = value as number | null;
+                    if (priceChange !== null) {
+                        td.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
+                        td.className = priceChange >= 0 ? 'text-success' : 'text-danger';
+                    } else {
+                        td.textContent = 'N/A';
+                        td.className = '';
+                    }
+                    break;
+                }
+                default:
+                    // Update other text-based columns
+                    td.textContent = value?.toString() ?? 'N/A';
+            }
+        });
+    }
+
+    private updateNewRowContent(
         row: Row<OverviewCoin>,
         chartsToUpdate: Element[],
         rowNew: HTMLTableRowElement
@@ -269,6 +339,12 @@ export class TableManager {
                         'data-is-stablecoin',
                         (row.original.category === 1).toString() // 1 is Stablecoin enum value
                     );
+                    if (row.original.klineData?.tradingPair?.id) {
+                        chartDiv.setAttribute(
+                            'data-trading-pair-id',
+                            row.original.klineData.tradingPair.id.toString()
+                        );
+                    }
                     td.appendChild(chartDiv);
                     chartsToUpdate.push(chartDiv);
                     break;
@@ -301,6 +377,17 @@ export class TableManager {
                     }
                     break;
                 }
+                case 'price': {
+                    const price = row.original.priceUsd;
+                    td.className = 'price-cell';
+                    if (price) {
+                        const priceNum = parseFloat(price);
+                        td.textContent = `$${priceNum.toFixed(priceNum < 1 ? 6 : 2)}`;
+                    } else {
+                        td.textContent = 'N/A';
+                    }
+                    break;
+                }
                 case 'priceChangePercentage24h': {
                     const priceChange = value as number | null;
                     if (priceChange !== null) {
@@ -321,13 +408,121 @@ export class TableManager {
 
     public async refreshTableData(): Promise<void> {
         const coins = await fetchCoins();
+        this.currentCoins = coins;
         this.tableCore.setOptions((prev) => {
             return {
                 ...prev,
-                data: coins,
+                data: this.currentCoins,
             };
         });
         this.renderTable();
+    }
+
+    /**
+     * Bulk update multiple coins (for batch updates)
+     */
+    public updateCoinsMarketData(updates: CoinMarketData[]): void {
+        const updatedCoins: Array<{ coinId: number; isRise: boolean }> = [];
+        let hasAnyChanges = false;
+
+        // First, update all coin data without rendering
+        updates.forEach((marketData) => {
+            const coinIndex = this.currentCoins.findIndex((coin) => coin.id === marketData.id);
+            if (coinIndex === -1) {
+                return;
+            }
+
+            const originalCoin = this.currentCoins[coinIndex];
+            if (!originalCoin) {
+                console.error(`Coin at index ${coinIndex} is undefined`);
+                return;
+            }
+
+            // Create a copy with updates
+            const updatedCoin: OverviewCoin = { ...originalCoin };
+            let hasChanges = false;
+            let isRise: boolean | null = null;
+
+            // Update price if provided
+            if (marketData.priceUsd !== undefined && updatedCoin.priceUsd !== marketData.priceUsd) {
+                if (updatedCoin.priceUsd !== null) {
+                    isRise = marketData.priceUsd > updatedCoin.priceUsd;
+                }
+                updatedCoin.priceUsd = marketData.priceUsd;
+                hasChanges = true;
+            }
+
+            // Update market cap if provided
+            if (
+                marketData.marketCapUsd !== undefined &&
+                updatedCoin.marketCapUsd !== marketData.marketCapUsd
+            ) {
+                updatedCoin.marketCapUsd = marketData.marketCapUsd;
+                hasChanges = true;
+            }
+
+            // Update 24h change if provided
+            if (
+                marketData.priceChangePercentage24h !== undefined &&
+                updatedCoin.priceChangePercentage24h !== marketData.priceChangePercentage24h
+            ) {
+                updatedCoin.priceChangePercentage24h = marketData.priceChangePercentage24h;
+                hasChanges = true;
+            }
+
+            if (hasChanges) {
+                this.currentCoins[coinIndex] = updatedCoin;
+                hasAnyChanges = true;
+
+                if (isRise !== null) {
+                    updatedCoins.push({ coinId: marketData.id, isRise: isRise });
+                }
+            }
+        });
+
+        // Render table once if there were any changes
+        if (hasAnyChanges) {
+            this.tableCore.setOptions((prev) => ({
+                ...prev,
+                data: [...this.currentCoins],
+            }));
+            this.renderTable();
+
+            // Add visual indicators for all updated coins at once
+            updatedCoins.forEach(({ coinId, isRise }) => {
+                this.addUpdateIndicator(coinId, isRise);
+            });
+        }
+    }
+
+    /**
+     * Add visual update indicator to the price cell only
+     */
+    private addUpdateIndicator(coinId: number, isRise: boolean): void {
+        const row = this.tableBody.querySelector(
+            `tr[data-coin-id="${coinId}"]`
+        ) as HTMLTableRowElement;
+        if (!row) return;
+
+        // Find the price cell specifically
+        const priceCell = row.querySelector('.price-cell') as HTMLTableCellElement;
+        if (!priceCell) {
+            console.warn(`Price cell not found for coin ${coinId}`);
+            return;
+        }
+
+        const addedClass = isRise ? 'coin-price-rise' : 'coin-price-fall';
+        priceCell.classList.add(addedClass);
+
+        // Remove the class after animation completes
+        const onAnimEnd = (e: AnimationEvent): void => {
+            if (e.animationName === (isRise ? 'priceRiseFlash' : 'priceFallFlash')) {
+                priceCell.classList.remove(addedClass);
+                priceCell.removeEventListener('animationend', onAnimEnd);
+            }
+        };
+
+        priceCell.addEventListener('animationend', onAnimEnd);
     }
 
     private updateTableState(): void {
@@ -336,5 +531,43 @@ export class TableManager {
             state: this.tableState,
         }));
         this.renderTable();
+    }
+
+    /**
+     * Update kline data for multiple trading pairs and refresh charts
+     */
+    public updateKlineData(klineDataUpdates: KlineDataUpdate[]): void {
+        let hasAnyUpdates = false;
+
+        // Update kline data in current coins
+        klineDataUpdates.forEach((klineUpdate) => {
+            const coinWithTradingPair = this.currentCoins.find(
+                (coin) => coin.klineData?.tradingPair?.id === klineUpdate.idTradingPair
+            );
+
+            if (coinWithTradingPair && coinWithTradingPair.klineData) {
+                coinWithTradingPair.klineData.klines = klineUpdate.klines;
+                hasAnyUpdates = true;
+
+                // Update the data attribute in the DOM
+                const chartElement = document.querySelector(
+                    `[data-trading-pair-id="${klineUpdate.idTradingPair}"] .mini-chart`
+                ) as HTMLElement;
+                if (chartElement) {
+                    chartElement.setAttribute(
+                        'data-kline-data',
+                        JSON.stringify(klineUpdate.klines)
+                    );
+                }
+            }
+        });
+
+        // If any kline data was updated, refresh all charts
+        if (hasAnyUpdates) {
+            const elementsToReobserve = destroyAllChartsForRerender();
+            if (elementsToReobserve.length > 0) {
+                this.setupChartObservers(elementsToReobserve);
+            }
+        }
     }
 }

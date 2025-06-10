@@ -26,21 +26,22 @@ export class ModalManager {
     private readonly selectedCoinsContainer = getElement('selectedCoinsContainer', HTMLElement);
     private readonly selectedCount = getElement('selectedCount', HTMLElement);
     private readonly startImportBtn = getElement('startImportBtn', HTMLButtonElement);
-    private readonly importTypeRadios = document.getElementsByName(
-        'importType'
-    ) as NodeListOf<HTMLInputElement>;
+    private readonly importTypeRadios: HTMLInputElement[];
 
     private readonly coinSearch: CoinSearch;
-    private readonly tableManager = new TableManager();
+    private readonly tableManager: TableManager;
 
     private readonly fullPageOverlay = getElement('fullPageOverlay', HTMLElement);
     private readonly modalCloseBtn = getElement('massImportModalClose', HTMLButtonElement);
 
-    constructor() {
+    constructor(tableManager: TableManager) {
         this.massImportModal = new bootstrap.Modal(this.massImportModalElement);
+        this.importTypeRadios = Array.from(
+            document.getElementsByName('importType')
+        ) as HTMLInputElement[];
 
         this.coinSearch = new CoinSearch();
-        this.tableManager = new TableManager();
+        this.tableManager = tableManager;
 
         this.setupEventListeners();
         initializeToastr();
@@ -152,7 +153,7 @@ export class ModalManager {
                 removeBtn.type = 'button';
                 removeBtn.className = 'btn btn-sm btn-outline-danger';
                 removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                removeBtn.onclick = () => {
+                removeBtn.onclick = (): void => {
                     this.selectedCoins.delete(symbol);
                     this.updateSelectedCoinsDisplay();
                 };
@@ -174,7 +175,11 @@ export class ModalManager {
             Array.from(this.importTypeRadios).find((radio) => radio.checked)?.value === 'manual';
         this.autoImportSettings.classList.toggle('d-none', isManual);
         this.manualImportSettings.classList.toggle('d-none', !isManual);
-        this.startImportBtn.disabled = this.selectedCoins.size === 0;
+        if (isManual) {
+            this.startImportBtn.disabled = this.selectedCoins.size === 0;
+        } else {
+            this.startImportBtn.disabled = false;
+        }
 
         return isManual;
     }
@@ -194,7 +199,7 @@ export class ModalManager {
             await this.importCoins(isManual);
 
             this.massImportModal.hide();
-            this.tableManager.refreshTableData();
+            await this.tableManager.refreshTableData();
             toastr.success('Mass import completed successfully');
         } catch (error) {
             console.error('Error during mass import:', error);
@@ -209,8 +214,6 @@ export class ModalManager {
     }
 
     private async importCoins(isManual: boolean): Promise<void> {
-        console.log(this.coinSearch.getSelectedCoinsData(Array.from(this.selectedCoins)));
-
         const coins = isManual
             ? this.coinSearch
                   .getSelectedCoinsData(Array.from(this.selectedCoins))
@@ -244,31 +247,27 @@ export class ModalManager {
     }
 
     private async prepareAutoCoins(): Promise<CoinCreationRequest[]> {
-        const count = parseInt(this.autoImportCoinCount.value);
-
-        const availableCoins = [...this.coinSearch.getListedCoins()];
-
-        const mainCoins = shuffle(availableCoins).slice(0, Math.min(count, availableCoins.length));
-
+        const count = Number(this.autoImportCoinCount.value);
+        const selectedCoins = shuffle([...this.coinSearch.getListedCoins()]).slice(0, count);
         return this.coinSearch
-            .getSelectedCoinsData(mainCoins)
+            .getSelectedCoinsData(selectedCoins)
             .map((candidateCoin) => this.convertToCoinCreationRequest(candidateCoin));
     }
 
     private resetMassImportModal(): void {
         this.selectedCoins.clear();
         this.updateSelectedCoinsDisplay();
-        this.startImportBtn.disabled = false;
-        this.autoImportCoinCount.value = '150';
         this.massImportSearchInput.value = '';
-        this.massImportSearchResults.innerHTML = '';
-        this.coinSearch.clearCoins();
+        this.autoImportCoinCount.value = '50';
+        this.showLoading(false);
 
+        // Reset import type to auto
         const autoImportRadio = Array.from(this.importTypeRadios).find(
             (radio) => radio.value === 'auto'
         );
         if (autoImportRadio) {
             autoImportRadio.checked = true;
+            this.handleImportTypeChange();
         }
     }
 }

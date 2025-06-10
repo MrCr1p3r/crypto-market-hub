@@ -4,13 +4,12 @@ using System.Text.Json;
 using GUI_Crypto.ApiContracts.Requests.CoinCreation;
 using GUI_Crypto.ApiContracts.Responses.CandidateCoin;
 using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
-using GUI_Crypto.Tests.Integration.Factories;
 using WireMock.Admin.Mappings;
 
 namespace GUI_Crypto.Tests.Integration.Controllers;
 
 public class OverviewControllerTests(CustomWebApplicationFactory factory)
-    : BaseIntegrationTest(factory),
+    : BaseControllerIntegrationTest(factory),
         IClassFixture<CustomWebApplicationFactory>
 {
     #region RenderOverview Tests

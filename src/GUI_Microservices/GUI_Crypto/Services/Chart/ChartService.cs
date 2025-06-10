@@ -4,11 +4,10 @@ using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.ServiceModels;
-using GUI_Crypto.Services.Interfaces;
 using SharedLibrary.Enums;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 
-namespace GUI_Crypto.Services;
+namespace GUI_Crypto.Services.Chart;
 
 /// <summary>
 /// Service for handling chart-related operations.

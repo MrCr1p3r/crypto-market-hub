@@ -4,7 +4,7 @@ using GUI_Crypto.ApiContracts.Requests.KlineData;
 using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.ApiControllers;
 using GUI_Crypto.ServiceModels;
-using GUI_Crypto.Services.Interfaces;
+using GUI_Crypto.Services.Chart;
 using GUI_Crypto.ViewModels;
 using GUI_Crypto.ViewModels.Chart;
 using Microsoft.AspNetCore.Mvc;

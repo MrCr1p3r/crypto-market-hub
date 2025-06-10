@@ -4,13 +4,13 @@ using GUI_Crypto.ApiContracts.Requests.KlineData;
 using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
-using GUI_Crypto.Services;
+using GUI_Crypto.Services.Chart;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 
-namespace GUI_Crypto.Tests.Unit.Services;
+namespace GUI_Crypto.Tests.Unit.Services.Chart;
 
 public class ChartServiceTests
 {

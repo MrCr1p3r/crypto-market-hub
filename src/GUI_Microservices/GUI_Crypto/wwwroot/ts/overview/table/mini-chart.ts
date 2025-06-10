@@ -60,7 +60,6 @@ export function renderMiniCharts(elements: Element[]): void {
 
         try {
             const klineData = JSON.parse(klineDataStr) as KlineData[];
-            console.log(klineData);
             if (klineData.length === 0) {
                 element.classList.remove('not-rendered');
                 element.innerHTML =
@@ -126,10 +125,50 @@ export function renderMiniCharts(elements: Element[]): void {
 
             const chart = new ApexCharts(element, options);
             chart.render();
+
+            // Store chart instance for future updates
+            (element as HTMLElement & { __chartInstance?: ApexCharts }).__chartInstance = chart;
         } catch (error) {
             console.error('Error rendering mini chart:', error);
             // Re-add the not-rendered class in case of error
             element.classList.add('not-rendered');
         }
     });
+}
+
+/**
+ * Destroy all existing charts and mark them for re-rendering
+ * Returns the elements that need to be re-observed by the table manager
+ */
+export function destroyAllChartsForRerender(): Element[] {
+    try {
+        // Find all chart elements that have been rendered
+        const allChartElements = document.querySelectorAll('.mini-chart:not(.not-rendered)');
+        const elementsToReobserve: Element[] = [];
+
+        allChartElements.forEach((chartElement) => {
+            const element = chartElement as HTMLElement;
+
+            // Destroy existing chart if it exists
+            const existingChart = (element as HTMLElement & { __chartInstance?: ApexCharts })
+                .__chartInstance;
+            if (existingChart) {
+                existingChart.destroy();
+                delete (element as HTMLElement & { __chartInstance?: ApexCharts }).__chartInstance;
+            }
+
+            // Clear element and mark as not-rendered
+            element.innerHTML = '';
+            element.classList.add('not-rendered');
+
+            // Add to list for re-observing
+            elementsToReobserve.push(element);
+        });
+
+        console.log(`Destroyed ${allChartElements.length} charts for re-rendering`);
+        return elementsToReobserve;
+    } catch (error) {
+        console.error('Error destroying charts for re-render:', error);
+        return [];
+    }
 }

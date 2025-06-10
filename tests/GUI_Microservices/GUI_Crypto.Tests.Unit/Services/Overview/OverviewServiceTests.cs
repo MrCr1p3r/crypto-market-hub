@@ -4,14 +4,14 @@ using GUI_Crypto.ApiContracts.Requests.CoinCreation;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.MicroserviceClients.SvcKline;
-using GUI_Crypto.Services;
+using GUI_Crypto.Services.Overview;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 using SvcKline = GUI_Crypto.MicroserviceClients.SvcKline.Contracts;
 
-namespace GUI_Crypto.Tests.Unit.Services;
+namespace GUI_Crypto.Tests.Unit.Services.Overview;
 
 public class OverviewServiceTests
 {

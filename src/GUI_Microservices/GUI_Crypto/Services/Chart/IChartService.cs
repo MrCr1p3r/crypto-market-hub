@@ -3,7 +3,7 @@ using GUI_Crypto.ApiContracts.Requests.KlineData;
 using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.ServiceModels;
 
-namespace GUI_Crypto.Services.Interfaces;
+namespace GUI_Crypto.Services.Chart;
 
 /// <summary>
 /// Defines contract for service for handling chart-related operations.

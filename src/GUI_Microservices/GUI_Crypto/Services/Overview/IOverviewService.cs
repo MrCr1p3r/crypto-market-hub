@@ -3,7 +3,7 @@ using GUI_Crypto.ApiContracts.Requests.CoinCreation;
 using GUI_Crypto.ApiContracts.Responses.CandidateCoin;
 using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 
-namespace GUI_Crypto.Services.Interfaces;
+namespace GUI_Crypto.Services.Overview;
 
 /// <summary>
 /// Defines the available operations for the overview service.

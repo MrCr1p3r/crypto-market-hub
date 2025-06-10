@@ -6,11 +6,10 @@ using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.MicroserviceClients.SvcKline;
-using GUI_Crypto.Services.Interfaces;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 
-namespace GUI_Crypto.Services;
+namespace GUI_Crypto.Services.Overview;
 
 /// <summary>
 /// Service for retrieving and managing overview data.

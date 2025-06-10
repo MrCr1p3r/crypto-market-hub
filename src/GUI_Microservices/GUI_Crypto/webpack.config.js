@@ -7,7 +7,8 @@ const __dirname = path.dirname(__filename);
 export default {
     entry: {
         chart: './wwwroot/ts/chart/chart.ts',
-        overview: './wwwroot/ts/overview/overview.ts'
+        overview: './wwwroot/ts/overview/overview.ts',
+        realtime: './wwwroot/ts/realtime/crypto-manager.ts'
     },
     module: {
         rules: [

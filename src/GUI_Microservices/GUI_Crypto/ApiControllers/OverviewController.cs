@@ -1,7 +1,7 @@
 using GUI_Crypto.ApiContracts.Requests.CoinCreation;
 using GUI_Crypto.ApiContracts.Responses.CandidateCoin;
 using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
-using GUI_Crypto.Services.Interfaces;
+using GUI_Crypto.Services.Overview;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Extensions;
 

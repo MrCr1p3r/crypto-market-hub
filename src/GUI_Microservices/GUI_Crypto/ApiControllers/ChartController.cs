@@ -1,6 +1,6 @@
 using GUI_Crypto.ApiContracts.Requests.KlineData;
 using GUI_Crypto.ApiContracts.Responses;
-using GUI_Crypto.Services.Interfaces;
+using GUI_Crypto.Services.Chart;
 using GUI_Crypto.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Extensions;

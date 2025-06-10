@@ -98,3 +98,84 @@ body {
 .navbar-toggler {
     border-color: rgba(162, 155, 254, 0.5);
 }
+
+/* Price rise animation */
+@keyframes priceRiseFlash {
+    0% {
+        color: #ffffff;
+    }
+    50% {
+        color: #00ff88;
+        text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+    }
+    100% {
+        color: #ffffff;
+    }
+}
+.coin-price-rise {
+    animation: priceRiseFlash 2.5s ease-in-out;
+}
+
+/* Price fall animation */
+@keyframes priceFallFlash {
+    0% {
+        color: #ffffff;
+    }
+    50% {
+        color: #ff0000;
+        text-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
+    }
+    100% {
+        color: #ffffff;
+    }
+}
+.coin-price-fall {
+    animation: priceFallFlash 2.5s ease-in-out;
+}
+
+/* Pulse effect for connection status */
+.connection-status.connected {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Update indicator badge */
+.update-badge {
+    background: linear-gradient(45deg, #00ff88, #00cc6a);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+    animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    20% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    80% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}

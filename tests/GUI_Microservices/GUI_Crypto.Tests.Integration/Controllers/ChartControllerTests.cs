@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using GUI_Crypto.ApiContracts.Requests.KlineData;
 using GUI_Crypto.ApiContracts.Responses;
-using GUI_Crypto.Tests.Integration.Factories;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions.Testing;
 using WireMock.Admin.Mappings;
@@ -11,7 +10,7 @@ using WireMock.Admin.Mappings;
 namespace GUI_Crypto.Tests.Integration.Controllers;
 
 public class ChartControllerTests(CustomWebApplicationFactory factory)
-    : BaseIntegrationTest(factory),
+    : BaseControllerIntegrationTest(factory),
         IClassFixture<CustomWebApplicationFactory>
 {
     #region Chart Tests

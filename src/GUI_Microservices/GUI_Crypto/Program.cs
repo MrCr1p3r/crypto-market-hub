@@ -1,9 +1,11 @@
 using CryptoChartAnalyzer.ServiceDefaults;
+using GUI_Crypto.Hubs;
+using GUI_Crypto.Infrastructure.DependencyInjection;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.MicroserviceClients.SvcKline;
-using GUI_Crypto.Services;
-using GUI_Crypto.Services.Interfaces;
+using GUI_Crypto.Services.Chart;
+using GUI_Crypto.Services.Overview;
 using GUI_Crypto.ViewModels;
 using SharedLibrary.Infrastructure;
 
@@ -66,6 +68,10 @@ builder.Services.AddScoped<IChartService, ChartService>();
 
 // Keep the view model factory
 builder.Services.AddScoped<ICryptoViewModelFactory, CryptoViewModelFactory>();
+
+// Add messaging services (RabbitMQ, SignalR, message handlers)
+builder.Services.AddMessagingServices(builder.Configuration);
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
@@ -95,6 +101,12 @@ app.UseRouting();
 app.UseAuthorization();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
+
+// Map SignalR hubs
+app.MapHub<CryptoHub>("/hubs/crypto");
+
+// Setup RabbitMQ infrastructure
+await app.SetupRabbitMqInfrastructureAsync();
 
 await app.RunAsync();
 

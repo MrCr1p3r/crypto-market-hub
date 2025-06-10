@@ -1,8 +1,7 @@
-using GUI_Crypto.Tests.Integration.Factories;
+namespace GUI_Crypto.Tests.Integration.Controllers;
 
-namespace GUI_Crypto.Tests.Integration;
-
-public abstract class BaseIntegrationTest(CustomWebApplicationFactory factory) : IAsyncLifetime
+public abstract class BaseControllerIntegrationTest(CustomWebApplicationFactory factory)
+    : IAsyncLifetime
 {
     private protected CustomWebApplicationFactory Factory { get; } = factory;
 
