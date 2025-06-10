@@ -3,7 +3,7 @@ namespace SVC_Scheduler.Jobs.UpdateJobs.Base;
 /// <summary>
 /// Source-generated logging methods for BaseScheduledJob.
 /// </summary>
-internal static partial class BaseScheduledJobLogging
+internal static partial class BaseScheduledUpdateJobLogging
 {
     // Job execution lifecycle logs
     [LoggerMessage(
