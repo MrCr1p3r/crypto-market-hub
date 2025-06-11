@@ -115,13 +115,9 @@ public class ChartServiceTests
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().Contain(coinsServiceError);
 
-        // Verify both clients were called
-        _mockExternalClient.Verify(
-            client =>
-                client.GetKlineData(Its.EquivalentTo(TestData.ExpectedDefaultKlineDataRequest)),
-            Times.Once
-        );
+        // Verify only coins client was called (external client should not be called when coins client fails)
         _mockCoinsClient.Verify(client => client.GetCoinById(idCoin), Times.Once);
+        _mockExternalClient.VerifyNoOtherCalls();
     }
 
     [Fact]
