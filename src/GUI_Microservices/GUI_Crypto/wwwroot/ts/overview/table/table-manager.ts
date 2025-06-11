@@ -25,7 +25,7 @@ export class TableManager {
     private readonly tableBody: HTMLElement;
     private readonly thead: HTMLElement;
     private readonly searchInput: HTMLInputElement;
-    private readonly btnConfirmDelete: HTMLButtonElement;
+    private readonly confirmDeleteBtn: HTMLButtonElement;
 
     private tableCore: Table<OverviewCoin>;
     private currentCoins: OverviewCoin[] = [];
@@ -59,7 +59,7 @@ export class TableManager {
         const table = document.getElementById('coinTable');
         const tableBody = document.getElementById('coinTableBody');
         const searchInput = document.getElementById('tableSearch');
-        const btnConfirmDelete = document.getElementById('confirmDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
         const deleteModalElement = document.getElementById('deleteConfirmModal');
         const thead = document.querySelector('#coinTable thead');
 
@@ -67,7 +67,7 @@ export class TableManager {
         this.tableBody = tableBody as HTMLElement;
         this.thead = thead as HTMLElement;
         this.searchInput = searchInput as HTMLInputElement;
-        this.btnConfirmDelete = btnConfirmDelete as HTMLButtonElement;
+        this.confirmDeleteBtn = confirmDeleteBtn as HTMLButtonElement;
         this.deleteModal = new bootstrap.Modal(deleteModalElement!);
 
         const options: TableOptionsResolved<OverviewCoin> = {
@@ -97,7 +97,7 @@ export class TableManager {
             if (!header) return;
             this.handleSortingChange(header as HTMLElement);
         });
-        this.btnConfirmDelete.addEventListener('click', () => this.handleDeleteConfirmation());
+        this.confirmDeleteBtn.addEventListener('click', () => this.handleDeleteConfirmation());
     }
 
     private handleSearch(): void {

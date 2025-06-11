@@ -10,7 +10,7 @@ import { shuffle } from './utils/array-utils';
 import { CoinCreationRequest } from './interfaces/coin-creation-request';
 import { CandidateCoin } from './interfaces/candidate-coin';
 
-export class ModalManager {
+export class ImportModalManager {
     private static readonly ITEMS_PER_PAGE = 30;
     private readonly selectedCoins: Set<string> = new Set();
 
@@ -78,7 +78,7 @@ export class ModalManager {
         }
 
         const coins = await this.coinSearch.fetchAndProcessCoins();
-        this.displayCoins(coins.slice(0, ModalManager.ITEMS_PER_PAGE));
+        this.displayCoins(coins.slice(0, ImportModalManager.ITEMS_PER_PAGE));
         this.showLoading(false);
     }
 
@@ -104,7 +104,7 @@ export class ModalManager {
                       .getListedCoins()
                       .filter((coin) => coin.toUpperCase().includes(upperTerm));
 
-        this.displayCoins(coins.slice(0, ModalManager.ITEMS_PER_PAGE));
+        this.displayCoins(coins.slice(0, ImportModalManager.ITEMS_PER_PAGE));
     }
 
     private displayCoins(coins: readonly string[]): void {

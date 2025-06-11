@@ -40,7 +40,7 @@ export async function deleteCoin(id: number): Promise<void> {
     if (!response.ok) throw { status: response.status };
 }
 
-export async function resetDatabase(): Promise<boolean> {
+export async function deleteAllCoins(): Promise<boolean> {
     const response = await fetch('/coins', {
         method: 'DELETE',
     });

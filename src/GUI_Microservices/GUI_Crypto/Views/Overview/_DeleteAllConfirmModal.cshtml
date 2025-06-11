@@ -1,0 +1,31 @@
+<!-- Delete All Confirmation Modal -->
+<div class="modal fade" id="deleteAllConfirmModal" tabindex="-1" aria-labelledby="deleteAllConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteAllConfirmModalLabel">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Confirm Delete All
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="deleteAllModalClose"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger" role="alert">
+                    <strong>Warning!</strong> This action cannot be undone.
+                </div>
+                <p>Are you sure you want to delete <strong>ALL</strong> coins from the database?</p>
+                <p>This will permanently remove all coin data, including:</p>
+                <ul>
+                    <li>All coin records</li>
+                    <li>All trading pairs</li>
+                    <li>All kline data</li>
+                </ul>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="cancelDeleteAllBtn">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteAllBtn">
+                    <i class="fas fa-trash-alt"></i> Delete All Coins
+                </button>
+            </div>
+        </div>
+    </div>
+</div> 
