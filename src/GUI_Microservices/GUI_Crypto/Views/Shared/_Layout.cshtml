@@ -19,14 +19,14 @@
             <div class="spinner-border mb-2" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <div>Processing Import...</div>
+            <div>Processing...</div>
         </div>
     </div>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark border-bottom box-shadow mb-3" 
             style="background-color: #2e294e;">
             <div class="container-fluid">
-                <a class="navbar-brand text-white" asp-area="" asp-controller="overview">
+                <a class="navbar-brand text-white" asp-area="" asp-controller="overview" asp-action="index">
                     Crypto Chart Analyzer</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
                     data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -36,7 +36,7 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="overview">Overview</a>
+                            <a class="nav-link text-white" asp-area="" asp-controller="overview" asp-action="index">Overview</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav">

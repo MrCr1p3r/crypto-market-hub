@@ -30,7 +30,7 @@ export class TableManager {
     private tableCore: Table<OverviewCoin>;
     private currentCoins: OverviewCoin[] = [];
     private tableState: TableState = {
-        sorting: [],
+        sorting: [{ id: 'marketCapUsd', desc: true }],
         columnFilters: [],
         globalFilter: '',
         columnVisibility: {},
@@ -272,24 +272,14 @@ export class TableManager {
                     break;
                 case 'marketCapUsd': {
                     const marketCap = value as number | null;
-                    if (marketCap) {
-                        if (marketCap >= 1_000_000_000) {
-                            td.textContent = `$${(marketCap / 1_000_000_000).toFixed(2)}B`;
-                        } else if (marketCap >= 1_000_000) {
-                            td.textContent = `$${(marketCap / 1_000_000).toFixed(2)}M`;
-                        } else {
-                            td.textContent = `$${marketCap.toLocaleString()}`;
-                        }
-                    } else {
-                        td.textContent = 'N/A';
-                    }
+                    td.textContent = this.formatMarketCap(marketCap);
                     break;
                 }
                 case 'price': {
                     const price = row.original.priceUsd;
                     if (price) {
                         const priceNum = parseFloat(price);
-                        td.textContent = `$${priceNum.toFixed(priceNum < 1 ? 6 : 2)}`;
+                        td.textContent = `$${this.formatPrice(priceNum)}`;
                     } else {
                         td.textContent = 'N/A';
                     }
@@ -311,6 +301,54 @@ export class TableManager {
                     td.textContent = value?.toString() ?? 'N/A';
             }
         });
+    }
+
+    private formatPrice(price: number): string {
+        if (price === 0) return '0.00';
+
+        // For prices >= $1, show 2 decimal places
+        if (price >= 1) {
+            return price.toFixed(2);
+        }
+
+        // For very small prices (< 0.000001), use scientific notation
+        if (price < 0.000001) {
+            return price.toExponential(2);
+        }
+
+        // For prices between 0.000001 and 1, show significant digits
+        // Find the first non-zero digit after decimal point
+        const priceStr = price.toString();
+        const decimalIndex = priceStr.indexOf('.');
+
+        if (decimalIndex === -1) return price.toFixed(2);
+
+        let firstNonZeroIndex = decimalIndex + 1;
+        while (firstNonZeroIndex < priceStr.length && priceStr[firstNonZeroIndex] === '0') {
+            firstNonZeroIndex++;
+        }
+
+        // Show up to the first 4 significant digits after the leading zeros
+        const zerosAfterDecimal = firstNonZeroIndex - decimalIndex - 1;
+        const significantDigits = Math.min(4, priceStr.length - firstNonZeroIndex);
+        const totalDecimals = zerosAfterDecimal + significantDigits;
+
+        return price.toFixed(Math.min(totalDecimals, 10));
+    }
+
+    private formatMarketCap(marketCap: number | null): string {
+        if (!marketCap) return 'N/A';
+
+        switch (true) {
+            case marketCap >= 1_000_000_000_000:
+                return `$${(marketCap / 1_000_000_000_000).toFixed(2)}T`;
+            case marketCap >= 1_000_000_000:
+                return `$${(marketCap / 1_000_000_000).toFixed(2)}B`;
+            case marketCap >= 1_000_000:
+                return `$${(marketCap / 1_000_000).toFixed(2)}M`;
+            default:
+                return `$${marketCap.toLocaleString()}`;
+        }
     }
 
     private updateNewRowContent(
@@ -359,18 +397,7 @@ export class TableManager {
                 }
                 case 'marketCapUsd': {
                     const marketCap = value as number | null;
-                    if (marketCap) {
-                        // Format market cap in billions/millions
-                        if (marketCap >= 1_000_000_000) {
-                            td.textContent = `$${(marketCap / 1_000_000_000).toFixed(2)}B`;
-                        } else if (marketCap >= 1_000_000) {
-                            td.textContent = `$${(marketCap / 1_000_000).toFixed(2)}M`;
-                        } else {
-                            td.textContent = `$${marketCap.toLocaleString()}`;
-                        }
-                    } else {
-                        td.textContent = 'N/A';
-                    }
+                    td.textContent = this.formatMarketCap(marketCap);
                     break;
                 }
                 case 'price': {
@@ -378,7 +405,7 @@ export class TableManager {
                     td.className = 'price-cell';
                     if (price) {
                         const priceNum = parseFloat(price);
-                        td.textContent = `$${priceNum.toFixed(priceNum < 1 ? 6 : 2)}`;
+                        td.textContent = `$${this.formatPrice(priceNum)}`;
                     } else {
                         td.textContent = 'N/A';
                     }

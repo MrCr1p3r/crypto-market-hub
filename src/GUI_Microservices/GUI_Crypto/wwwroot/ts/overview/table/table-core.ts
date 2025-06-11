@@ -36,7 +36,15 @@ export const columns: ColumnDef<OverviewCoin>[] = [
         accessorKey: 'priceUsd',
         header: 'Price',
         enableSorting: true,
-        sortingFn: 'basic',
+        sortingFn: (rowA, rowB, columnId): number => {
+            const aValue = rowA.getValue(columnId) as string | null;
+            const bValue = rowB.getValue(columnId) as string | null;
+
+            const aNum = aValue ? parseFloat(aValue) : 0;
+            const bNum = bValue ? parseFloat(bValue) : 0;
+
+            return aNum - bNum;
+        },
     },
     {
         id: 'priceChangePercentage24h',
