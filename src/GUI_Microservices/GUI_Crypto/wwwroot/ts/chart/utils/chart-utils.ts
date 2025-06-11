@@ -5,7 +5,7 @@ export function renderChart(
     chartContainer: HTMLElement,
     klineData: KlineData[],
     coinSymbol: string
-) {
+): ApexCharts {
     const options: ApexOptions = {
         series: [
             {
@@ -38,7 +38,10 @@ export function renderChart(
     return chartInstance;
 }
 
-export async function rerenderChart(chartInstance: ApexCharts, klineData: KlineData[]) {
+export async function rerenderChart(
+    chartInstance: ApexCharts,
+    klineData: KlineData[]
+): Promise<void> {
     const updatedSeries = klineData.map((k: KlineData) => ({
         x: new Date(k.openTime),
         y: [k.openPrice, k.highPrice, k.lowPrice, k.closePrice],

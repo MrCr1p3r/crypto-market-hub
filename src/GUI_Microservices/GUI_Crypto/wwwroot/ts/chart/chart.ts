@@ -4,23 +4,30 @@ import { fetchKlineData } from './services';
 import { renderChart, rerenderChart } from './utils/chart-utils';
 import toastr from 'toastr';
 import { initializeToastr } from '../configs/toastr-config';
+import ApexCharts from 'apexcharts';
 
 export class Chart {
     private static instance: Chart | null = null;
-    private chartInstance: any;
+    private chartInstance: ApexCharts;
     private chartContainer!: HTMLElement;
     private startDateInput!: HTMLInputElement;
     private endDateInput!: HTMLInputElement;
     private timeframeSelect!: HTMLSelectElement;
-    private selectedMainCoin!: HTMLElement;
-    private tradingPairItems!: NodeListOf<Element>;
     private startSelected: boolean = false;
     private endSelected: boolean = false;
-    
+
     // Store chart initialization data
     private currentTradingPairId: number = 0;
-    private mainCoinData: { id: number; symbol: string; name: string } = { id: 0, symbol: '', name: '' };
-    private quoteCoinData: { id: number; symbol: string; name: string } = { id: 0, symbol: '', name: '' };
+    private mainCoinData: { id: number; symbol: string; name: string } = {
+        id: 0,
+        symbol: '',
+        name: '',
+    };
+    private quoteCoinData: { id: number; symbol: string; name: string } = {
+        id: 0,
+        symbol: '',
+        name: '',
+    };
     private currentExchanges: Exchange[] = [];
 
     private constructor(klineData: KlineData[], coinSymbol: string) {
@@ -66,14 +73,12 @@ export class Chart {
         this.startDateInput = document.getElementById('start') as HTMLInputElement;
         this.endDateInput = document.getElementById('end') as HTMLInputElement;
         this.timeframeSelect = document.getElementById('timeframeSelect') as HTMLSelectElement;
-        this.selectedMainCoin = document.getElementById('selectedMainCoin') as HTMLElement;
-        this.tradingPairItems = document.querySelectorAll('.dropdown-item');
     }
 
     private extractChartData(): void {
         // Extract trading pair data from DOM elements
         const chartDataElement = document.getElementById('chartData');
-        
+
         if (!chartDataElement) {
             throw new Error('Chart data element not found');
         }
@@ -90,12 +95,12 @@ export class Chart {
         this.mainCoinData = {
             id: parseInt(mainCoinIdStr),
             symbol: mainCoinSymbol,
-            name: mainCoinName
+            name: mainCoinName,
         };
 
         // Extract quote coin data and trading pair ID from active dropdown item
         const activeDropdownItem = document.querySelector('.dropdown-item.active') as HTMLElement;
-        
+
         if (!activeDropdownItem) {
             throw new Error('No active trading pair found in dropdown');
         }
@@ -106,7 +111,13 @@ export class Chart {
         const tradingPairIdStr = activeDropdownItem.dataset['tradingPairId'];
         const tradingPairExchanges = activeDropdownItem.dataset['tradingPairExchanges'];
 
-        if (!quoteCoinIdStr || !quoteCoinName || !quoteCoinSymbol || !tradingPairIdStr || !tradingPairExchanges) {
+        if (
+            !quoteCoinIdStr ||
+            !quoteCoinName ||
+            !quoteCoinSymbol ||
+            !tradingPairIdStr ||
+            !tradingPairExchanges
+        ) {
             throw new Error('Quote coin data is incomplete in active dropdown item');
         }
 
@@ -115,7 +126,7 @@ export class Chart {
         this.quoteCoinData = {
             id: parseInt(quoteCoinIdStr),
             symbol: quoteCoinSymbol,
-            name: quoteCoinName
+            name: quoteCoinName,
         };
     }
 
@@ -129,58 +140,9 @@ export class Chart {
     }
 
     private setupEventListeners(): void {
-        this.tradingPairItems.forEach((item) => {
-            item.addEventListener('click', this.handleTradingPairChange.bind(this));
-        });
         this.startDateInput.addEventListener('change', this.handleStartDateChange.bind(this));
         this.endDateInput.addEventListener('change', this.handleEndDateChange.bind(this));
         this.timeframeSelect.addEventListener('change', this.handleTimeframeChange.bind(this));
-    }
-
-    private handleTradingPairChange(event: Event): void {
-        const element = event.currentTarget as HTMLElement;
-        
-        // Get data from the clicked dropdown item
-        const quoteCoinSymbol = element.dataset['quote'];
-        const quoteCoinIdStr = element.dataset['quoteCoinId'];
-        const quoteCoinName = element.dataset['quoteCoinName'];
-        const tradingPairIdStr = element.dataset['tradingPairId'];
-        const tradingPairExchanges = element.dataset['tradingPairExchanges'];
-
-        if (!quoteCoinSymbol || !quoteCoinIdStr || !quoteCoinName || !tradingPairIdStr || !tradingPairExchanges) {
-            toastr.error('Trading pair data is incomplete');
-            return;
-        }
-
-        // Parse exchanges data (it comes as JSON string from Razor)
-        let exchanges: Exchange[];
-        try {
-            exchanges = JSON.parse(tradingPairExchanges) as Exchange[];
-        } catch (error) {
-            console.error('Failed to parse exchanges data:', error);
-            toastr.error('Failed to parse exchanges data');
-            return;
-        }
-
-        // Update current data
-        this.currentTradingPairId = parseInt(tradingPairIdStr);
-        this.currentExchanges = exchanges;
-        this.quoteCoinData = {
-            id: parseInt(quoteCoinIdStr),
-            symbol: quoteCoinSymbol,
-            name: quoteCoinName
-        };
-        
-        // Update UI
-        const selectedQuoteCoinElement = document.getElementById('selectedQuoteCoin');
-        if (selectedQuoteCoinElement) {
-            selectedQuoteCoinElement.textContent = quoteCoinSymbol;
-        }
-        
-        this.tradingPairItems.forEach((i) => i.classList.remove('active'));
-        element.classList.add('active');
-
-        this.rerenderChartWithCurrentValues();
     }
 
     private handleStartDateChange(): void {
@@ -199,7 +161,7 @@ export class Chart {
         this.endDateInput.max = maxEndDate.toISOString().slice(0, 16);
         if (!this.endSelected) {
             this.endDateInput.focus();
-            (this.endDateInput as any).showPicker();
+            (this.endDateInput as HTMLInputElement & { showPicker(): void }).showPicker();
         }
     }
 
@@ -216,7 +178,7 @@ export class Chart {
         this.startDateInput.max = endDate.toISOString().slice(0, 16);
         if (!this.startSelected) {
             this.startDateInput.focus();
-            (this.startDateInput as any).showPicker();
+            (this.startDateInput as HTMLInputElement & { showPicker(): void }).showPicker();
         }
     }
 
@@ -235,19 +197,28 @@ export class Chart {
 
     private parseTimeframeToInterval(timeframeValue: string): ExchangeKlineInterval {
         const timeframe = parseInt(timeframeValue);
-        
+
         // Map timeframe values to ExchangeKlineInterval enum
         switch (timeframe) {
-            case 1: return ExchangeKlineInterval.OneMinute;
-            case 5: return ExchangeKlineInterval.FiveMinutes;
-            case 15: return ExchangeKlineInterval.FifteenMinutes;
-            case 30: return ExchangeKlineInterval.ThirtyMinutes;
-            case 60: return ExchangeKlineInterval.OneHour;
-            case 240: return ExchangeKlineInterval.FourHours;
-            case 1440: return ExchangeKlineInterval.OneDay;
-            case 10080: return ExchangeKlineInterval.OneWeek;
-            case 43200: return ExchangeKlineInterval.OneMonth;
-            default: 
+            case 1:
+                return ExchangeKlineInterval.OneMinute;
+            case 5:
+                return ExchangeKlineInterval.FiveMinutes;
+            case 15:
+                return ExchangeKlineInterval.FifteenMinutes;
+            case 30:
+                return ExchangeKlineInterval.ThirtyMinutes;
+            case 60:
+                return ExchangeKlineInterval.OneHour;
+            case 240:
+                return ExchangeKlineInterval.FourHours;
+            case 1440:
+                return ExchangeKlineInterval.OneDay;
+            case 10080:
+                return ExchangeKlineInterval.OneWeek;
+            case 43200:
+                return ExchangeKlineInterval.OneMonth;
+            default:
                 throw new Error(`Unknown timeframe value: ${timeframe}`);
         }
     }
@@ -256,7 +227,7 @@ export class Chart {
         const timeframe = this.timeframeSelect.value;
         const startDate = new Date(this.startDateInput.value);
         const endDate = new Date(this.endDateInput.value);
-        
+
         const request: KlineDataRequest = {
             idTradingPair: this.currentTradingPairId,
             coinMain: this.mainCoinData,
@@ -270,7 +241,7 @@ export class Chart {
 
         try {
             const fetchedKlineData = await fetchKlineData(request);
-            
+
             if (fetchedKlineData.length === 0) {
                 toastr.warning(
                     `No data found for trading pair ${request.coinMain.symbol}/${request.coinQuote.symbol}.

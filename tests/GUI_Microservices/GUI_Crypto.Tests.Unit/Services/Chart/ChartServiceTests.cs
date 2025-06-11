@@ -31,7 +31,8 @@ public class ChartServiceTests
     public async Task GetChartData_WhenSuccessfulFlow_ShouldReturnChartDataWithDefaultParameters()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
 
         _mockExternalClient
             .Setup(client => client.GetKlineData(It.IsAny<SvcExternal.Requests.KlineDataRequest>()))
@@ -42,7 +43,7 @@ public class ChartServiceTests
             .ReturnsAsync(Result.Ok(TestData.BitcoinCoin));
 
         // Act
-        var result = await _chartService.GetChartData(request);
+        var result = await _chartService.GetChartData(idCoin, idTradingPair);
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -56,17 +57,15 @@ public class ChartServiceTests
                 client.GetKlineData(Its.EquivalentTo(TestData.ExpectedDefaultKlineDataRequest)),
             Times.Once
         );
-        _mockCoinsClient.Verify(
-            client => client.GetCoinById(TestData.BasicKlineDataRequest.CoinMain.Id),
-            Times.Once
-        );
+        _mockCoinsClient.Verify(client => client.GetCoinById(idCoin), Times.Once);
     }
 
     [Fact]
     public async Task GetChartData_WhenExternalClientFails_ShouldReturnFailureResult()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
         var externalServiceError = new GenericErrors.InternalError("External service unavailable");
 
         _mockExternalClient
@@ -78,29 +77,27 @@ public class ChartServiceTests
             .ReturnsAsync(Result.Ok(TestData.BitcoinCoin));
 
         // Act
-        var result = await _chartService.GetChartData(request);
+        var result = await _chartService.GetChartData(idCoin, idTradingPair);
 
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().Contain(externalServiceError);
 
-        // Verify both clients were called (they run in parallel)
+        // Verify both clients were called
         _mockExternalClient.Verify(
             client =>
                 client.GetKlineData(Its.EquivalentTo(TestData.ExpectedDefaultKlineDataRequest)),
             Times.Once
         );
-        _mockCoinsClient.Verify(
-            client => client.GetCoinById(TestData.BasicKlineDataRequest.CoinMain.Id),
-            Times.Once
-        );
+        _mockCoinsClient.Verify(client => client.GetCoinById(idCoin), Times.Once);
     }
 
     [Fact]
     public async Task GetChartData_WhenCoinsClientFails_ShouldReturnFailureResult()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
         var coinsServiceError = new GenericErrors.InternalError("Coins service unavailable");
 
         _mockExternalClient
@@ -112,29 +109,27 @@ public class ChartServiceTests
             .ReturnsAsync(Result.Fail(coinsServiceError));
 
         // Act
-        var result = await _chartService.GetChartData(request);
+        var result = await _chartService.GetChartData(idCoin, idTradingPair);
 
         // Assert
         result.IsFailed.Should().BeTrue();
         result.Errors.Should().Contain(coinsServiceError);
 
-        // Verify both clients were called (they run in parallel)
+        // Verify both clients were called
         _mockExternalClient.Verify(
             client =>
                 client.GetKlineData(Its.EquivalentTo(TestData.ExpectedDefaultKlineDataRequest)),
             Times.Once
         );
-        _mockCoinsClient.Verify(
-            client => client.GetCoinById(TestData.BasicKlineDataRequest.CoinMain.Id),
-            Times.Once
-        );
+        _mockCoinsClient.Verify(client => client.GetCoinById(idCoin), Times.Once);
     }
 
     [Fact]
     public async Task GetChartData_WhenBothClientsFail_ShouldReturnFirstFailure()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
         var externalServiceError = new GenericErrors.InternalError("External service unavailable");
         var coinsServiceError = new GenericErrors.InternalError("Coins service unavailable");
 
@@ -147,12 +142,12 @@ public class ChartServiceTests
             .ReturnsAsync(Result.Fail(coinsServiceError));
 
         // Act
-        var result = await _chartService.GetChartData(request);
+        var result = await _chartService.GetChartData(idCoin, idTradingPair);
 
         // Assert
         result.IsFailed.Should().BeTrue();
-        // Should return the first error encountered (external service in this case)
-        result.Errors.Should().Contain(externalServiceError);
+        // Should return the first error encountered (coins service in this case since it's called first)
+        result.Errors.Should().Contain(coinsServiceError);
     }
 
     #endregion
@@ -235,24 +230,6 @@ public class ChartServiceTests
 
     private static class TestData
     {
-        public static readonly KlineDataRequest BasicKlineDataRequest = new()
-        {
-            CoinMain = new KlineDataRequestCoin
-            {
-                Id = 1,
-                Symbol = "BTC",
-                Name = "Bitcoin",
-            },
-            IdTradingPair = 101,
-            CoinQuote = new KlineDataRequestCoin
-            {
-                Id = 2,
-                Symbol = "USDT",
-                Name = "Tether",
-            },
-            Exchanges = [Exchange.Binance],
-        };
-
         public static readonly KlineDataRequest CustomKlineDataRequest = new()
         {
             CoinMain = new KlineDataRequestCoin

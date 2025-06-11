@@ -16,7 +16,7 @@ import { OverviewCoin } from '../interfaces/overview-coin';
 import { CoinMarketData } from '../interfaces/coin-market-data';
 import { columns } from './table-core';
 import { destroyAllChartsForRerender, renderMiniCharts } from './mini-chart';
-import { fetchCoins, deleteCoin, openChart } from '../services';
+import { fetchCoins, deleteCoin } from '../services';
 import { initializeToastr } from '../../configs/toastr-config';
 import { KlineDataUpdate } from 'realtime/interfaces/kline-signalr';
 
@@ -154,23 +154,19 @@ export class TableManager {
         return button;
     }
 
-    private createFullChartButton(row: OverviewCoin): HTMLButtonElement {
+    private createFullChartButton(coin: OverviewCoin): HTMLButtonElement {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'btn btn-sm btn-outline-primary';
-        button.disabled = !row.klineData?.tradingPair;
+        button.disabled = !coin.klineData?.tradingPair;
 
         const iconElement = document.createElement('i');
         iconElement.className = 'fas fa-chart-line';
         button.appendChild(iconElement);
 
-        if (row.klineData?.tradingPair) {
-            button.addEventListener('click', async () => {
-                try {
-                    await openChart(row);
-                } catch (error) {
-                    toastr.error(`Failed to open chart: ${error}`);
-                }
+        if (coin.klineData?.tradingPair) {
+            button.addEventListener('click', () => {
+                window.open(`/chart/${coin.id}/${coin.klineData!.tradingPair!.id}`, '_blank');
             });
         }
 

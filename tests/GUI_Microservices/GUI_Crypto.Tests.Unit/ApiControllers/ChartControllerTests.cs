@@ -37,12 +37,13 @@ public class ChartControllerTests : IDisposable
     public async Task Chart_WhenSuccessfulFlow_ShouldCallBothServicesAndReturnChartView()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
         var chartData = TestData.BitcoinChartData;
         var chartViewModel = TestData.BitcoinChartViewModel;
 
         _mockChartService
-            .Setup(service => service.GetChartData(It.IsAny<KlineDataRequest>()))
+            .Setup(service => service.GetChartData(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(Result.Ok(chartData));
 
         _mockViewModelFactory
@@ -50,7 +51,7 @@ public class ChartControllerTests : IDisposable
             .Returns(chartViewModel);
 
         // Act
-        var result = await _testedController.Chart(request);
+        var result = await _testedController.Chart(idCoin, idTradingPair);
 
         // Assert
         result.Should().BeOfType<ViewResult>().Which.ViewName.Should().Be("Chart");
@@ -59,7 +60,7 @@ public class ChartControllerTests : IDisposable
 
         // Verify service calls
         _mockChartService.Verify(
-            service => service.GetChartData(Its.EquivalentTo(request)),
+            service => service.GetChartData(idCoin, idTradingPair),
             Times.Once
         );
         _mockViewModelFactory.Verify(
@@ -72,15 +73,16 @@ public class ChartControllerTests : IDisposable
     public async Task Chart_WhenChartServiceFails_ShouldReturnErrorWithoutCallingViewModelFactory()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
         var serviceError = new GenericErrors.InternalError("Chart service unavailable");
 
         _mockChartService
-            .Setup(service => service.GetChartData(It.IsAny<KlineDataRequest>()))
+            .Setup(service => service.GetChartData(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(Result.Fail<ChartData>(serviceError));
 
         // Act
-        var result = await _testedController.Chart(request);
+        var result = await _testedController.Chart(idCoin, idTradingPair);
 
         // Assert
         result.Should().BeOfType<ObjectResult>().Which.StatusCode.Should().Be(500);
@@ -96,7 +98,7 @@ public class ChartControllerTests : IDisposable
 
         // Verify service calls
         _mockChartService.Verify(
-            service => service.GetChartData(Its.EquivalentTo(request)),
+            service => service.GetChartData(idCoin, idTradingPair),
             Times.Once
         );
         _mockViewModelFactory.Verify(
@@ -109,15 +111,16 @@ public class ChartControllerTests : IDisposable
     public async Task Chart_WhenBadRequestError_ShouldReturnBadRequest()
     {
         // Arrange
-        var request = TestData.InvalidKlineDataRequest;
+        var idCoin = -1; // Invalid ID
+        var idTradingPair = -1; // Invalid trading pair ID
         var validationError = new GenericErrors.BadRequestError("Invalid request parameters");
 
         _mockChartService
-            .Setup(service => service.GetChartData(It.IsAny<KlineDataRequest>()))
+            .Setup(service => service.GetChartData(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(Result.Fail<ChartData>(validationError));
 
         // Act
-        var result = await _testedController.Chart(request);
+        var result = await _testedController.Chart(idCoin, idTradingPair);
 
         // Assert
         result.Should().BeOfType<BadRequestObjectResult>().Which.StatusCode.Should().Be(400);
@@ -132,7 +135,7 @@ public class ChartControllerTests : IDisposable
         problemDetails.Detail.Should().Contain("Invalid request parameters");
 
         _mockChartService.Verify(
-            service => service.GetChartData(Its.EquivalentTo(request)),
+            service => service.GetChartData(idCoin, idTradingPair),
             Times.Once
         );
     }
@@ -141,15 +144,16 @@ public class ChartControllerTests : IDisposable
     public async Task Chart_WhenNotFoundError_ShouldReturnNotFound()
     {
         // Arrange
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 999; // Non-existent coin ID
+        var idTradingPair = 999; // Non-existent trading pair ID
         var notFoundError = new GenericErrors.NotFoundError("Coin not found");
 
         _mockChartService
-            .Setup(service => service.GetChartData(It.IsAny<KlineDataRequest>()))
+            .Setup(service => service.GetChartData(It.IsAny<int>(), It.IsAny<int>()))
             .ReturnsAsync(Result.Fail<ChartData>(notFoundError));
 
         // Act
-        var result = await _testedController.Chart(request);
+        var result = await _testedController.Chart(idCoin, idTradingPair);
 
         // Assert
         result.Should().BeOfType<NotFoundObjectResult>().Which.StatusCode.Should().Be(404);

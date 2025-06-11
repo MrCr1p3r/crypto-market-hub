@@ -13,12 +13,13 @@ public interface IChartService
     /// <summary>
     /// Retrieves all data needed for the chart view model.
     /// </summary>
-    /// <param name="request">The coin chart parameters containing coin identifiers.</param>
+    /// <param name="idCoin">The id of the coin to fetch chart data for.</param>
+    /// <param name="idTradingPair">The id of the trading pair to fetch chart data for.</param>
     /// <returns>
     /// Success: Aggregated chart data.
     /// Failure: An error that occurred during data retrieval.
     /// </returns>
-    Task<Result<ChartData>> GetChartData(KlineDataRequest request);
+    Task<Result<ChartData>> GetChartData(int idCoin, int idTradingPair);
 
     /// <summary>
     /// Fetches kline data for a specific trading pair from external exchanges.

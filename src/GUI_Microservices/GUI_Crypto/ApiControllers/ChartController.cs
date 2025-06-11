@@ -20,19 +20,22 @@ public class ChartController(IChartService chartService, ICryptoViewModelFactory
     /// <summary>
     /// Renders the chart view for a specific coin.
     /// </summary>
-    /// <param name="request">The request parameters for fetching chart data.</param>
+    /// <param name="idCoin">The id of the coin to fetch chart data for.</param>
+    /// <param name="idTradingPair">The id of the trading pair to fetch chart data for.</param>
     /// <returns>Rendered view.</returns>
     /// <response code="200">View rendered successfully.</response>
     /// <response code="400">Invalid request parameters.</response>
+    /// <response code="404">Coin or trading pair with the specified id was not found.</response>
     /// <response code="500">Internal server error occured.</response>
-    [HttpPost]
+    [HttpGet("{idCoin:int}/{idTradingPair:int}")]
     [Consumes("application/json")]
     [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(string), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> Chart([FromBody] KlineDataRequest request)
+    public async Task<IActionResult> Chart([FromRoute] int idCoin, [FromRoute] int idTradingPair)
     {
-        var chartData = await _chartService.GetChartData(request);
+        var chartData = await _chartService.GetChartData(idCoin, idTradingPair);
         if (chartData.IsFailed)
         {
             return chartData.ToActionResult(this);

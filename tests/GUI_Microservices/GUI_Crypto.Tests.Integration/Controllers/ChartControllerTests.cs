@@ -24,10 +24,11 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
         );
         await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.GetCoinById);
 
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
 
         // Act
-        var response = await Client.PostAsJsonAsync("/chart", request);
+        var response = await Client.GetAsync($"/chart/{idCoin}/{idTradingPair}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -43,10 +44,11 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
         );
         await Factory.SvcCoinsServerMock.PostMappingAsync(WireMockMappings.SvcCoins.GetCoinById);
 
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
 
         // Act
-        var response = await Client.PostAsJsonAsync("/chart", request);
+        var response = await Client.GetAsync($"/chart/{idCoin}/{idTradingPair}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -63,10 +65,11 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
             WireMockMappings.SvcCoins.GetCoinByIdError
         );
 
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
 
         // Act
-        var response = await Client.PostAsJsonAsync("/chart", request);
+        var response = await Client.GetAsync($"/chart/{idCoin}/{idTradingPair}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
@@ -83,10 +86,11 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
             WireMockMappings.SvcCoins.GetCoinByIdNotFound
         );
 
-        var request = TestData.BasicKlineDataRequest;
+        var idCoin = 1;
+        var idTradingPair = 101;
 
         // Act
-        var response = await Client.PostAsJsonAsync("/chart", request);
+        var response = await Client.GetAsync($"/chart/{idCoin}/{idTradingPair}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -329,24 +333,6 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
 
     private static class TestData
     {
-        public static readonly KlineDataRequest BasicKlineDataRequest = new()
-        {
-            CoinMain = new KlineDataRequestCoin
-            {
-                Id = 1,
-                Symbol = "BTC",
-                Name = "Bitcoin",
-            },
-            IdTradingPair = 101,
-            CoinQuote = new KlineDataRequestCoin
-            {
-                Id = 5,
-                Symbol = "USDT",
-                Name = "Tether",
-            },
-            Exchanges = [Exchange.Binance],
-        };
-
         public static readonly KlineDataRequest CustomKlineDataRequest = new()
         {
             CoinMain = new KlineDataRequestCoin

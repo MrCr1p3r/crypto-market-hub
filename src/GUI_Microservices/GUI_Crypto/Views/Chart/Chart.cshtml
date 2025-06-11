@@ -1,10 +1,6 @@
 @using System.Web
 @model GUI_Crypto.ViewModels.Chart.ChartViewModel
 
-@{
-    var selectedTradingPair = Model.Coin.TradingPairs.First(tp => tp.CoinQuote.Symbol == Model.Coin.SelectedQuoteCoinSymbol);
-}
-
 <div class="container">
     <h2 class="text-center py-3 d-flex justify-content-center align-items-center">
         <div class="dropdown">
@@ -21,7 +17,7 @@
                             data-quote-coin-name="@tradingPair.CoinQuote.Name"
                             data-trading-pair-id="@tradingPair.Id"
                             data-trading-pair-exchanges='@Html.Raw(Json.Serialize(tradingPair.Exchanges))'
-                            >@Model.Coin.Symbol/@tradingPair.CoinQuote.Symbol</a></li>
+                            href="/chart/@Model.Coin.Id/@tradingPair.Id">@Model.Coin.Symbol/@tradingPair.CoinQuote.Symbol</a></li>
                 }
             </ul>
         </div>
