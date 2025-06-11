@@ -8,9 +8,9 @@ namespace GUI_Crypto.Tests.Integration.Messaging;
 /// Integration tests for KlineDataMessageHandler testing the full messaging pipeline:
 /// RabbitMQ Message → MessageHandler → SignalR Hub → Connected Clients.
 /// </summary>
+[Collection("Messaging Integration Tests")]
 public class KlineDataMessageTests(CustomWebApplicationFactory factory)
-    : BaseMessagingIntegrationTest(factory),
-        IClassFixture<CustomWebApplicationFactory>
+    : BaseMessagingIntegrationTest(factory)
 {
     #region Happy Path Tests
 
@@ -18,7 +18,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithValidData_ShouldBroadcastToSignalRClients()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -67,7 +67,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         const int clientCount = 3;
-        var connections = (await CreateMultipleSignalRConnectionsAsync(clientCount)).ToList();
+        var connections = (await GetMultipleSignalRConnections(clientCount)).ToList();
         var listeners = connections
             .Select(c => CreateSignalRListener<IEnumerable<KlineData>>(c, "ReceiveKlineDataUpdate"))
             .ToList();
@@ -101,7 +101,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithSingleTradingPair_ShouldBroadcastCorrectly()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -136,7 +136,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithFailedJob_ShouldNotBroadcastToClients()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -148,8 +148,6 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
             "Kline data fetch failed"
         );
 
-        await AllowTimeForProcessingAsync();
-
         // Assert - No broadcast should occur for failed jobs
         listener
             .ReceivedMessages.Should()
@@ -160,7 +158,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithNullData_ShouldNotBroadcastToClients()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -172,8 +170,6 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
             null
         );
 
-        await AllowTimeForProcessingAsync();
-
         // Assert - No broadcast should occur for null data
         listener
             .ReceivedMessages.Should()
@@ -184,7 +180,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithEmptyData_ShouldBroadcastEmptyCollection()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -211,7 +207,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithEmptyKlinesForTradingPair_ShouldBroadcastCorrectly()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -259,7 +255,6 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
                 JobConstants.QueueNames.GuiKlineDataUpdated,
                 testData
             );
-            await AllowTimeForProcessingAsync();
         };
 
         await act.Should().NotThrowAsync("broadcasting to no clients should not cause errors");
@@ -269,7 +264,7 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
     public async Task KlineDataMessage_WithClientDisconnectingDuringProcessing_ShouldNotThrowError()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<KlineData>>(
             connection,
             "ReceiveKlineDataUpdate"
@@ -286,7 +281,6 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
                 JobConstants.QueueNames.GuiKlineDataUpdated,
                 testData
             );
-            await AllowTimeForProcessingAsync();
         };
 
         // Assert - Should not throw even with disconnected clients

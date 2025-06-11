@@ -73,3 +73,9 @@ dotnet_diagnostic.LOGGEN036.severity = none
 
 # S6967: ModelState.IsValid should be called in controller actions
 dotnet_diagnostic.S6967.severity = none
+
+# S4136: Method overloads should be grouped together
+dotnet_diagnostic.S4136.severity = none
+
+# CA1711: Identifiers should not have incorrect suffix
+dotnet_diagnostic.CA1711.severity = none

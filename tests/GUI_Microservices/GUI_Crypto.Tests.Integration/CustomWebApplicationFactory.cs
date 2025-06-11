@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -21,6 +22,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         new WireMockContainerBuilder().Build();
 
     private readonly RabbitMqContainer _rabbitMqContainer = new RabbitMqBuilder().Build();
+
+    // SignalR connection pool for test performance
+    private readonly ConcurrentQueue<HubConnection> _signalRConnectionPool = new();
+    private readonly List<HubConnection> _allConnections = [];
+    private readonly SemaphoreSlim _connectionSemaphore = new(1, 1);
 
     // Expose mock servers for tests
     public IWireMockAdminApi SvcCoinsServerMock { get; private set; } = null!;
@@ -71,6 +77,45 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         {
             Uri = new Uri(_rabbitMqContainer.GetConnectionString()),
         };
+
+        // Pre-warm the SignalR connection pool
+        await PreWarmSignalRConnectionPoolAsync();
+    }
+
+    /// <summary>
+    /// Pre-creates a few SignalR connections to improve test startup performance.
+    /// </summary>
+    private async Task PreWarmSignalRConnectionPoolAsync()
+    {
+        const int initialPoolSize = 3;
+        var preWarmTasks = Enumerable
+            .Range(0, initialPoolSize)
+            .Select(async _ =>
+            {
+                var connection = await CreateSignalRConnectionAsync();
+                _signalRConnectionPool.Enqueue(connection);
+            });
+
+        await Task.WhenAll(preWarmTasks);
+    }
+
+    /// <summary>
+    /// Gets a SignalR connection from the pool, creating one if necessary.
+    /// This dramatically improves test performance by reusing connections.
+    /// </summary>
+    /// <returns>A configured and connected SignalR hub connection.</returns>
+    public async Task<HubConnection> GetPooledSignalRConnectionAsync()
+    {
+        if (
+            _signalRConnectionPool.TryDequeue(out var pooledConnection)
+            && pooledConnection.State == HubConnectionState.Connected
+        )
+        {
+            return pooledConnection;
+        }
+
+        // Create new connection if pool is empty or connection is stale
+        return await CreateSignalRConnectionAsync();
     }
 
     /// <summary>
@@ -90,15 +135,70 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             .Build();
 
         await connection.StartAsync();
+
+        // Track all connections for proper disposal
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            _allConnections.Add(connection);
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+
         return connection;
+    }
+
+    /// <summary>
+    /// Returns a SignalR connection to the pool for reuse.
+    /// </summary>
+    /// <param name="connection">The connection to return to the pool.</param>
+    public void ReturnSignalRConnectionToPool(HubConnection connection)
+    {
+        if (connection.State == HubConnectionState.Connected)
+        {
+            _signalRConnectionPool.Enqueue(connection);
+        }
     }
 
     public new async Task DisposeAsync()
     {
+        // Dispose all SignalR connections
+        await _connectionSemaphore.WaitAsync();
+        try
+        {
+            var disposeTasks = _allConnections.Select(async connection =>
+            {
+                try
+                {
+                    if (connection.State == HubConnectionState.Connected)
+                    {
+                        await connection.StopAsync();
+                    }
+
+                    await connection.DisposeAsync();
+                }
+                catch
+                {
+                    // Ignore disposal errors
+                }
+            });
+
+            await Task.WhenAll(disposeTasks);
+            _allConnections.Clear();
+        }
+        finally
+        {
+            _connectionSemaphore.Release();
+        }
+
         await _svcCoinsWireMockContainer.DisposeAsync();
         await _svcExternalWireMockContainer.DisposeAsync();
         await _svcKlineWireMockContainer.DisposeAsync();
         await _rabbitMqContainer.DisposeAsync();
         await base.DisposeAsync();
+
+        _connectionSemaphore.Dispose();
     }
 }

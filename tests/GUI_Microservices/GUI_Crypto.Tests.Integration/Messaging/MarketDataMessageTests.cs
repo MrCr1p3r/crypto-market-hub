@@ -7,9 +7,9 @@ namespace GUI_Crypto.Tests.Integration.Messaging;
 /// Integration tests for MarketDataMessageHandler testing the full messaging pipeline:
 /// RabbitMQ Message → MessageHandler → SignalR Hub → Connected Clients.
 /// </summary>
+[Collection("Messaging Integration Tests")]
 public class MarketDataMessageTests(CustomWebApplicationFactory factory)
-    : BaseMessagingIntegrationTest(factory),
-        IClassFixture<CustomWebApplicationFactory>
+    : BaseMessagingIntegrationTest(factory)
 {
     #region Happy Path Tests
 
@@ -17,7 +17,7 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
     public async Task MarketDataMessage_WithValidData_ShouldBroadcastToSignalRClients()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<CoinMarketData>>(
             connection,
             "ReceiveMarketDataUpdate"
@@ -60,7 +60,7 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
     {
         // Arrange
         const int clientCount = 3;
-        var connections = (await CreateMultipleSignalRConnectionsAsync(clientCount)).ToList();
+        var connections = (await GetMultipleSignalRConnections(clientCount)).ToList();
         var listeners = connections
             .Select(c =>
                 CreateSignalRListener<IEnumerable<CoinMarketData>>(c, "ReceiveMarketDataUpdate")
@@ -97,7 +97,7 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
     public async Task MarketDataMessage_WithFailedJob_ShouldNotBroadcastToClients()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<CoinMarketData>>(
             connection,
             "ReceiveMarketDataUpdate"
@@ -109,8 +109,6 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
             "Test error occurred"
         );
 
-        await AllowTimeForProcessingAsync();
-
         // Assert - No broadcast should occur for failed jobs
         listener
             .ReceivedMessages.Should()
@@ -121,7 +119,7 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
     public async Task MarketDataMessage_WithNullData_ShouldNotBroadcastToClients()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<CoinMarketData>>(
             connection,
             "ReceiveMarketDataUpdate"
@@ -133,8 +131,6 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
             null
         );
 
-        await AllowTimeForProcessingAsync();
-
         // Assert - No broadcast should occur for null data
         listener
             .ReceivedMessages.Should()
@@ -145,7 +141,7 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
     public async Task MarketDataMessage_WithEmptyData_ShouldBroadcastEmptyCollection()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<CoinMarketData>>(
             connection,
             "ReceiveMarketDataUpdate"
@@ -185,7 +181,6 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
                 JobConstants.QueueNames.GuiMarketDataUpdated,
                 testData
             );
-            await AllowTimeForProcessingAsync();
         };
 
         await act.Should().NotThrowAsync("broadcasting to no clients should not cause errors");
@@ -195,7 +190,7 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
     public async Task MarketDataMessage_WithClientDisconnectingDuringProcessing_ShouldNotThrowError()
     {
         // Arrange
-        var connection = await CreateSignalRConnectionAsync();
+        var connection = await GetSignalRConnection();
         var listener = CreateSignalRListener<IEnumerable<CoinMarketData>>(
             connection,
             "ReceiveMarketDataUpdate"
@@ -212,7 +207,6 @@ public class MarketDataMessageTests(CustomWebApplicationFactory factory)
                 JobConstants.QueueNames.GuiMarketDataUpdated,
                 testData
             );
-            await AllowTimeForProcessingAsync();
         };
 
         // Assert - Should not throw even with disconnected clients

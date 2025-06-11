@@ -9,9 +9,9 @@ using WireMock.Admin.Mappings;
 
 namespace GUI_Crypto.Tests.Integration.Controllers;
 
+[Collection("Controllers Integration Tests")]
 public class ChartControllerTests(CustomWebApplicationFactory factory)
-    : BaseControllerIntegrationTest(factory),
-        IClassFixture<CustomWebApplicationFactory>
+    : BaseControllerIntegrationTest(factory)
 {
     #region Chart Tests
 

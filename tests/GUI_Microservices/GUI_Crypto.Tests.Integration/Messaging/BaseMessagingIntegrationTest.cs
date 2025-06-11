@@ -11,7 +11,7 @@ public abstract class BaseMessagingIntegrationTest : BaseControllerIntegrationTe
 {
     private protected MessagePublisher MessagePublisher { get; }
 
-    private readonly List<HubConnection> _signalRConnections = [];
+    private readonly List<HubConnection> _borrowedConnections = [];
 
     protected BaseMessagingIntegrationTest(CustomWebApplicationFactory factory)
         : base(factory)
@@ -20,49 +20,38 @@ public abstract class BaseMessagingIntegrationTest : BaseControllerIntegrationTe
     }
 
     /// <summary>
-    /// Creates and starts a SignalR connection, automatically subscribing to overview updates.
+    /// Gets a SignalR connection from the factory's pool, automatically subscribing to overview updates.
+    /// This reuses connections across test instances for optimal performance.
     /// </summary>
     /// <returns>A connected SignalR hub connection.</returns>
-    protected async Task<HubConnection> CreateSignalRConnectionAsync()
+    protected async Task<HubConnection> GetSignalRConnection()
     {
-        var connection = await Factory.CreateSignalRConnectionAsync();
+        var connection = await Factory.GetPooledSignalRConnectionAsync();
         await connection.InvokeAsync("SubscribeToOverviewUpdates");
 
-        // Track connection for disposal
-        _signalRConnections.Add(connection);
+        // Track borrowed connections for proper return to pool
+        _borrowedConnections.Add(connection);
 
         return connection;
     }
 
     /// <summary>
     /// Creates multiple SignalR connections for testing multi-client scenarios.
+    /// The first connection comes from the pool, additional ones are created as needed.
     /// </summary>
     /// <param name="count">Number of connections to create.</param>
     /// <returns>Collection of connected SignalR hub connections.</returns>
-    protected async Task<IEnumerable<HubConnection>> CreateMultipleSignalRConnectionsAsync(
-        int count
-    )
+    protected async Task<IEnumerable<HubConnection>> GetMultipleSignalRConnections(int count)
     {
         var connections = new List<HubConnection>();
 
         for (int i = 0; i < count; i++)
         {
-            var connection = await CreateSignalRConnectionAsync();
+            var connection = await GetSignalRConnection();
             connections.Add(connection);
         }
 
         return connections;
-    }
-
-    /// <summary>
-    /// Waits for a specified duration to allow asynchronous operations to complete,
-    /// especially in tests where no message is expected.
-    /// </summary>
-    /// <param name="milliseconds">Milliseconds to wait (default: 1000ms).</param>
-    /// <returns>A task representing the wait operation.</returns>
-    protected static async Task AllowTimeForProcessingAsync(int milliseconds = 1000)
-    {
-        await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
     }
 
     /// <summary>
@@ -82,13 +71,13 @@ public abstract class BaseMessagingIntegrationTest : BaseControllerIntegrationTe
 
     public override async Task DisposeAsync()
     {
-        // Dispose all SignalR connections
-        foreach (var connection in _signalRConnections)
+        // Return all borrowed connections to the pool for reuse
+        foreach (var connection in _borrowedConnections)
         {
-            await connection.DisposeAsync();
+            Factory.ReturnSignalRConnectionToPool(connection);
         }
 
-        _signalRConnections.Clear();
+        _borrowedConnections.Clear();
 
         await base.DisposeAsync();
     }
