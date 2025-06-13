@@ -179,3 +179,41 @@ body {
         transform: translateY(-10px);
     }
 }
+
+/* Pagination styles */
+#firstPageBtn:disabled,
+#prevPageBtn:disabled,
+#nextPageBtn:disabled,
+#lastPageBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#firstPageBtn:hover:not(:disabled),
+#prevPageBtn:hover:not(:disabled),
+#nextPageBtn:hover:not(:disabled),
+#lastPageBtn:hover:not(:disabled) {
+    background-color: #a29bfe;
+    border-color: #a29bfe;
+    color: #ffffff;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+#pageSizeSelect {
+    border: 1px solid #2e294e;
+    transition: border-color 0.2s;
+}
+
+#pageSizeSelect:focus {
+    border-color: #a29bfe;
+    box-shadow: 0 0 0 0.2rem rgba(162, 155, 254, 0.25);
+}
+
+#pageInfo {
+    font-size: 0.9rem;
+}
+
+#pageInfo strong {
+    color: #a29bfe;
+}

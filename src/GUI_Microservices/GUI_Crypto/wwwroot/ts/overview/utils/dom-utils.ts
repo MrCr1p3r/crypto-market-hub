@@ -6,33 +6,6 @@ export function getElement<T extends HTMLElement>(id: string, type: new () => T)
     return element;
 }
 
-export function createButton(
-    className: string,
-    icon: string,
-    onClick?: () => void,
-    disabled = false
-): HTMLButtonElement {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = className;
-    button.disabled = disabled;
-
-    const iconElement = document.createElement('i');
-    iconElement.className = icon;
-    button.appendChild(iconElement);
-
-    if (onClick) button.addEventListener('click', onClick);
-    return button;
-}
-
-export function createHiddenInput(name: string, value: string): HTMLInputElement {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = name;
-    input.value = value;
-    return input;
-}
-
 export function appendNoItemsMessage(
     container: HTMLElement,
     message: string = 'No items found',

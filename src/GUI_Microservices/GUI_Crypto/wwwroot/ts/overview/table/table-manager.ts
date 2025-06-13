@@ -9,7 +9,7 @@ import {
     getCoreRowModel,
     getSortedRowModel,
     getFilteredRowModel,
-    type TableState,
+    getPaginationRowModel,
 } from '@tanstack/table-core';
 
 import { OverviewCoin } from '../interfaces/overview-coin';
@@ -19,38 +19,28 @@ import { destroyAllChartsForRerender, renderMiniCharts } from './mini-chart';
 import { fetchCoins, deleteCoin } from '../services';
 import { initializeToastr } from '../../configs/toastr-config';
 import { KlineDataUpdate } from 'realtime/interfaces/kline-signalr';
+import { updateTableState } from '../utils/tanstack-utils';
 
 export class TableManager {
-    private readonly table: HTMLTableElement;
+    private readonly tableElement: HTMLTableElement;
     private readonly tableBody: HTMLElement;
     private readonly thead: HTMLElement;
     private readonly searchInput: HTMLInputElement;
     private readonly confirmDeleteBtn: HTMLButtonElement;
 
-    private tableCore: Table<OverviewCoin>;
+    // Pagination controls
+    private readonly firstPageBtn: HTMLButtonElement;
+    private readonly prevPageBtn: HTMLButtonElement;
+    private readonly nextPageBtn: HTMLButtonElement;
+    private readonly lastPageBtn: HTMLButtonElement;
+    private readonly pageSizeSelect: HTMLSelectElement;
+    private readonly currentPageSpan: HTMLElement;
+    private readonly totalPagesSpan: HTMLElement;
+    private readonly rowsShowingSpan: HTMLElement;
+    private readonly totalRowsSpan: HTMLElement;
+
+    private table: Table<OverviewCoin>;
     private currentCoins: OverviewCoin[] = [];
-    private tableState: TableState = {
-        sorting: [{ id: 'marketCapUsd', desc: true }],
-        columnFilters: [],
-        globalFilter: '',
-        columnVisibility: {},
-        columnOrder: [],
-        columnPinning: {},
-        rowSelection: {},
-        expanded: {},
-        grouping: [],
-        columnSizing: {},
-        rowPinning: {},
-        columnSizingInfo: {
-            isResizingColumn: false,
-            startOffset: null,
-            startSize: null,
-            columnSizingStart: [],
-            deltaOffset: 0,
-            deltaPercentage: 0,
-        },
-        pagination: { pageIndex: 0, pageSize: 10 },
-    };
 
     private deleteModal: bootstrap.Modal;
     private coinToDelete: { id: number; symbol: string } | null = null;
@@ -63,27 +53,59 @@ export class TableManager {
         const deleteModalElement = document.getElementById('deleteConfirmModal');
         const thead = document.querySelector('#coinTable thead');
 
-        this.table = table as HTMLTableElement;
+        // Pagination elements
+        const firstPageBtn = document.getElementById('firstPageBtn');
+        const prevPageBtn = document.getElementById('prevPageBtn');
+        const nextPageBtn = document.getElementById('nextPageBtn');
+        const lastPageBtn = document.getElementById('lastPageBtn');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const rowsShowingSpan = document.getElementById('rowsShowing');
+        const totalRowsSpan = document.getElementById('totalRows');
+
+        this.tableElement = table as HTMLTableElement;
         this.tableBody = tableBody as HTMLElement;
         this.thead = thead as HTMLElement;
         this.searchInput = searchInput as HTMLInputElement;
         this.confirmDeleteBtn = confirmDeleteBtn as HTMLButtonElement;
         this.deleteModal = new bootstrap.Modal(deleteModalElement!);
 
+        // Pagination controls
+        this.firstPageBtn = firstPageBtn as HTMLButtonElement;
+        this.prevPageBtn = prevPageBtn as HTMLButtonElement;
+        this.nextPageBtn = nextPageBtn as HTMLButtonElement;
+        this.lastPageBtn = lastPageBtn as HTMLButtonElement;
+        this.pageSizeSelect = pageSizeSelect as HTMLSelectElement;
+        this.currentPageSpan = currentPageSpan as HTMLElement;
+        this.totalPagesSpan = totalPagesSpan as HTMLElement;
+        this.rowsShowingSpan = rowsShowingSpan as HTMLElement;
+        this.totalRowsSpan = totalRowsSpan as HTMLElement;
+
         const options: TableOptionsResolved<OverviewCoin> = {
             data: this.currentCoins,
             columns,
+            state: {
+                sorting: [{ id: 'marketCapUsd', desc: true }],
+                pagination: { pageIndex: 0, pageSize: 50 },
+                globalFilter: '',
+            },
+            onStateChange: (updater) => {
+                updateTableState(this.table, updater);
+                this.renderTable();
+                this.updatePaginationInfo();
+                this.updateSortIcons();
+            },
             getCoreRowModel: getCoreRowModel(),
             getSortedRowModel: getSortedRowModel(),
             getFilteredRowModel: getFilteredRowModel(),
-            state: this.tableState,
-            onStateChange: () => {},
+            getPaginationRowModel: getPaginationRowModel(),
             enableSorting: true,
             enableFilters: true,
             renderFallbackValue: null,
         };
 
-        this.tableCore = createTable(options);
+        this.table = createTable(options);
 
         this.setupEventListeners();
         this.refreshTableData();
@@ -92,28 +114,39 @@ export class TableManager {
 
     private setupEventListeners(): void {
         this.searchInput.addEventListener('input', () => this.handleSearch());
+
         this.thead.addEventListener('click', (event: MouseEvent) => {
             const header = (event.target as HTMLElement)?.closest('th.sortable');
             if (!header) return;
             this.handleSortingChange(header as HTMLElement);
         });
+
         this.confirmDeleteBtn.addEventListener('click', () => this.handleDeleteConfirmation());
+
+        this.firstPageBtn.addEventListener('click', () => this.table.firstPage());
+        this.prevPageBtn.addEventListener('click', () => this.table.previousPage());
+        this.nextPageBtn.addEventListener('click', () => this.table.nextPage());
+        this.lastPageBtn.addEventListener('click', () => this.table.lastPage());
+
+        this.pageSizeSelect.addEventListener('change', () => {
+            this.table.setPageSize(Number(this.pageSizeSelect.value));
+        });
     }
 
     private handleSearch(): void {
-        this.tableState.globalFilter = this.searchInput.value.toLowerCase().trim();
-        this.updateTableState();
+        const searchValue = this.searchInput.value.toLowerCase().trim();
+        this.table.setGlobalFilter(searchValue);
     }
 
     private handleSortingChange(target: HTMLElement): void {
         const columnId = target.getAttribute('data-column-id');
-        const currentSort = this.tableCore.getState().sorting;
+        if (!columnId) return;
+
+        const currentSort = this.table.getState().sorting;
         const currentSortItem = currentSort?.[0];
         const isDesc = currentSortItem?.id === columnId && !currentSortItem?.desc;
 
-        this.tableState.sorting = [{ id: columnId!, desc: isDesc }];
-        this.updateTableState();
-        this.updateSortIcons();
+        this.table.setSorting([{ id: columnId, desc: isDesc }]);
     }
 
     private async handleDeleteConfirmation(): Promise<void> {
@@ -126,17 +159,17 @@ export class TableManager {
     }
 
     private updateSortIcons(): void {
-        this.table.querySelectorAll('th[data-column-id] i').forEach((icon) => {
+        this.tableElement.querySelectorAll('th[data-column-id] i').forEach((icon) => {
             icon.className = 'fas fa-sort';
         });
 
-        const currentSortingState = this.tableCore.getState().sorting;
+        const currentSortingState = this.table.getState().sorting;
         if (currentSortingState === undefined) return;
 
         const currentSort = currentSortingState[0];
         if (!currentSort) return;
 
-        const header = this.table.querySelector(`th[data-column-id="${currentSort.id}"]`);
+        const header = this.tableElement.querySelector(`th[data-column-id="${currentSort.id}"]`);
         const icon = header?.querySelector('i');
         if (!icon) return;
         icon.className = `fas fa-sort-${currentSort.desc ? 'down' : 'up'}`;
@@ -181,7 +214,7 @@ export class TableManager {
     }
 
     private renderTable(): void {
-        const processedRows = this.tableCore.getRowModel().rows;
+        const processedRows = this.table.getRowModel().rows;
         const existingRows = Array.from(this.tableBody.children) as HTMLTableRowElement[];
         const chartsToUpdate: Element[] = [];
 
@@ -259,7 +292,7 @@ export class TableManager {
         // Update only the data-driven cells, not the chart or actions
         const cells = existingRow.children;
 
-        this.tableCore.getAllColumns().forEach((column, index) => {
+        this.table.getAllColumns().forEach((column, index) => {
             const td = cells[index] as HTMLTableCellElement;
             if (!td) return;
 
@@ -356,7 +389,7 @@ export class TableManager {
         chartsToUpdate: Element[],
         rowNew: HTMLTableRowElement
     ): void {
-        this.tableCore.getAllColumns().forEach((column) => {
+        this.table.getAllColumns().forEach((column) => {
             const td = document.createElement('td');
             const value = row.getValue(column.id);
 
@@ -432,13 +465,14 @@ export class TableManager {
     public async refreshTableData(): Promise<void> {
         const coins = await fetchCoins();
         this.currentCoins = coins;
-        this.tableCore.setOptions((prev) => {
+        this.table.setOptions((prev) => {
             return {
                 ...prev,
                 data: this.currentCoins,
             };
         });
         this.renderTable();
+        this.updatePaginationInfo();
     }
 
     /**
@@ -505,11 +539,12 @@ export class TableManager {
 
         // Render table once if there were any changes
         if (hasAnyChanges) {
-            this.tableCore.setOptions((prev) => ({
+            this.table.setOptions((prev) => ({
                 ...prev,
                 data: [...this.currentCoins],
             }));
             this.renderTable();
+            this.updatePaginationInfo();
 
             // Add visual indicators for all updated coins at once
             updatedCoins.forEach(({ coinId, isRise }) => {
@@ -548,14 +583,6 @@ export class TableManager {
         priceCell.addEventListener('animationend', onAnimEnd);
     }
 
-    private updateTableState(): void {
-        this.tableCore.setOptions((prev) => ({
-            ...prev,
-            state: this.tableState,
-        }));
-        this.renderTable();
-    }
-
     /**
      * Update kline data for multiple trading pairs and refresh charts
      */
@@ -592,5 +619,29 @@ export class TableManager {
                 this.setupChartObservers(elementsToReobserve);
             }
         }
+    }
+
+    private updatePaginationInfo(): void {
+        const paginationState = this.table.getState().pagination;
+        const pageCount = this.table.getPageCount();
+        const totalRows = this.currentCoins.length;
+        const currentRows = this.table.getRowModel().rows.length;
+
+        // Update page info
+        this.currentPageSpan.textContent = (paginationState.pageIndex + 1).toString();
+        this.totalPagesSpan.textContent = Math.max(pageCount, 1).toString();
+
+        // Update row counts
+        this.totalRowsSpan.textContent = totalRows.toString();
+        this.rowsShowingSpan.textContent = currentRows.toString();
+
+        // Update button states
+        const canGoPrevious = this.table.getCanPreviousPage();
+        const canGoNext = this.table.getCanNextPage();
+
+        this.firstPageBtn.disabled = !canGoPrevious;
+        this.prevPageBtn.disabled = !canGoPrevious;
+        this.nextPageBtn.disabled = !canGoNext;
+        this.lastPageBtn.disabled = !canGoNext;
     }
 }
