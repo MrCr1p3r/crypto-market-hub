@@ -91,7 +91,7 @@ public static class InfrastructureServiceExtensions
                 var baseUrl =
                     configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
                 client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromMinutes(5);
+                client.Timeout = TimeSpan.FromMinutes(20);
             }
         );
 
@@ -110,7 +110,7 @@ public static class InfrastructureServiceExtensions
                 var baseUrl =
                     configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
                 client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromMinutes(5);
+                client.Timeout = TimeSpan.FromMinutes(20);
             }
         );
 

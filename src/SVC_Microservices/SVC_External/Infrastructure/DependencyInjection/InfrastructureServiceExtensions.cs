@@ -1,6 +1,6 @@
-using System.Threading.RateLimiting;
-using Microsoft.Extensions.Http.Resilience;
 using SharedLibrary.Infrastructure;
+using SVC_External.ExternalClients.MarketDataProviders.CoinGecko;
+using SVC_External.Infrastructure.CoinGecko;
 using ZiggyCreatures.Caching.Fusion;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
@@ -35,9 +35,9 @@ public static class InfrastructureServiceExtensions
             .AddFusionCache()
             .WithDefaultEntryOptions(options =>
             {
-                options.Duration = TimeSpan.FromMinutes(15);
-                // Start eager refresh after ≈9 minutes (60% of 15 minutes)
-                options.EagerRefreshThreshold = 0.60f;
+                options.Duration = TimeSpan.FromHours(1);
+                // Start eager refresh after ≈ 40 minutes (66% of 1 hour)
+                options.EagerRefreshThreshold = 0.66f;
             })
             .WithSerializer(new FusionCacheSystemTextJsonSerializer())
             .WithRegisteredDistributedCache()
@@ -105,16 +105,12 @@ public static class InfrastructureServiceExtensions
         IConfiguration configuration
     )
     {
-        var rateLimiter = new SlidingWindowRateLimiter(
-            new SlidingWindowRateLimiterOptions
-            {
-                Window = TimeSpan.FromSeconds(60),
-                SegmentsPerWindow = 20,
-                PermitLimit = 30,
-                QueueLimit = int.MaxValue,
-            }
-        );
-        services.AddSingleton(rateLimiter);
+        services.AddSingleton<
+            ICoinGeckoAuthenticationStateService,
+            CoinGeckoAuthenticationStateService
+        >();
+
+        services.AddTransient<CoinGeckoAdaptiveHandler>();
 
         services
             .AddHttpClient(
@@ -127,23 +123,9 @@ public static class InfrastructureServiceExtensions
                     client.BaseAddress = new Uri(baseUrl);
                     client.DefaultRequestHeaders.Add("accept", "application/json");
                     client.DefaultRequestHeaders.Add("User-Agent", "SVC_External");
-
-                    var apiKey = configuration["COINGECKO_API_KEY"];
-                    if (!string.IsNullOrEmpty(apiKey))
-                    {
-                        client.DefaultRequestHeaders.Add("x-cg-demo-api-key", apiKey);
-                    }
                 }
             )
-            .AddStandardResilienceHandler(options =>
-            {
-                options.RateLimiter = new HttpRateLimiterStrategyOptions
-                {
-                    Name = "CoinGeckoClient-RateLimiter",
-                    RateLimiter = args =>
-                        rateLimiter.AcquireAsync(cancellationToken: args.Context.CancellationToken),
-                };
-            });
+            .AddHttpMessageHandler<CoinGeckoAdaptiveHandler>();
 
         return services;
     }

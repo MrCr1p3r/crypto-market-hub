@@ -72,4 +72,40 @@ public static class CoinGeckoDtos
         [JsonPropertyName("target_coin_id")]
         public string TargetCoinId { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// Represents an error response from CoinGecko API.
+    /// </summary>
+    public class CoinGeckoErrorResponse
+    {
+        /// <summary>
+        /// Status information about the error.
+        /// </summary>
+        [JsonPropertyName("status")]
+        public CoinGeckoErrorStatus? Status { get; set; }
+    }
+
+    /// <summary>
+    /// Represents the status section of a CoinGecko error response.
+    /// </summary>
+    public class CoinGeckoErrorStatus
+    {
+        /// <summary>
+        /// Timestamp when the error occurred.
+        /// </summary>
+        [JsonPropertyName("timestamp")]
+        public string? Timestamp { get; set; }
+
+        /// <summary>
+        /// Error code from CoinGecko API.
+        /// </summary>
+        [JsonPropertyName("error_code")]
+        public int ErrorCode { get; set; }
+
+        /// <summary>
+        /// Error message from CoinGecko API.
+        /// </summary>
+        [JsonPropertyName("error_message")]
+        public string? ErrorMessage { get; set; }
+    }
 }
