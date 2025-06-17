@@ -233,9 +233,17 @@ export class TableManager {
         button.type = 'button';
         button.className = 'btn btn-sm btn-outline-danger';
 
+        // Add tooltip attributes
+        button.setAttribute('data-bs-toggle', 'tooltip');
+        button.setAttribute('data-bs-placement', 'top');
+        button.setAttribute('title', 'Delete this coin');
+
         const iconElement = document.createElement('i');
         iconElement.className = 'fas fa-trash';
         button.appendChild(iconElement);
+
+        // Initialize tooltip
+        new bootstrap.Tooltip(button);
 
         return button;
     }
@@ -245,6 +253,13 @@ export class TableManager {
         button.type = 'button';
         button.className = 'btn btn-sm btn-outline-primary';
         button.disabled = !coin.klineData?.tradingPairId;
+
+        // Add tooltip attributes
+        if (coin.klineData?.tradingPairId) {
+            button.setAttribute('data-bs-toggle', 'tooltip');
+            button.setAttribute('data-bs-placement', 'top');
+            button.setAttribute('title', 'View full chart');
+        }
 
         const iconElement = document.createElement('i');
         iconElement.className = 'fas fa-chart-line';
@@ -256,7 +271,40 @@ export class TableManager {
             });
         }
 
+        // Initialize tooltip
+        new bootstrap.Tooltip(button);
+
         return button;
+    }
+
+    /**
+     * Enable full chart button when current trading pair id becomes available
+     */
+    private enableFullChartButton(coin: OverviewCoin): void {
+        const row = this.tableBody.querySelector(
+            `tr[data-coin-id="${coin.id}"]`
+        ) as HTMLTableRowElement;
+        if (!row) return;
+
+        // Find the full chart button in the actions column
+        const fullChartButton = row.querySelector('.btn-outline-primary') as HTMLButtonElement;
+        if (!fullChartButton || !fullChartButton.disabled) return;
+
+        // Enable the button
+        fullChartButton.disabled = false;
+
+        // Add tooltip attributes
+        fullChartButton.setAttribute('data-bs-toggle', 'tooltip');
+        fullChartButton.setAttribute('data-bs-placement', 'top');
+        fullChartButton.setAttribute('title', 'View full chart');
+
+        // Add click event listener
+        fullChartButton.addEventListener('click', () => {
+            window.open(`/chart/${coin.id}/${coin.klineData!.tradingPairId}`, '_blank');
+        });
+
+        // Initialize tooltip
+        new bootstrap.Tooltip(fullChartButton);
     }
 
     private confirmDelete(id: number, symbol: string): void {
@@ -635,6 +683,8 @@ export class TableManager {
             );
 
             if (coinWithTradingPair) {
+                const wasDisabled = !coinWithTradingPair.klineData?.tradingPairId;
+
                 coinWithTradingPair.klineData = {
                     tradingPairId: klineUpdate.idTradingPair,
                     klines: klineUpdate.klines,
@@ -650,6 +700,11 @@ export class TableManager {
                         'data-kline-data',
                         JSON.stringify(klineUpdate.klines)
                     );
+                }
+
+                // Update full chart button if it was previously disabled
+                if (wasDisabled) {
+                    this.enableFullChartButton(coinWithTradingPair);
                 }
             }
         });
