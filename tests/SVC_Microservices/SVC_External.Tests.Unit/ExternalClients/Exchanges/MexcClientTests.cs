@@ -198,7 +198,7 @@ public class MexcClientTests
         };
 
         public static readonly string SuccessfulKlineEndpoint =
-            "/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=100&startTime=1640995200000&endTime=1641081600000";
+            "/api/v3/klines?symbol=BTCUSDT&interval=60m&limit=100&startTime=1640995200000&endTime=1641081600000";
 
         public static readonly ExchangeKlineDataRequest ErrorKlineRequest = new()
         {

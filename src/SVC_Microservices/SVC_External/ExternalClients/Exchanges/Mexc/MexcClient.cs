@@ -131,10 +131,10 @@ public class MexcClient(IHttpClientFactory httpClientFactory, ILogger<MexcClient
                 ExchangeKlineInterval.FiveMinutes => "5m",
                 ExchangeKlineInterval.FifteenMinutes => "15m",
                 ExchangeKlineInterval.ThirtyMinutes => "30m",
-                ExchangeKlineInterval.OneHour => "1h",
+                ExchangeKlineInterval.OneHour => "60m",
                 ExchangeKlineInterval.FourHours => "4h",
                 ExchangeKlineInterval.OneDay => "1d",
-                ExchangeKlineInterval.OneWeek => "1w",
+                ExchangeKlineInterval.OneWeek => "1W",
                 ExchangeKlineInterval.OneMonth => "1M",
                 _ => throw new ArgumentException($"Unsupported TimeFrame: {timeFrame}"),
             };
