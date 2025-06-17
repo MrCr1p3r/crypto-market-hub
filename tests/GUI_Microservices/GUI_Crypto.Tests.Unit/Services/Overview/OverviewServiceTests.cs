@@ -61,8 +61,9 @@ public class OverviewServiceTests
         overviewCoins[0].MarketCapUsd.Should().Be(1_200_000_000_000);
         overviewCoins[0].PriceUsd.Should().Be("50000.00");
         overviewCoins[0].PriceChangePercentage24h.Should().Be(3.5m);
+        overviewCoins[0].TradingPairIds.Should().NotBeEmpty();
         overviewCoins[0].KlineData.Should().NotBeNull();
-        overviewCoins[0].KlineData!.TradingPair.Should().NotBeNull();
+        overviewCoins[0].KlineData!.TradingPairId.Should().Be(1);
         overviewCoins[0].KlineData!.Klines.Should().HaveCount(2);
 
         overviewCoins[1].Id.Should().Be(2);
@@ -72,8 +73,9 @@ public class OverviewServiceTests
         overviewCoins[1].MarketCapUsd.Should().Be(400_000_000_000);
         overviewCoins[1].PriceUsd.Should().Be("3000.00");
         overviewCoins[1].PriceChangePercentage24h.Should().Be(-1.2m);
+        overviewCoins[1].TradingPairIds.Should().NotBeEmpty();
         overviewCoins[1].KlineData.Should().NotBeNull();
-        overviewCoins[1].KlineData!.TradingPair.Should().NotBeNull();
+        overviewCoins[1].KlineData!.TradingPairId.Should().Be(2);
         overviewCoins[1].KlineData!.Klines.Should().HaveCount(2);
 
         // Verify client calls
@@ -180,8 +182,9 @@ public class OverviewServiceTests
         overviewCoin.Id.Should().Be(1);
         overviewCoin.Symbol.Should().Be("BTC");
         overviewCoin.Name.Should().Be("Bitcoin");
+        overviewCoin.TradingPairIds.Should().NotBeEmpty();
         overviewCoin.KlineData.Should().NotBeNull();
-        overviewCoin.KlineData!.TradingPair.Should().NotBeNull();
+        overviewCoin.KlineData!.TradingPairId.Should().Be(1);
         overviewCoin.KlineData!.Klines.Should().HaveCount(2);
 
         _mockCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);

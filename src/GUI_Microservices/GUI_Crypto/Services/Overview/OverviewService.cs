@@ -143,7 +143,7 @@ public class OverviewService(
 
                 klineData = new KlineData
                 {
-                    TradingPair = ToTradingPair(currentTradingPair),
+                    TradingPairId = currentTradingPair.Id,
                     Klines = klines,
                 };
             }
@@ -157,22 +157,10 @@ public class OverviewService(
                 MarketCapUsd = coin.MarketCapUsd,
                 PriceUsd = coin.PriceUsd,
                 PriceChangePercentage24h = coin.PriceChangePercentage24h,
+                TradingPairIds = coin.TradingPairs.Select(tp => tp.Id),
                 KlineData = klineData,
             };
         }
-
-        private static TradingPair ToTradingPair(SvcCoins.Responses.TradingPair tradingPair) =>
-            new()
-            {
-                Id = tradingPair.Id,
-                CoinQuote = new TradingPairCoinQuote
-                {
-                    Id = tradingPair.CoinQuote.Id,
-                    Symbol = tradingPair.CoinQuote.Symbol,
-                    Name = tradingPair.CoinQuote.Name,
-                },
-                Exchanges = tradingPair.Exchanges,
-            };
 
         /// <summary>
         /// Converts a list of spot coins and database coins to a list of candidate coins.
@@ -281,6 +269,7 @@ public class OverviewService(
                 MarketCapUsd = coin.MarketCapUsd,
                 PriceUsd = coin.PriceUsd,
                 PriceChangePercentage24h = coin.PriceChangePercentage24h,
+                TradingPairIds = coin.TradingPairs.Select(tp => tp.Id),
             };
     }
 }

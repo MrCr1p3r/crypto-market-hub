@@ -191,15 +191,15 @@ export class TableManager {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'btn btn-sm btn-outline-primary';
-        button.disabled = !coin.klineData?.tradingPair;
+        button.disabled = !coin.klineData?.tradingPairId;
 
         const iconElement = document.createElement('i');
         iconElement.className = 'fas fa-chart-line';
         button.appendChild(iconElement);
 
-        if (coin.klineData?.tradingPair) {
+        if (coin.klineData?.tradingPairId) {
             button.addEventListener('click', () => {
-                window.open(`/chart/${coin.id}/${coin.klineData!.tradingPair!.id}`, '_blank');
+                window.open(`/chart/${coin.id}/${coin.klineData!.tradingPairId}`, '_blank');
             });
         }
 
@@ -406,12 +406,10 @@ export class TableManager {
                         'data-is-stablecoin',
                         (row.original.category === 1).toString() // 1 is Stablecoin enum value
                     );
-                    if (row.original.klineData?.tradingPair?.id) {
-                        chartDiv.setAttribute(
-                            'data-trading-pair-id',
-                            row.original.klineData.tradingPair.id.toString()
-                        );
-                    }
+                    chartDiv.setAttribute(
+                        'data-trading-pair-main-coin-id',
+                        row.original.id.toString()
+                    );
                     td.appendChild(chartDiv);
                     chartsToUpdate.push(chartDiv);
                     break;
@@ -591,17 +589,20 @@ export class TableManager {
 
         // Update kline data in current coins
         klineDataUpdates.forEach((klineUpdate) => {
-            const coinWithTradingPair = this.currentCoins.find(
-                (coin) => coin.klineData?.tradingPair?.id === klineUpdate.idTradingPair
+            const coinWithTradingPair = this.currentCoins.find((coin) =>
+                coin.tradingPairIds.includes(klineUpdate.idTradingPair)
             );
 
-            if (coinWithTradingPair && coinWithTradingPair.klineData) {
-                coinWithTradingPair.klineData.klines = klineUpdate.klines;
+            if (coinWithTradingPair) {
+                coinWithTradingPair.klineData = {
+                    tradingPairId: klineUpdate.idTradingPair,
+                    klines: klineUpdate.klines,
+                };
                 hasAnyUpdates = true;
 
                 // Update the data attribute in the DOM
                 const chartElement = document.querySelector(
-                    `[data-trading-pair-id="${klineUpdate.idTradingPair}"] .mini-chart`
+                    `.mini-chart[data-trading-pair-main-coin-id="${coinWithTradingPair.id}"]`
                 ) as HTMLElement;
                 if (chartElement) {
                     chartElement.setAttribute(

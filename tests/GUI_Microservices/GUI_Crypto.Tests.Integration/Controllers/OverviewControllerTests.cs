@@ -57,8 +57,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
         btcCoin.MarketCapUsd.Should().Be(1_200_000_000_000);
         btcCoin.PriceUsd.Should().Be("50000.00");
         btcCoin.PriceChangePercentage24h.Should().Be(3.5m);
+        btcCoin.TradingPairIds.Should().NotBeEmpty();
         btcCoin.KlineData.Should().NotBeNull();
-        btcCoin.KlineData!.TradingPair.Should().NotBeNull();
+        btcCoin.KlineData!.TradingPairId.Should().Be(101);
         btcCoin.KlineData.Klines.Should().HaveCount(2);
 
         // Verify second coin (Ethereum)
@@ -70,8 +71,9 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
         ethCoin.MarketCapUsd.Should().Be(600_000_000_000);
         ethCoin.PriceUsd.Should().Be("3500.00");
         ethCoin.PriceChangePercentage24h.Should().Be(-1.2m);
+        ethCoin.TradingPairIds.Should().NotBeEmpty();
         ethCoin.KlineData.Should().NotBeNull();
-        ethCoin.KlineData!.TradingPair.Should().NotBeNull();
+        ethCoin.KlineData!.TradingPairId.Should().Be(102);
         ethCoin.KlineData.Klines.Should().HaveCount(2);
     }
 

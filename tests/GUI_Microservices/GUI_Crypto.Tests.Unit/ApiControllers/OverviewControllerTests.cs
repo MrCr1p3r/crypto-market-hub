@@ -5,7 +5,6 @@ using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 using GUI_Crypto.ApiControllers;
 using GUI_Crypto.Services.Overview;
 using Microsoft.AspNetCore.Mvc;
-using SharedLibrary.Enums;
 using SharedLibrary.Errors;
 
 namespace GUI_Crypto.Tests.Unit.ApiControllers;
@@ -499,21 +498,8 @@ public class OverviewControllerTests : IDisposable
                 MarketCapUsd = 1_200_000_000_000,
                 PriceUsd = "50000.00",
                 PriceChangePercentage24h = 3.5m,
-                KlineData = new()
-                {
-                    TradingPair = new()
-                    {
-                        Id = 101,
-                        CoinQuote = new()
-                        {
-                            Id = 5,
-                            Symbol = "USDT",
-                            Name = "Tether",
-                        },
-                        Exchanges = [Exchange.Binance],
-                    },
-                    Klines = [],
-                },
+                TradingPairIds = [101],
+                KlineData = new() { TradingPairId = 101, Klines = [] },
             },
             new OverviewCoin
             {
@@ -524,21 +510,8 @@ public class OverviewControllerTests : IDisposable
                 MarketCapUsd = 400_000_000_000,
                 PriceUsd = "3000.00",
                 PriceChangePercentage24h = -1.2m,
-                KlineData = new()
-                {
-                    TradingPair = new()
-                    {
-                        Id = 102,
-                        CoinQuote = new()
-                        {
-                            Id = 5,
-                            Symbol = "USDT",
-                            Name = "Tether",
-                        },
-                        Exchanges = [Exchange.Binance, Exchange.Bybit],
-                    },
-                    Klines = [],
-                },
+                TradingPairIds = [102],
+                KlineData = new() { TradingPairId = 102, Klines = [] },
             },
         ];
 
@@ -610,6 +583,7 @@ public class OverviewControllerTests : IDisposable
                 MarketCapUsd = 15_000_000_000,
                 PriceUsd = "0.45",
                 PriceChangePercentage24h = 5.2m,
+                TradingPairIds = [],
                 KlineData = null,
             },
             new OverviewCoin
@@ -621,6 +595,7 @@ public class OverviewControllerTests : IDisposable
                 MarketCapUsd = 8_000_000_000,
                 PriceUsd = "7.50",
                 PriceChangePercentage24h = -2.1m,
+                TradingPairIds = [],
                 KlineData = null,
             },
         ];

@@ -1,5 +1,4 @@
 import { Kline } from './kline';
-import { Exchange } from './shared/exchange';
 
 export interface OverviewCoin {
     id: number;
@@ -9,16 +8,9 @@ export interface OverviewCoin {
     marketCapUsd: number | null;
     priceUsd: string | null;
     priceChangePercentage24h: number | null;
+    tradingPairIds: number[];
     klineData: {
-        tradingPair: {
-            id: number;
-            coinQuote: {
-                id: number;
-                symbol: string;
-                name: string;
-            };
-            exchanges: Exchange[];
-        };
+        tradingPairId: number;
         klines: Kline[];
     } | null;
 }

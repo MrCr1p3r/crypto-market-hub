@@ -41,15 +41,6 @@ export function renderMiniCharts(elements: Element[]): void {
         // Skip if already rendered
         if (!element.classList.contains('not-rendered')) return;
 
-        // Check if coin is a stablecoin
-        const isStablecoin = element.getAttribute('data-is-stablecoin') === 'true';
-        if (isStablecoin) {
-            element.classList.remove('not-rendered');
-            element.innerHTML =
-                '<div class="mini-chart-message">No chart available for stablecoin</div>';
-            return;
-        }
-
         const klineDataStr = element.getAttribute('data-kline-data');
         if (!klineDataStr) {
             element.classList.remove('not-rendered');
@@ -141,34 +132,28 @@ export function renderMiniCharts(elements: Element[]): void {
  * Returns the elements that need to be re-observed by the table manager
  */
 export function destroyAllChartsForRerender(): Element[] {
-    try {
-        // Find all chart elements that have been rendered
-        const allChartElements = document.querySelectorAll('.mini-chart:not(.not-rendered)');
-        const elementsToReobserve: Element[] = [];
+    // Find all chart elements that have been rendered
+    const allChartElements = document.querySelectorAll('.mini-chart:not(.not-rendered)');
+    const elementsToReobserve: Element[] = [];
 
-        allChartElements.forEach((chartElement) => {
-            const element = chartElement as HTMLElement;
+    allChartElements.forEach((chartElement) => {
+        const element = chartElement as HTMLElement;
 
-            // Destroy existing chart if it exists
-            const existingChart = (element as HTMLElement & { __chartInstance?: ApexCharts })
-                .__chartInstance;
-            if (existingChart) {
-                existingChart.destroy();
-                delete (element as HTMLElement & { __chartInstance?: ApexCharts }).__chartInstance;
-            }
+        // Destroy existing chart if it exists
+        const existingChart = (element as HTMLElement & { __chartInstance?: ApexCharts })
+            .__chartInstance;
+        if (existingChart) {
+            existingChart.destroy();
+            delete (element as HTMLElement & { __chartInstance?: ApexCharts }).__chartInstance;
+        }
 
-            // Clear element and mark as not-rendered
-            element.innerHTML = '';
-            element.classList.add('not-rendered');
+        // Clear element and mark as not-rendered
+        element.innerHTML = '';
+        element.classList.add('not-rendered');
 
-            // Add to list for re-observing
-            elementsToReobserve.push(element);
-        });
+        // Add to list for re-observing
+        elementsToReobserve.push(element);
+    });
 
-        console.log(`Destroyed ${allChartElements.length} charts for re-rendering`);
-        return elementsToReobserve;
-    } catch (error) {
-        console.error('Error destroying charts for re-render:', error);
-        return [];
-    }
+    return elementsToReobserve;
 }

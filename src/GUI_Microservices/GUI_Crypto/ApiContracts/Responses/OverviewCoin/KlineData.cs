@@ -6,9 +6,9 @@ namespace GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 public class KlineData
 {
     /// <summary>
-    /// Trading pair for which klines are available.
+    /// Id of the trading pair for which klines are available.
     /// </summary>
-    public required TradingPair TradingPair { get; set; }
+    public required int TradingPairId { get; set; }
 
     /// <summary>
     /// The klines for the trading pair.

@@ -31,6 +31,11 @@ public class OverviewCoin : CoinBase
     public decimal? PriceChangePercentage24h { get; init; }
 
     /// <summary>
+    /// The trading pair ids of this coin.
+    /// </summary>
+    public required IEnumerable<int> TradingPairIds { get; set; }
+
+    /// <summary>
     /// Kline data for the coin.
     /// </summary>
     public KlineData? KlineData { get; set; }
