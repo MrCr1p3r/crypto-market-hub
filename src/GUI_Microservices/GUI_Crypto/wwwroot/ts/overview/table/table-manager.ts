@@ -20,6 +20,7 @@ import { fetchCoins, deleteCoin } from '../services';
 import { initializeToastr } from '../../configs/toastr-config';
 import { KlineDataUpdate } from 'realtime/interfaces/kline-signalr';
 import { updateTableState } from '../utils/tanstack-utils';
+import { getElement } from '../utils/dom-utils';
 
 export class TableManager {
     private readonly tableElement: HTMLTableElement;
@@ -44,6 +45,12 @@ export class TableManager {
 
     private deleteModal: bootstrap.Modal;
     private coinToDelete: { id: number; symbol: string } | null = null;
+
+    // Modal UI blocking elements
+    private readonly deleteModalElement = getElement('deleteConfirmModal', HTMLElement);
+    private readonly cancelDeleteBtn: HTMLButtonElement;
+    private readonly deleteModalCloseBtn: HTMLButtonElement;
+    private readonly fullPageOverlay = getElement('fullPageOverlay', HTMLElement);
 
     constructor() {
         const table = document.getElementById('coinTable');
@@ -70,6 +77,14 @@ export class TableManager {
         this.searchInput = searchInput as HTMLInputElement;
         this.confirmDeleteBtn = confirmDeleteBtn as HTMLButtonElement;
         this.deleteModal = new bootstrap.Modal(deleteModalElement!);
+
+        // Modal UI blocking elements
+        this.cancelDeleteBtn = this.deleteModalElement.querySelector(
+            '[data-bs-dismiss="modal"]'
+        ) as HTMLButtonElement;
+        this.deleteModalCloseBtn = this.deleteModalElement.querySelector(
+            '.btn-close'
+        ) as HTMLButtonElement;
 
         // Pagination controls
         this.firstPageBtn = firstPageBtn as HTMLButtonElement;
@@ -151,11 +166,49 @@ export class TableManager {
 
     private async handleDeleteConfirmation(): Promise<void> {
         if (!this.coinToDelete) return;
-        await deleteCoin(this.coinToDelete.id);
-        await this.refreshTableData();
-        this.deleteModal.hide();
-        this.coinToDelete = null;
-        toastr.success('Coin deleted successfully');
+
+        try {
+            // Prevent modal from being closed
+            this.deleteModalCloseBtn.disabled = true;
+            this.confirmDeleteBtn.disabled = true;
+            this.cancelDeleteBtn.disabled = true;
+            this.deleteModalElement.dataset['bsBackdrop'] = 'static';
+            this.deleteModalElement.dataset['bsKeyboard'] = 'false';
+
+            // Show progress overlay
+            this.fullPageOverlay.classList.remove('d-none');
+
+            await deleteCoin(this.coinToDelete.id);
+
+            this.currentCoins = this.currentCoins.filter(
+                (coin) => coin.id !== this.coinToDelete!.id
+            );
+            this.updateTableData();
+
+            this.deleteModal.hide();
+            this.coinToDelete = null;
+            toastr.success('Coin deleted successfully');
+        } catch (error) {
+            toastr.error(`Failed to delete coin: ${error}`);
+            console.error('Delete error:', error);
+        } finally {
+            // Re-enable modal closing and hide overlay
+            this.deleteModalCloseBtn.disabled = false;
+            this.confirmDeleteBtn.disabled = false;
+            this.cancelDeleteBtn.disabled = false;
+            this.deleteModalElement.dataset['bsBackdrop'] = 'true';
+            this.deleteModalElement.dataset['bsKeyboard'] = 'true';
+            this.fullPageOverlay.classList.add('d-none');
+        }
+    }
+
+    private updateTableData(): void {
+        this.table.setOptions((prev) => ({
+            ...prev,
+            data: [...this.currentCoins],
+        }));
+        this.renderTable();
+        this.updatePaginationInfo();
     }
 
     private updateSortIcons(): void {
@@ -463,14 +516,7 @@ export class TableManager {
     public async refreshTableData(): Promise<void> {
         const coins = await fetchCoins();
         this.currentCoins = coins;
-        this.table.setOptions((prev) => {
-            return {
-                ...prev,
-                data: this.currentCoins,
-            };
-        });
-        this.renderTable();
-        this.updatePaginationInfo();
+        this.updateTableData();
     }
 
     /**
@@ -537,12 +583,7 @@ export class TableManager {
 
         // Render table once if there were any changes
         if (hasAnyChanges) {
-            this.table.setOptions((prev) => ({
-                ...prev,
-                data: [...this.currentCoins],
-            }));
-            this.renderTable();
-            this.updatePaginationInfo();
+            this.updateTableData();
 
             // Add visual indicators for all updated coins at once
             updatedCoins.forEach(({ coinId, isRise }) => {
