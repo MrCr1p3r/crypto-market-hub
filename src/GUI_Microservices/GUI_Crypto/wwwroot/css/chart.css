@@ -3,11 +3,24 @@ body {
     color: #ffffff;
 }
 
+/* Trading pair picker container styling */
+h2.text-center {
+    background-color: rgba(42, 42, 58, 0.4);
+    border: 2px solid #4a4a5a;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    max-width: fit-content;
+}
+
 .chart-container {
     background-color: #222034;
     padding: 20px;
     border-radius: 10px;
     margin: 20px;
+    border: 2px solid #3a3a4a;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dropdown-menu {
@@ -34,4 +47,112 @@ body {
 #selectedQuoteCoin {
     font-size: 2rem;
     font-weight: 500;
+}
+
+/* Form controls dark theme styling */
+.form-select,
+.form-control {
+    background-color: #2a2a3a;
+    border: 2px solid #555555;
+    color: #ffffff;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+}
+
+.form-select:focus,
+.form-control:focus {
+    background-color: #2a2a3a;
+    border-color: #00E396;
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 227, 150, 0.25);
+}
+
+.form-select:hover,
+.form-control:hover {
+    border-color: #666666;
+}
+
+.form-select option {
+    background-color: #2a2a3a;
+    color: #ffffff;
+}
+
+/* Labels styling */
+label {
+    color: #ffffff;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Specific styling for datetime inputs */
+input[type="datetime-local"] {
+    background-color: #2a2a3a;
+    border: 2px solid #555555;
+    color: #ffffff;
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+}
+
+input[type="datetime-local"]:focus {
+    background-color: #2a2a3a;
+    border-color: #00E396;
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 227, 150, 0.25);
+}
+
+input[type="datetime-local"]:hover {
+    border-color: #666666;
+}
+
+/* Calendar picker styling */
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* Date picker popup styling for WebKit browsers */
+input[type="datetime-local"]::-webkit-datetime-edit {
+    color: #ffffff;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
+    background-color: transparent;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-text {
+    color: #cccccc;
+}
+
+input[type="datetime-local"]::-webkit-datetime-edit-month-field,
+input[type="datetime-local"]::-webkit-datetime-edit-day-field,
+input[type="datetime-local"]::-webkit-datetime-edit-year-field,
+input[type="datetime-local"]::-webkit-datetime-edit-hour-field,
+input[type="datetime-local"]::-webkit-datetime-edit-minute-field {
+    color: #ffffff;
+}
+
+/* Custom date picker overlay for better dark theme support */
+input[type="datetime-local"] {
+    color-scheme: dark;
+}
+
+/* Firefox date picker styling */
+input[type="datetime-local"]::-moz-color-swatch {
+    border: none;
+}
+
+/* Chart specific styling - simplified to fit container entirely */
+#priceChart {
+    background-color: transparent;
+    min-height: 400px;
+    width: 100%;
+}
+
+/* Controls container styling */
+.row {
+    background-color: rgba(42, 42, 58, 0.3);
+    border: 1px solid #4a4a5a;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
 }

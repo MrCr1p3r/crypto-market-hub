@@ -17,9 +17,9 @@ namespace GUI_Crypto.Services.Chart;
 public class ChartService(ISvcCoinsClient coinsClient, ISvcExternalClient externalClient)
     : IChartService
 {
-    public const ExchangeKlineInterval DefaultInterval = ExchangeKlineInterval.FifteenMinutes;
+    public const ExchangeKlineInterval DefaultInterval = ExchangeKlineInterval.OneDay;
     public const int DefaultLimit = 1000;
-    public static readonly DateTime DefaultStartTime = DateTime.UtcNow.AddDays(-7);
+    public static readonly DateTime DefaultStartTime = DateTime.UtcNow.AddDays(-30);
     public static readonly DateTime DefaultEndTime = DateTime.UtcNow;
     private readonly ISvcCoinsClient _coinsClient = coinsClient;
     private readonly ISvcExternalClient _externalClient = externalClient;
