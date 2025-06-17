@@ -47,17 +47,6 @@ builder.Services.AddHttpClient(
     }
 );
 
-builder.Services.AddHttpClient(
-    "SvcBridgeClient",
-    client =>
-    {
-        var baseAddress =
-            builder.Configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
-        client.BaseAddress = new Uri(baseAddress);
-        client.Timeout = TimeSpan.FromMinutes(5);
-    }
-);
-
 builder.Services.AddScoped<ISvcCoinsClient, SvcCoinsClient>();
 builder.Services.AddScoped<ISvcExternalClient, SvcExternalClient>();
 builder.Services.AddScoped<ISvcKlineClient, SvcKlineClient>();

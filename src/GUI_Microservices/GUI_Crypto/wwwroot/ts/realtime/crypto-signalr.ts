@@ -73,13 +73,11 @@ export class CryptoSignalR {
 
         // Market data event handlers
         this.connection.on('ReceiveMarketDataUpdate', (marketData: CoinMarketData[]) => {
-            console.log('Received market data update:', marketData);
             this.handleMarketDataUpdate(marketData);
         });
 
         // Kline data event handlers
         this.connection.on('ReceiveKlineDataUpdate', (klineDataUpdates: KlineDataUpdate[]) => {
-            console.log('Received kline data updates:', klineDataUpdates);
             this.handleKlineDataUpdate(klineDataUpdates);
         });
     }

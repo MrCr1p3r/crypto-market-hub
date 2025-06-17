@@ -60,7 +60,6 @@ export async function initializeOverviewRealtime(tableManager: TableManager): Pr
 
     // Add event listener for kline data updates
     document.addEventListener('klineDataUpdated', (event: Event) => {
-        console.log('Kline data updates event received:', event);
         const customEvent = event as CustomEvent;
         const klineDataUpdates = customEvent.detail;
 

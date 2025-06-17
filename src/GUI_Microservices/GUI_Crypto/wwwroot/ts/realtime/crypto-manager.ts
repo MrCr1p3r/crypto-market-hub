@@ -66,13 +66,11 @@ export class CryptoManager {
 
         // Market data update events
         this.signalRClient.on('marketDataUpdate', (args: MarketDataUpdateEventArgs) => {
-            console.log('Market data updated:', args);
             this.onMarketDataUpdate(args);
         });
 
         // Kline data update events
         this.signalRClient.on('klineDataUpdate', (args: KlineDataUpdateEventArgs) => {
-            console.log('Kline data updated:', args);
             this.onKlineDataUpdate(args);
         });
 
