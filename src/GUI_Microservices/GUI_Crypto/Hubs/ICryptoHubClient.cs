@@ -20,4 +20,10 @@ public interface ICryptoHubClient
     /// <param name="klineData">The updated kline data.</param>
     /// <returns>A task that receives kline data updates.</returns>
     Task ReceiveKlineDataUpdate(IEnumerable<KlineData> klineData);
+
+    /// <summary>
+    /// Notifies clients that the initial cache warmup has completed.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task ReceiveCacheWarmupCompleted();
 }

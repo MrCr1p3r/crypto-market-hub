@@ -34,4 +34,18 @@ internal static partial class SpotCoinsCacheWarmupJobLogging
         Message = "SpotCoinsCacheWarmupJob completed"
     )]
     internal static partial void LogJobCompleted(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 5007,
+        Level = LogLevel.Information,
+        Message = "First cache warmup completed successfully with {CoinCount} coins - notification sent to GUI"
+    )]
+    internal static partial void LogFirstCacheWarmupCompleted(this ILogger logger, int coinCount);
+
+    [LoggerMessage(
+        EventId = 5008,
+        Level = LogLevel.Information,
+        Message = "Cache warmup completion message published to GUI"
+    )]
+    internal static partial void LogCacheWarmupMessagePublished(this ILogger logger);
 }

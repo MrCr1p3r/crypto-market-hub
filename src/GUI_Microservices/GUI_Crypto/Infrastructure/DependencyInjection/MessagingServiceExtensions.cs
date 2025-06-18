@@ -1,3 +1,4 @@
+using GUI_Crypto.Infrastructure.Caching;
 using GUI_Crypto.Infrastructure.Messaging;
 using GUI_Crypto.Services.Messaging;
 using RabbitMQ.Client;
@@ -73,6 +74,10 @@ public static class MessagingServiceExtensions
     {
         services.AddScoped<MarketDataMessageHandler>();
         services.AddScoped<KlineDataMessageHandler>();
+        services.AddScoped<CacheWarmupMessageHandler>();
+
+        // Add cache warmup state service as singleton to maintain state across requests
+        services.AddSingleton<ICacheWarmupStateService, CacheWarmupStateService>();
 
         return services;
     }

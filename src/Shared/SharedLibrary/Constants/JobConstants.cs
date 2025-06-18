@@ -24,6 +24,11 @@ public static class JobConstants
         /// Trading pairs update job name.
         /// </summary>
         public const string TradingPairsUpdate = "Trading Pairs Update";
+
+        /// <summary>
+        /// Spot coins cache warmup job name.
+        /// </summary>
+        public const string SpotCoinsCacheWarmup = "Spot Coins Cache Warmup";
     }
 
     /// <summary>
@@ -67,6 +72,11 @@ public static class JobConstants
         /// Routing key for trading pairs update messages.
         /// </summary>
         public const string TradingPairsUpdated = "svc.scheduler.tradingpairs.updated";
+
+        /// <summary>
+        /// Routing key for cache warmup completion messages.
+        /// </summary>
+        public const string CacheWarmupCompleted = "svc.scheduler.cache.warmup.completed";
     }
 
     /// <summary>
@@ -90,6 +100,11 @@ public static class JobConstants
         public const string GuiTradingPairsUpdated = "gui.crypto.tradingpairs.updated";
 
         /// <summary>
+        /// Queue for cache warmup completion messages in GUI.
+        /// </summary>
+        public const string GuiCacheWarmupCompleted = "gui.crypto.cache.warmup.completed";
+
+        /// <summary>
         /// Gets all GUI queue names.
         /// </summary>
         /// <returns>Collection of all GUI queue names.</returns>
@@ -98,6 +113,7 @@ public static class JobConstants
             yield return GuiMarketDataUpdated;
             yield return GuiKlineDataUpdated;
             yield return GuiTradingPairsUpdated;
+            yield return GuiCacheWarmupCompleted;
         }
 
         /// <summary>
@@ -111,6 +127,7 @@ public static class JobConstants
                 [GuiMarketDataUpdated] = RoutingKeys.MarketDataUpdated,
                 [GuiKlineDataUpdated] = RoutingKeys.KlineDataUpdated,
                 [GuiTradingPairsUpdated] = RoutingKeys.TradingPairsUpdated,
+                [GuiCacheWarmupCompleted] = RoutingKeys.CacheWarmupCompleted,
             };
         }
     }

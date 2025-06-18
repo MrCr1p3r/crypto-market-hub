@@ -32,6 +32,13 @@ public class MessageConsumerBackgroundService(
             stoppingToken
         );
 
+        // Start consuming cache warmup completion messages
+        await _messageConsumer.StartConsumingAsync<JobCompletedMessage>(
+            JobConstants.QueueNames.GuiCacheWarmupCompleted,
+            HandleCacheWarmupCompletedMessage,
+            stoppingToken
+        );
+
         // Keep the service running until cancellation is requested
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
@@ -65,5 +72,17 @@ public class MessageConsumerBackgroundService(
         using var scope = _serviceScopeFactory.CreateScope();
         var handler = scope.ServiceProvider.GetRequiredService<KlineDataMessageHandler>();
         await handler.HandleAsync(message, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Handles cache warmup completion messages.
+    /// </summary>
+    /// <param name="message">The cache warmup completion message to handle.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task HandleCacheWarmupCompletedMessage(JobCompletedMessage message)
+    {
+        using var scope = _serviceScopeFactory.CreateScope();
+        var handler = scope.ServiceProvider.GetRequiredService<CacheWarmupMessageHandler>();
+        await handler.HandleAsync();
     }
 }

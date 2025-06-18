@@ -78,6 +78,11 @@ export class CryptoManager {
         this.signalRClient.on('connectionStatusChanged', (args: ConnectionEventArgs) => {
             this.onConnectionStatusChanged(args);
         });
+
+        // Cache warmup completion events
+        this.signalRClient.on('cacheWarmupCompleted', () => {
+            this.dispatchCustomEvent('cacheWarmupCompleted', {});
+        });
     }
 
     /**

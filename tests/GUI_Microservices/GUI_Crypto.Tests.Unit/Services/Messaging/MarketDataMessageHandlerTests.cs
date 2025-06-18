@@ -69,8 +69,7 @@ public class MarketDataMessageHandlerTests
         // Assert
         _mockClients.Verify(c => c.Group("MarketDataSubscribers"), Times.Once);
         _mockCryptoHubClient.Verify(
-            client =>
-                client.ReceiveMarketDataUpdate(It.IsAny<IEnumerable<CoinMarketData>>()),
+            client => client.ReceiveMarketDataUpdate(It.IsAny<IEnumerable<CoinMarketData>>()),
             Times.Once
         );
     }

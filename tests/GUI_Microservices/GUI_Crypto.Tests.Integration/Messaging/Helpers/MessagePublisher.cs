@@ -105,6 +105,9 @@ public class MessagePublisher(IConnectionFactory connectionFactory)
             JobConstants.QueueNames.GuiMarketDataUpdated => JobConstants.Names.MarketDataUpdate,
             JobConstants.QueueNames.GuiKlineDataUpdated => JobConstants.Names.KlineDataUpdate,
             JobConstants.QueueNames.GuiTradingPairsUpdated => JobConstants.Names.TradingPairsUpdate,
+            JobConstants.QueueNames.GuiCacheWarmupCompleted => JobConstants
+                .Names
+                .SpotCoinsCacheWarmup,
             _ => "Test Job",
         };
     }

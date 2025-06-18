@@ -1,3 +1,4 @@
+using GUI_Crypto.Infrastructure.Caching;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GUI_Crypto.Hubs;
@@ -5,8 +6,24 @@ namespace GUI_Crypto.Hubs;
 /// <summary>
 /// SignalR hub for broadcasting real-time crypto data updates to connected clients.
 /// </summary>
-public class CryptoHub : Hub<ICryptoHubClient>
+public class CryptoHub(ICacheWarmupStateService cacheWarmupStateService) : Hub<ICryptoHubClient>
 {
+    private readonly ICacheWarmupStateService _cacheWarmupStateService = cacheWarmupStateService;
+
+    /// <summary>
+    /// Called when a client connects to the hub.
+    /// </summary>
+    /// <returns>A task representing the asynchronous connection operation.</returns>
+    public override async Task OnConnectedAsync()
+    {
+        if (_cacheWarmupStateService.IsWarmedUp)
+        {
+            await Clients.Caller.ReceiveCacheWarmupCompleted();
+        }
+
+        await base.OnConnectedAsync();
+    }
+
     /// <summary>
     /// Called when a client disconnects from the hub.
     /// </summary>

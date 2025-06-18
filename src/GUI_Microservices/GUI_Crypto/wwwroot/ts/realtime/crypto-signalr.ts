@@ -80,6 +80,11 @@ export class CryptoSignalR {
         this.connection.on('ReceiveKlineDataUpdate', (klineDataUpdates: KlineDataUpdate[]) => {
             this.handleKlineDataUpdate(klineDataUpdates);
         });
+
+        // Cache warmup completion event handlers
+        this.connection.on('ReceiveCacheWarmupCompleted', () => {
+            this.emit('cacheWarmupCompleted', {});
+        });
     }
 
     /**

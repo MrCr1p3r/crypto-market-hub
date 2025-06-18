@@ -217,3 +217,88 @@ body {
 #pageInfo strong {
     color: #a29bfe;
 }
+
+/* Cache warmup toast styles */
+.toast-cache-warmup {
+    background-color: #2e294e !important;
+    border: 1px solid #a29bfe;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(162, 155, 254, 0.3);
+}
+
+.toast-cache-warmup .toast-message {
+    color: #ffffff !important;
+}
+
+/* Dark theme toastr overrides */
+#toast-container > .toast-info {
+    background-color: #17a2b8 !important;
+    color: #ffffff !important;
+}
+
+#toast-container > .toast-success {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+#toast-container > .toast-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+#toast-container > .toast-error {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+}
+
+/* Ensure all toast text is visible */
+#toast-container .toast-message {
+    color: inherit !important;
+}
+
+#toast-container .toast-title {
+    color: inherit !important;
+    font-weight: bold;
+}
+
+/* Progress bar styling for dark theme */
+#toast-container .toast-progress {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Close button styling */
+#toast-container .toast-close-button {
+    color: inherit !important;
+    opacity: 0.7;
+}
+
+#toast-container .toast-close-button:hover {
+    opacity: 1;
+}
+
+/* Import button loading state */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
