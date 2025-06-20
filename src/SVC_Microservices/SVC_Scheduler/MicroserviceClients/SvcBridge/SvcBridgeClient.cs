@@ -9,11 +9,11 @@ namespace SVC_Scheduler.MicroserviceClients.SvcBridge;
 /// <summary>
 /// Implements interactions with SVC_Bridge microservice.
 /// </summary>
-public class SvcBridgeClient(IHttpClientFactory httpClientFactory, ILogger<SvcBridgeClient> logger)
+public class SvcBridgeClient(HttpClient httpClient, ILogger<SvcBridgeClient> logger)
     : ISvcBridgeClient
 {
     private const string BaseUrl = "bridge";
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("SvcBridgeClient");
+    private readonly HttpClient _httpClient = httpClient;
     private readonly ILogger<SvcBridgeClient> _logger = logger;
 
     /// <inheritdoc />

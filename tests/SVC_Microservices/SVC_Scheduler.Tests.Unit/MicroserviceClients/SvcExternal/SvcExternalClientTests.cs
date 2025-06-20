@@ -11,27 +11,21 @@ namespace SVC_Scheduler.Tests.Unit.MicroserviceClients.SvcExternal;
 public class SvcExternalClientTests
 {
     private readonly IFixture _fixture;
-    private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
-    private readonly FakeLogger<SvcExternalClient> _logger;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly SvcExternalClient _client;
+    private readonly FakeLogger<SvcExternalClient> _logger;
+    private readonly SvcExternalClient _testedClient;
 
     public SvcExternalClientTests()
     {
         _fixture = new Fixture();
-        _httpClientFactoryMock = new Mock<IHttpClientFactory>();
 
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         var httpClient = _httpMessageHandlerMock.CreateClient();
         httpClient.BaseAddress = new Uri("https://example.com");
 
-        _httpClientFactoryMock
-            .Setup(factory => factory.CreateClient("SvcExternalClient"))
-            .Returns(httpClient);
-
         _logger = new FakeLogger<SvcExternalClient>();
 
-        _client = new SvcExternalClient(_httpClientFactoryMock.Object, _logger);
+        _testedClient = new SvcExternalClient(httpClient, _logger);
     }
 
     [Fact]
@@ -45,7 +39,7 @@ public class SvcExternalClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
 
         // Act
-        await _client.GetAllSpotCoins();
+        await _testedClient.GetAllSpotCoins();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
@@ -65,7 +59,7 @@ public class SvcExternalClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
 
         // Act
-        var result = await _client.GetAllSpotCoins();
+        var result = await _testedClient.GetAllSpotCoins();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -82,7 +76,7 @@ public class SvcExternalClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<Coin>());
 
         // Act
-        var result = await _client.GetAllSpotCoins();
+        var result = await _testedClient.GetAllSpotCoins();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -107,7 +101,7 @@ public class SvcExternalClientTests
             .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
 
         // Act
-        var result = await _client.GetAllSpotCoins();
+        var result = await _testedClient.GetAllSpotCoins();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -133,7 +127,7 @@ public class SvcExternalClientTests
             .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
 
         // Act
-        var result = await _client.GetAllSpotCoins();
+        var result = await _testedClient.GetAllSpotCoins();
 
         // Assert
         result.IsFailed.Should().BeTrue();

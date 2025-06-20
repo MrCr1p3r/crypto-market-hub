@@ -16,27 +16,21 @@ namespace SVC_Scheduler.Tests.Unit.MicroserviceClients.SvcBridge;
 public class SvcBridgeClientTests
 {
     private readonly IFixture _fixture;
-    private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
-    private readonly FakeLogger<SvcBridgeClient> _logger;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly SvcBridgeClient _client;
+    private readonly FakeLogger<SvcBridgeClient> _logger;
+    private readonly SvcBridgeClient _testedClient;
 
     public SvcBridgeClientTests()
     {
         _fixture = new Fixture();
-        _httpClientFactoryMock = new Mock<IHttpClientFactory>();
 
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         var httpClient = _httpMessageHandlerMock.CreateClient();
         httpClient.BaseAddress = new Uri("https://example.com");
 
-        _httpClientFactoryMock
-            .Setup(factory => factory.CreateClient("SvcBridgeClient"))
-            .Returns(httpClient);
-
         _logger = new FakeLogger<SvcBridgeClient>();
 
-        _client = new SvcBridgeClient(_httpClientFactoryMock.Object, _logger);
+        _testedClient = new SvcBridgeClient(httpClient, _logger);
     }
 
     #region UpdateCoinsMarketData Tests
@@ -53,7 +47,7 @@ public class SvcBridgeClientTests
         var expectedUrl = "https://example.com/bridge/coins/market-data";
 
         // Act
-        await _client.UpdateCoinsMarketData();
+        await _testedClient.UpdateCoinsMarketData();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(HttpMethod.Post, expectedUrl);
@@ -69,7 +63,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedMarketData);
 
         // Act
-        var result = await _client.UpdateCoinsMarketData();
+        var result = await _testedClient.UpdateCoinsMarketData();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -86,7 +80,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<CoinMarketData>());
 
         // Act
-        var result = await _client.UpdateCoinsMarketData();
+        var result = await _testedClient.UpdateCoinsMarketData();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -111,7 +105,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
 
         // Act
-        var result = await _client.UpdateCoinsMarketData();
+        var result = await _testedClient.UpdateCoinsMarketData();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -137,7 +131,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
 
         // Act
-        var result = await _client.UpdateCoinsMarketData();
+        var result = await _testedClient.UpdateCoinsMarketData();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -155,7 +149,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedMarketData);
 
         // Act
-        await _client.UpdateCoinsMarketData();
+        await _testedClient.UpdateCoinsMarketData();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
@@ -184,7 +178,7 @@ public class SvcBridgeClientTests
         var expectedUrl = "https://example.com/bridge/kline";
 
         // Act
-        await _client.UpdateKlineData();
+        await _testedClient.UpdateKlineData();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(HttpMethod.Post, expectedUrl);
@@ -200,7 +194,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedKlineData);
 
         // Act
-        var result = await _client.UpdateKlineData();
+        var result = await _testedClient.UpdateKlineData();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -217,7 +211,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<KlineDataResponse>());
 
         // Act
-        var result = await _client.UpdateKlineData();
+        var result = await _testedClient.UpdateKlineData();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -242,7 +236,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
 
         // Act
-        var result = await _client.UpdateKlineData();
+        var result = await _testedClient.UpdateKlineData();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -268,7 +262,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
 
         // Act
-        var result = await _client.UpdateKlineData();
+        var result = await _testedClient.UpdateKlineData();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -286,7 +280,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedKlineData);
 
         // Act
-        await _client.UpdateKlineData();
+        await _testedClient.UpdateKlineData();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(
@@ -315,7 +309,7 @@ public class SvcBridgeClientTests
         var expectedUrl = "https://example.com/bridge/trading-pairs";
 
         // Act
-        await _client.UpdateTradingPairs();
+        await _testedClient.UpdateTradingPairs();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(HttpMethod.Post, expectedUrl);
@@ -331,7 +325,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
 
         // Act
-        var result = await _client.UpdateTradingPairs();
+        var result = await _testedClient.UpdateTradingPairs();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -348,7 +342,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, new List<Coin>());
 
         // Act
-        var result = await _client.UpdateTradingPairs();
+        var result = await _testedClient.UpdateTradingPairs();
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -373,7 +367,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.BadRequest, problemDetails);
 
         // Act
-        var result = await _client.UpdateTradingPairs();
+        var result = await _testedClient.UpdateTradingPairs();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -399,7 +393,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.InternalServerError, problemDetails);
 
         // Act
-        var result = await _client.UpdateTradingPairs();
+        var result = await _testedClient.UpdateTradingPairs();
 
         // Assert
         result.IsFailed.Should().BeTrue();
@@ -417,7 +411,7 @@ public class SvcBridgeClientTests
             .ReturnsJsonResponse(HttpStatusCode.OK, expectedCoins);
 
         // Act
-        await _client.UpdateTradingPairs();
+        await _testedClient.UpdateTradingPairs();
 
         // Assert
         _httpMessageHandlerMock.VerifyRequest(

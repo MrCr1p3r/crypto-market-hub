@@ -71,29 +71,18 @@ public static class InfrastructureServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddMicroserviceClients(this IServiceCollection services)
-    {
-        services.AddScoped<ISvcBridgeClient, SvcBridgeClient>();
-        services.AddScoped<ISvcExternalClient, SvcExternalClient>();
-
-        return services;
-    }
-
     private static IServiceCollection AddSvcBridgeHttpClient(
         this IServiceCollection services,
         IConfiguration configuration
     )
     {
-        services.AddHttpClient(
-            "SvcBridgeClient",
-            client =>
-            {
-                var baseUrl =
-                    configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
-                client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromMinutes(20);
-            }
-        );
+        services.AddHttpClient<ISvcBridgeClient, SvcBridgeClient>(client =>
+        {
+            var baseUrl =
+                configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
+            client.BaseAddress = new Uri(baseUrl);
+            client.Timeout = TimeSpan.FromMinutes(20);
+        });
 
         return services;
     }
@@ -103,16 +92,13 @@ public static class InfrastructureServiceExtensions
         IConfiguration configuration
     )
     {
-        services.AddHttpClient(
-            "SvcExternalClient",
-            client =>
-            {
-                var baseUrl =
-                    configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
-                client.BaseAddress = new Uri(baseUrl);
-                client.Timeout = TimeSpan.FromMinutes(20);
-            }
-        );
+        services.AddHttpClient<ISvcExternalClient, SvcExternalClient>(client =>
+        {
+            var baseUrl =
+                configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
+            client.BaseAddress = new Uri(baseUrl);
+            client.Timeout = TimeSpan.FromMinutes(20);
+        });
 
         return services;
     }

@@ -15,7 +15,6 @@ builder.AddServiceDefaults();
 builder
     .Services.AddInfrastructureServices()
     .AddHttpClients(builder.Configuration)
-    .AddMicroserviceClients()
     .AddRabbitMqPublisher(builder.Configuration)
     .AddScheduledJobs();
 

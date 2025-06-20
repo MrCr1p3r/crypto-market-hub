@@ -7,12 +7,10 @@ namespace SVC_Scheduler.MicroserviceClients.SvcExternal;
 /// <summary>
 /// Implementation for interacting with the SVC_External microservice.
 /// </summary>
-public class SvcExternalClient(
-    IHttpClientFactory httpClientFactory,
-    ILogger<SvcExternalClient> logger
-) : ISvcExternalClient
+public class SvcExternalClient(HttpClient httpClient, ILogger<SvcExternalClient> logger)
+    : ISvcExternalClient
 {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("SvcExternalClient");
+    private readonly HttpClient _httpClient = httpClient;
 
     /// <inheritdoc />
     public async Task<Result<IEnumerable<Coin>>> GetAllSpotCoins() =>
