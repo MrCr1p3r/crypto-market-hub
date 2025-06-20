@@ -110,7 +110,7 @@ public class CoinsService(
             .Select(combinedResult => combinedResult.Coins)
             .SelectMany(coins => coins);
 
-        return Result.Ok(GroupCoinsBySymbol(processedCoins));
+        return Result.Ok(GroupCoins(processedCoins));
     }
 
     private static List<List<Coin>> ExcludeInactiveCoins(
@@ -295,41 +295,129 @@ public class CoinsService(
         }
     }
 
-    private static IEnumerable<Coin> GroupCoinsBySymbol(IEnumerable<Coin> coins)
+    private static IEnumerable<Coin> GroupCoins(IEnumerable<Coin> coins)
     {
-        var groupedCoins = coins
-            .GroupBy(coin => new { coin.Symbol, coin.Name })
-            .Select(group => new Coin
-            {
-                Symbol = group.Key.Symbol,
-                Name = group.Key.Name,
-                IdCoinGecko = group
-                    .FirstOrDefault(coin => coin.IdCoinGecko is not null)
-                    ?.IdCoinGecko,
-                Category = group.First().Category,
-                TradingPairs = group
-                    .SelectMany(coin => coin.TradingPairs)
-                    .GroupBy(tradingPair => new
-                    {
-                        tradingPair.CoinQuote.Symbol,
-                        tradingPair.CoinQuote.Name,
-                    })
-                    .Select(group => new TradingPair
-                    {
-                        CoinQuote = new TradingPairCoinQuote
-                        {
-                            Symbol = group.Key.Symbol,
-                            Name = group.Key.Name,
-                            Category = group.First().CoinQuote.Category,
-                            IdCoinGecko = group
-                                .FirstOrDefault(coin => coin.CoinQuote.IdCoinGecko is not null)
-                                ?.CoinQuote.IdCoinGecko,
-                        },
-                        ExchangeInfos = group.SelectMany(tradingPair => tradingPair.ExchangeInfos),
-                    }),
-            });
+        var coinsList = coins.ToList();
 
-        return groupedCoins;
+        // Phase 1: Group coins by CoinGecko ID
+        var representativeCoinsFromGeckoGrouping = coinsList
+            .Where(coin => !string.IsNullOrEmpty(coin.IdCoinGecko))
+            .GroupBy(coin => coin.IdCoinGecko)
+            .Select(CreateCoinFromGeckoGroup!);
+
+        // Phase 2: Combine coins grouped by CoinGecko ID with coins that have no CoinGecko ID
+        var coinsWithoutGeckoId = coinsList.Where(coin => string.IsNullOrEmpty(coin.IdCoinGecko));
+        var combinedCoins = representativeCoinsFromGeckoGrouping.Concat(coinsWithoutGeckoId);
+
+        // Phase 3: Group the combined collection by symbol-name pair
+        return combinedCoins
+            .GroupBy(coin => new
+            {
+                Symbol = coin.Symbol.ToLowerInvariant(),
+                Name = coin.Name?.ToLowerInvariant(),
+            })
+            .Select(CreateCoinFromSymbolNameGroup);
+    }
+
+    private static Coin CreateCoinFromGeckoGroup(IGrouping<string, Coin> group)
+    {
+        // Use the first occurrence as canonical representation
+        var representativeCoin = group.First();
+
+        return new Coin
+        {
+            Symbol = representativeCoin.Symbol,
+            Name = representativeCoin.Name,
+            IdCoinGecko = group.Key,
+            Category = representativeCoin.Category,
+            TradingPairs = GroupTradingPairsWithPrioritizedGrouping(
+                group.SelectMany(coin => coin.TradingPairs)
+            ),
+        };
+    }
+
+    private static Coin CreateCoinFromSymbolNameGroup(IGrouping<object, Coin> group)
+    {
+        var representativeCoin = group.First();
+
+        return new Coin
+        {
+            Symbol = representativeCoin.Symbol,
+            Name = representativeCoin.Name,
+            IdCoinGecko = group
+                .FirstOrDefault(coin => !string.IsNullOrEmpty(coin.IdCoinGecko))
+                ?.IdCoinGecko,
+            Category = representativeCoin.Category,
+            TradingPairs = GroupTradingPairsWithPrioritizedGrouping(
+                group.SelectMany(coin => coin.TradingPairs)
+            ),
+        };
+    }
+
+    private static IEnumerable<TradingPair> GroupTradingPairsWithPrioritizedGrouping(
+        IEnumerable<TradingPair> tradingPairs
+    )
+    {
+        var tradingPairsList = tradingPairs.ToList();
+
+        // Phase 1: Group by quote coin CoinGecko ID
+        var representativePairsFromGeckoGrouping = tradingPairsList
+            .Where(tp => !string.IsNullOrEmpty(tp.CoinQuote.IdCoinGecko))
+            .GroupBy(tp => tp.CoinQuote.IdCoinGecko)
+            .Select(CreateTradingPairFromGeckoGroup!);
+
+        // Phase 2: Combine pairs grouped by CoinGecko ID with pairs that have no CoinGecko ID
+        var pairsWithoutGeckoId = tradingPairsList.Where(tp =>
+            string.IsNullOrEmpty(tp.CoinQuote.IdCoinGecko)
+        );
+        var combinedPairs = representativePairsFromGeckoGrouping.Concat(pairsWithoutGeckoId);
+
+        // Phase 3: Group the combined collection by quote coin symbol-name pair
+        return combinedPairs
+            .GroupBy(tp => new
+            {
+                Symbol = tp.CoinQuote.Symbol.ToLowerInvariant(),
+                Name = tp.CoinQuote.Name?.ToLowerInvariant(),
+            })
+            .Select(CreateTradingPairFromSymbolNameGroup);
+    }
+
+    private static TradingPair CreateTradingPairFromGeckoGroup(IGrouping<string, TradingPair> group)
+    {
+        var representativePair = group.First();
+
+        return new TradingPair
+        {
+            CoinQuote = new TradingPairCoinQuote
+            {
+                Symbol = representativePair.CoinQuote.Symbol,
+                Name = representativePair.CoinQuote.Name,
+                Category = representativePair.CoinQuote.Category,
+                IdCoinGecko = group.Key,
+            },
+            ExchangeInfos = group.SelectMany(tp => tp.ExchangeInfos),
+        };
+    }
+
+    private static TradingPair CreateTradingPairFromSymbolNameGroup(
+        IGrouping<object, TradingPair> group
+    )
+    {
+        var representativePair = group.First();
+
+        return new TradingPair
+        {
+            CoinQuote = new TradingPairCoinQuote
+            {
+                Symbol = representativePair.CoinQuote.Symbol,
+                Name = representativePair.CoinQuote.Name,
+                Category = representativePair.CoinQuote.Category,
+                IdCoinGecko = group
+                    .FirstOrDefault(tp => !string.IsNullOrEmpty(tp.CoinQuote.IdCoinGecko))
+                    ?.CoinQuote.IdCoinGecko,
+            },
+            ExchangeInfos = group.SelectMany(tp => tp.ExchangeInfos),
+        };
     }
 
     private static class Mapping

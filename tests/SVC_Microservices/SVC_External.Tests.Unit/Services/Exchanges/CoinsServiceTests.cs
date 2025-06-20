@@ -366,6 +366,100 @@ public class CoinsServiceTests
         _logger.VerifyWasCalled(LogLevel.Warning, "SOL");
     }
 
+    [Fact]
+    public async Task GetAllCurrentActiveSpotCoins_GroupsCoinsBySameCoinGeckoId()
+    {
+        // Arrange
+        _firstClientMock
+            .Setup(client => client.GetAllSpotCoins())
+            .ReturnsAsync(TestData.ExchangeCoinsWithSameCoinGeckoIdResult);
+
+        _secondClientMock
+            .Setup(client => client.GetAllSpotCoins())
+            .ReturnsAsync(TestData.ExchangeCoins2Result);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetSymbolToIdMapForExchange(TestData.IdBinance))
+            .ReturnsAsync(TestData.SymbolToIdMapForSameCoinGeckoIdScenario);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetSymbolToIdMapForExchange(TestData.IdBybit))
+            .ReturnsAsync(TestData.SymbolToIdMapForSameCoinGeckoIdScenario);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetCoinsList())
+            .ReturnsAsync(TestData.CoinGeckoCoinsForGroupingTestsResult);
+
+        // Act
+        var result = await _coinsService.GetAllCurrentActiveSpotCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var coins = result.Value.ToList();
+
+        // Should have only one coin (BTC/WBTC grouped together) plus individual coins
+        var bitcoinCoins = coins.Where(c => c.IdCoinGecko == "bitcoin").ToList();
+        bitcoinCoins.Should().HaveCount(1, "coins with same CoinGecko ID should be grouped");
+
+        var bitcoinCoin = bitcoinCoins[0];
+        bitcoinCoin.Symbol.Should().Be("BTC", "first coin should be used as representative");
+        bitcoinCoin.Name.Should().Be("Bitcoin");
+        bitcoinCoin
+            .TradingPairs.Should()
+            .HaveCount(2, "trading pairs from both coins should be merged");
+    }
+
+    [Fact]
+    public async Task GetAllCurrentActiveSpotCoins_GroupsCoinsFromCoinGeckoGroupingWithSymbolNameGrouping()
+    {
+        // Arrange
+        _firstClientMock
+            .Setup(client => client.GetAllSpotCoins())
+            .ReturnsAsync(TestData.ExchangeCoinsForCombinedGroupingScenarioResult);
+
+        _secondClientMock
+            .Setup(client => client.GetAllSpotCoins())
+            .ReturnsAsync(TestData.ExchangeCoins2Result);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetSymbolToIdMapForExchange(TestData.IdBinance))
+            .ReturnsAsync(TestData.SymbolToIdMapForCombinedGroupingScenario);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetSymbolToIdMapForExchange(TestData.IdBybit))
+            .ReturnsAsync(TestData.SymbolToIdMapForCombinedGroupingScenario);
+
+        _coinGeckoClientMock
+            .Setup(client => client.GetCoinsList())
+            .ReturnsAsync(TestData.CoinGeckoCoinsForGroupingTestsResult);
+
+        // Act
+        var result = await _coinsService.GetAllCurrentActiveSpotCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        var coins = result.Value.ToList();
+
+        // Should have only one BTC coin (all three grouped together)
+        var bitcoinCoins = coins.Where(c => c.Symbol == "BTC" && c.Name == "Bitcoin").ToList();
+        bitcoinCoins
+            .Should()
+            .HaveCount(1, "coins should be grouped by CoinGecko ID first, then by symbol-name");
+
+        var bitcoinCoin = bitcoinCoins[0];
+        bitcoinCoin.IdCoinGecko.Should().Be("bitcoin");
+        bitcoinCoin
+            .TradingPairs.Should()
+            .HaveCount(
+                3,
+                "all trading pairs should be merged: USDT from BTC, ETH from WBTC, EUR from third BTC"
+            );
+
+        // Verify trading pairs from all sources are present
+        var quoteCoinSymbols = bitcoinCoin.TradingPairs.Select(tp => tp.CoinQuote.Symbol).ToList();
+        quoteCoinSymbols.Should().Contain(["USDT", "ETH", "EUR"]);
+    }
+
     private static class TestData
     {
         public const string IdBinance = "binance";
@@ -649,5 +743,178 @@ public class CoinsServiceTests
         public static readonly Result<IEnumerable<Coin>> ExpectedCoinsResult = Result.Ok(
             ExpectedCoins
         );
+
+        // Test data for grouping scenarios
+        private static readonly IEnumerable<ExchangeCoin> ExchangeCoinsWithSameCoinGeckoId =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                Name = null,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new ExchangeTradingPairCoinQuote
+                        {
+                            Symbol = "USDT",
+                            Name = null,
+                        },
+                        ExchangeInfo = new ExchangeTradingPairExchangeInfo
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "WBTC", // Different symbol but same CoinGecko ID
+                Name = null,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new ExchangeTradingPairCoinQuote
+                        {
+                            Symbol = "ETH",
+                            Name = null,
+                        },
+                        ExchangeInfo = new ExchangeTradingPairExchangeInfo
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                ],
+            },
+        ];
+
+        public static readonly Result<
+            IEnumerable<ExchangeCoin>
+        > ExchangeCoinsWithSameCoinGeckoIdResult = Result.Ok(ExchangeCoinsWithSameCoinGeckoId);
+
+        private static readonly IEnumerable<ExchangeCoin> ExchangeCoinsForCombinedGroupingScenario =
+        [
+            new()
+            {
+                Symbol = "BTC",
+                Name = null,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new ExchangeTradingPairCoinQuote
+                        {
+                            Symbol = "USDT",
+                            Name = null,
+                        },
+                        ExchangeInfo = new ExchangeTradingPairExchangeInfo
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "WBTC", // Same CoinGecko ID as BTC
+                Name = null,
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new ExchangeTradingPairCoinQuote
+                        {
+                            Symbol = "ETH",
+                            Name = null,
+                        },
+                        ExchangeInfo = new ExchangeTradingPairExchangeInfo
+                        {
+                            Exchange = Exchange.Binance,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                ],
+            },
+            new()
+            {
+                Symbol = "BTC", // Same symbol-name as representative from CoinGecko grouping but no CoinGecko ID
+                Name = "Bitcoin", // This will match the name from CoinGecko after processing
+                TradingPairs =
+                [
+                    new()
+                    {
+                        CoinQuote = new ExchangeTradingPairCoinQuote
+                        {
+                            Symbol = "EUR",
+                            Name = null,
+                        },
+                        ExchangeInfo = new ExchangeTradingPairExchangeInfo
+                        {
+                            Exchange = Exchange.Bybit,
+                            Status = ExchangeTradingPairStatus.Available,
+                        },
+                    },
+                ],
+            },
+        ];
+
+        public static readonly Result<
+            IEnumerable<ExchangeCoin>
+        > ExchangeCoinsForCombinedGroupingScenarioResult = Result.Ok(
+            ExchangeCoinsForCombinedGroupingScenario
+        );
+
+        public static readonly FrozenDictionary<
+            string,
+            string?
+        > SymbolToIdMapForSameCoinGeckoIdScenario = new Dictionary<string, string?>
+        {
+            { "BTC", "bitcoin" },
+            { "WBTC", "bitcoin" }, // Same CoinGecko ID
+            { "USDT", "usdt" },
+            { "ETH", "ethereum" },
+        }.ToFrozenDictionary();
+
+        public static readonly FrozenDictionary<
+            string,
+            string?
+        > SymbolToIdMapForCombinedGroupingScenario = new Dictionary<string, string?>
+        {
+            { "BTC", "bitcoin" },
+            { "WBTC", "bitcoin" }, // Same CoinGecko ID as BTC
+            { "USDT", "usdt" },
+            { "ETH", "ethereum" },
+            { "EUR", null }, // No CoinGecko ID for EUR
+        }.ToFrozenDictionary();
+
+        private static readonly IEnumerable<CoinCoinGecko> CoinGeckoCoinsForGroupingTests =
+        [
+            new()
+            {
+                Id = "bitcoin",
+                Symbol = "BTC",
+                Name = "Bitcoin",
+            },
+            new()
+            {
+                Id = "usdt",
+                Symbol = "USDT",
+                Name = "Tether",
+            },
+            new()
+            {
+                Id = "ethereum",
+                Symbol = "ETH",
+                Name = "Ethereum",
+            },
+        ];
+
+        public static readonly Result<
+            IEnumerable<CoinCoinGecko>
+        > CoinGeckoCoinsForGroupingTestsResult = Result.Ok(CoinGeckoCoinsForGroupingTests);
     }
 }
