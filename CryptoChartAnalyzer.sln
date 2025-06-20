@@ -63,6 +63,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVC_Scheduler", "src\SVC_Mi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVC_Scheduler.Tests.Unit", "tests\SVC_Microservices\SVC_Scheduler.Tests.Unit\SVC_Scheduler.Tests.Unit.csproj", "{CEF1FDA3-F113-45A9-A182-469C71BF1F4C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVC_Scheduler.Tests.Integration", "tests\SVC_Microservices\SVC_Scheduler.Tests.Integration\SVC_Scheduler.Tests.Integration.csproj", "{1C6B6C30-7966-4722-B0C8-C46259A60344}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -156,6 +158,10 @@ Global
 		{CEF1FDA3-F113-45A9-A182-469C71BF1F4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEF1FDA3-F113-45A9-A182-469C71BF1F4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEF1FDA3-F113-45A9-A182-469C71BF1F4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C6B6C30-7966-4722-B0C8-C46259A60344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C6B6C30-7966-4722-B0C8-C46259A60344}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C6B6C30-7966-4722-B0C8-C46259A60344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C6B6C30-7966-4722-B0C8-C46259A60344}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D73E572A-0D46-4536-9E3B-FEE4F05CA608} = {7242EB01-66E2-41DA-AE07-0E14D52A87DA}
@@ -186,5 +192,6 @@ Global
 		{447DC02F-57D1-4629-B700-8BE8A3BDE2A5} = {762AD00E-3371-4115-AA96-00342FF653B2}
 		{46CA7649-489A-4538-8150-28D44A1E18CC} = {D73E572A-0D46-4536-9E3B-FEE4F05CA608}
 		{CEF1FDA3-F113-45A9-A182-469C71BF1F4C} = {E1CA78D8-ABDA-429F-B9F7-ABB12A028248}
+		{1C6B6C30-7966-4722-B0C8-C46259A60344} = {E1CA78D8-ABDA-429F-B9F7-ABB12A028248}
 	EndGlobalSection
 EndGlobal
