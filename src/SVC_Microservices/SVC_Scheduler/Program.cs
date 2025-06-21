@@ -41,37 +41,43 @@ app.MapDefaultEndpoints();
 
 // Configure Coravel scheduled jobs
 app.Services.UseScheduler(scheduler =>
+#pragma warning disable S125 // Sections of code should not be commented out
+#pragma warning disable S1135 // Track uses of "TODO" tags
 {
-    // Market Data Update Job - Every 30 seconds
+    // Market Data Update Job - Every minute
     scheduler
         .Schedule<MarketDataUpdateJob>()
-        .EveryThirtySeconds()
+        .EveryMinute()
         .PreventOverlapping("MarketDataUpdate")
         .PreventOverlapping("CoinGeckoLock");
 
-    // Kline Data Update Job - Every minute
+    // Kline Data Update Job - Every 5 minutes
     scheduler
         .Schedule<KlineDataUpdateJob>()
-        .EveryMinute()
+        .EveryFiveMinutes()
         .PreventOverlapping("KlineDataUpdate")
         .PreventOverlapping("TradingPairsKlineLock");
 
-    // Spot Coins Cache Warmup Job - Every 2 minutes
+    // Spot Coins Cache Warmup Job - Every 15 minutes
     scheduler
         .Schedule<SpotCoinsCacheWarmupJob>()
-        .Cron("*/2 * * * *")
+        .EveryFifteenMinutes()
         .RunOnceAtStart()
         .PreventOverlapping("SpotCoinsCacheWarmup")
         .PreventOverlapping("CoinGeckoLock");
 
-    // Trading Pairs Update Job - Every 30 minutes TODO: uncomment when ready
+    // TODO: uncomment when ready
+    // Trading Pairs Update Job - Every 30 minutes
     // scheduler
     //     .Schedule<TradingPairsUpdateJob>()
     //     .EveryThirtyMinutes()
     //     .PreventOverlapping("TradingPairsUpdate")
     //     .PreventOverlapping("TradingPairsKlineLock")
     //     .PreventOverlapping("CoinGeckoLock");
-});
+}
+#pragma warning restore S1135 // Track uses of "TODO" tags
+#pragma warning restore S125 // Sections of code should not be commented out
+);
 
 await app.RunAsync();
 
