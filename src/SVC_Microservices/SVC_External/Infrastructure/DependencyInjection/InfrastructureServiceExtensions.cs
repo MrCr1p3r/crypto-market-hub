@@ -1,3 +1,5 @@
+using System.Threading.RateLimiting;
+using Microsoft.Extensions.Http.Resilience;
 using SharedLibrary.Infrastructure;
 using SVC_External.ExternalClients.MarketDataProviders.CoinGecko;
 using SVC_External.Infrastructure.CoinGecko;
@@ -51,15 +53,18 @@ public static class InfrastructureServiceExtensions
         IConfiguration configuration
     )
     {
-        services.AddHttpClient(
-            "BinanceClient",
-            client =>
-            {
-                var baseUrl =
-                    configuration["Services:BinanceClient:BaseUrl"] ?? "https://api.binance.com";
-                client.BaseAddress = new Uri(baseUrl);
-            }
-        );
+        services
+            .AddHttpClient(
+                "BinanceClient",
+                client =>
+                {
+                    var baseUrl =
+                        configuration["Services:BinanceClient:BaseUrl"]
+                        ?? "https://api.binance.com";
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+            )
+            .AddStandardResilienceHandler();
 
         return services;
     }
@@ -69,15 +74,17 @@ public static class InfrastructureServiceExtensions
         IConfiguration configuration
     )
     {
-        services.AddHttpClient(
-            "BybitClient",
-            client =>
-            {
-                var baseUrl =
-                    configuration["Services:BybitClient:BaseUrl"] ?? "https://api.bybit.com";
-                client.BaseAddress = new Uri(baseUrl);
-            }
-        );
+        services
+            .AddHttpClient(
+                "BybitClient",
+                client =>
+                {
+                    var baseUrl =
+                        configuration["Services:BybitClient:BaseUrl"] ?? "https://api.bybit.com";
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+            )
+            .AddStandardResilienceHandler();
 
         return services;
     }
@@ -87,15 +94,39 @@ public static class InfrastructureServiceExtensions
         IConfiguration configuration
     )
     {
-        services.AddHttpClient(
-            "MexcClient",
-            client =>
+        var mexcRateLimiter = new SlidingWindowRateLimiter(
+            new SlidingWindowRateLimiterOptions
             {
-                var baseUrl =
-                    configuration["Services:MexcClient:BaseUrl"] ?? "https://api.mexc.com";
-                client.BaseAddress = new Uri(baseUrl);
+                // Actual limit is 500 (as of 21.06.2025),
+                // but we want to leave some room for inconsistencies
+                PermitLimit = 480,
+                Window = TimeSpan.FromSeconds(10),
+                SegmentsPerWindow = 100,
+                QueueLimit = int.MaxValue,
             }
         );
+
+        services
+            .AddHttpClient(
+                "MexcClient",
+                client =>
+                {
+                    var baseUrl =
+                        configuration["Services:MexcClient:BaseUrl"] ?? "https://api.mexc.com";
+                    client.BaseAddress = new Uri(baseUrl);
+                }
+            )
+            .AddStandardResilienceHandler(options =>
+            {
+                options.RateLimiter = new HttpRateLimiterStrategyOptions
+                {
+                    Name = "MexcClient-RateLimiter",
+                    RateLimiter = args =>
+                        mexcRateLimiter.AcquireAsync(
+                            cancellationToken: args.Context.CancellationToken
+                        ),
+                };
+            });
 
         return services;
     }
