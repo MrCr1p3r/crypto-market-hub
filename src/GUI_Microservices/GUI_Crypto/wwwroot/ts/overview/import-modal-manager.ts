@@ -28,6 +28,12 @@ export class ImportModalManager {
     private readonly startImportBtn = getElement('startImportBtn', HTMLButtonElement);
     private readonly importTypeRadios: HTMLInputElement[];
 
+    // Max coins functionality
+    private readonly setMaxCoinsBtn = getElement('setMaxCoinsBtn', HTMLButtonElement);
+    private readonly maxCoinsDisplay = getElement('maxCoinsDisplay', HTMLElement);
+    private readonly coinCountHelp = getElement('coinCountHelp', HTMLElement);
+    private maxAvailableCoins: number = 0;
+
     private readonly coinSearch: CoinSearch;
     private readonly tableManager: TableManager;
 
@@ -59,6 +65,11 @@ export class ImportModalManager {
         });
         this.startImportBtn.addEventListener('click', () => this.handleStartImport());
 
+        // Max coins functionality
+        this.setMaxCoinsBtn.addEventListener('click', () => this.setToMaxCoins());
+        this.autoImportCoinCount.addEventListener('input', () => this.validateCoinCount());
+        this.autoImportCoinCount.addEventListener('change', () => this.validateCoinCount());
+
         this.massImportModalElement.addEventListener('hidden.bs.modal', () =>
             this.resetMassImportModal()
         );
@@ -77,7 +88,8 @@ export class ImportModalManager {
             this.handleImportTypeChange();
         }
 
-        const coins = await this.coinSearch.fetchAndProcessCoins();
+        const coins = await this.coinSearch.getCandidateCoins();
+        this.updateMaxCoinsCount(coins.length);
         this.displayCoins(coins.slice(0, ImportModalManager.ITEMS_PER_PAGE));
         this.showLoading(false);
     }
@@ -268,6 +280,74 @@ export class ImportModalManager {
         if (autoImportRadio) {
             autoImportRadio.checked = true;
             this.handleImportTypeChange();
+        }
+
+        // Reset max coins display
+        this.maxAvailableCoins = 0;
+        this.updateMaxCoinsDisplay();
+    }
+
+    /**
+     * Update the maximum available coins count and UI
+     */
+    private updateMaxCoinsCount(maxCoins: number): void {
+        this.maxAvailableCoins = maxCoins;
+        this.autoImportCoinCount.max = maxCoins.toString();
+        this.updateMaxCoinsDisplay();
+        this.validateCoinCount();
+    }
+
+    /**
+     * Update the max coins display in the UI
+     */
+    private updateMaxCoinsDisplay(): void {
+        this.maxCoinsDisplay.textContent = `/ ${this.maxAvailableCoins}`;
+        this.coinCountHelp.textContent = `Enter number of coins to import (1 - ${this.maxAvailableCoins} available)`;
+
+        // Enable/disable max button based on availability
+        this.setMaxCoinsBtn.disabled = this.maxAvailableCoins === 0;
+    }
+
+    /**
+     * Set the coin count input to maximum available
+     */
+    private setToMaxCoins(): void {
+        if (this.maxAvailableCoins > 0) {
+            this.autoImportCoinCount.value = this.maxAvailableCoins.toString();
+            this.validateCoinCount();
+        }
+    }
+
+    /**
+     * Validate the coin count input and provide feedback
+     */
+    private validateCoinCount(): void {
+        const value = parseInt(this.autoImportCoinCount.value);
+        const min = parseInt(this.autoImportCoinCount.min);
+        const max = this.maxAvailableCoins;
+
+        // Remove any existing validation classes
+        this.autoImportCoinCount.classList.remove('is-valid', 'is-invalid');
+
+        if (isNaN(value) || value < min || value > max) {
+            this.autoImportCoinCount.classList.add('is-invalid');
+            this.startImportBtn.disabled = true;
+
+            // Update help text with error
+            if (isNaN(value)) {
+                this.coinCountHelp.textContent = 'Please enter a valid number';
+            } else if (value < min) {
+                this.coinCountHelp.textContent = `Minimum is ${min} coin`;
+            } else if (value > max) {
+                this.coinCountHelp.textContent = `Maximum is ${max} coins (available)`;
+            }
+        } else {
+            this.autoImportCoinCount.classList.add('is-valid');
+            this.coinCountHelp.textContent = `Enter number of coins to import (1 - ${max} available)`;
+
+            // Only enable start button if we're in auto mode or have manual selections
+            const isManual = this.handleImportTypeChange();
+            this.startImportBtn.disabled = isManual ? this.selectedCoins.size === 0 : false;
         }
     }
 }

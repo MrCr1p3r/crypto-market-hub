@@ -11,7 +11,7 @@ body {
 }
 .sidebar {
     background-color: #2e294e;
-    height: 100vh;
+    min-height: 100vh;
 }
 .sidebar h5 {
     color: #a29bfe;
@@ -42,7 +42,7 @@ body {
 #tableSearch {
     max-width: 300px;
     margin-left: auto;
-    border: 1px solid #2e294e;
+    border: 1px solid #6c757d;
     transition: border-color 0.2s;
 }
 
@@ -201,7 +201,7 @@ body {
 }
 
 #pageSizeSelect {
-    border: 1px solid #2e294e;
+    border: 1px solid #6c757d;
     transition: border-color 0.2s;
 }
 
@@ -300,5 +300,71 @@ body {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+/* Table loading overlay */
+.table-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(34, 32, 52, 0.98);
+    z-index: 1000;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    border-radius: 8px;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    background: rgba(46, 41, 78, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(162, 155, 254, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(162, 155, 254, 0.2);
+    border-top: 4px solid #a29bfe;
+    border-right: 4px solid #a29bfe;
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+    margin-bottom: 1rem;
+    box-shadow: 0 0 20px rgba(162, 155, 254, 0.4);
+}
+
+.loading-content p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #a29bfe !important;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.5px;
+}
+
+/* Enhanced spin animation */
+@keyframes spin {
+    0% { 
+        transform: rotate(0deg);
+        box-shadow: 0 0 20px rgba(162, 155, 254, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(162, 155, 254, 0.6);
+    }
+    100% { 
+        transform: rotate(360deg);
+        box-shadow: 0 0 20px rgba(162, 155, 254, 0.4);
     }
 }

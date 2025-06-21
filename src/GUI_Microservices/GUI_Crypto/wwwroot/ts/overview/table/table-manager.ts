@@ -43,6 +43,10 @@ export class TableManager {
     private table: Table<OverviewCoin>;
     private currentCoins: OverviewCoin[] = [];
 
+    // Loading state
+    private isLoading = false;
+    private loadingOverlay: HTMLElement | null = null;
+
     private deleteModal: bootstrap.Modal;
     private coinToDelete: { id: number; symbol: string } | null = null;
 
@@ -122,9 +126,10 @@ export class TableManager {
 
         this.table = createTable(options);
 
+        initializeToastr();
+
         this.setupEventListeners();
         this.refreshTableData();
-        initializeToastr();
     }
 
     private setupEventListeners(): void {
@@ -562,9 +567,22 @@ export class TableManager {
     }
 
     public async refreshTableData(): Promise<void> {
-        const coins = await fetchCoins();
-        this.currentCoins = coins;
-        this.updateTableData();
+        if (this.isLoading) return;
+
+        this.isLoading = true;
+        this.showLoadingSpinner();
+
+        try {
+            const fetchedCoins = await fetchCoins();
+            this.currentCoins = fetchedCoins;
+            this.updateTableData();
+        } catch (error) {
+            toastr.error(`Failed to refresh table: ${error}`);
+            console.error('Refresh error:', error);
+        } finally {
+            this.isLoading = false;
+            this.hideLoadingSpinner();
+        }
     }
 
     /**
@@ -740,5 +758,41 @@ export class TableManager {
         this.prevPageBtn.disabled = !canGoPrevious;
         this.nextPageBtn.disabled = !canGoNext;
         this.lastPageBtn.disabled = !canGoNext;
+    }
+
+    /**
+     * Show loading spinner overlay on the table
+     */
+    private showLoadingSpinner(): void {
+        if (this.loadingOverlay) {
+            this.loadingOverlay.classList.remove('d-none');
+            this.tableElement.style.height = '80vh';
+            return;
+        }
+
+        // Create loading overlay if it doesn't exist
+        this.loadingOverlay = document.createElement('div');
+        this.loadingOverlay.className = 'table-loading-overlay';
+        this.loadingOverlay.innerHTML = `
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="text-light">Loading coins...</p>
+            </div>
+        `;
+
+        // Position the overlay relative to the entire table element
+        this.tableElement.style.position = 'relative';
+        this.tableElement.style.height = '80vh';
+        this.tableElement.appendChild(this.loadingOverlay);
+    }
+
+    /**
+     * Hide loading spinner overlay
+     */
+    private hideLoadingSpinner(): void {
+        if (this.loadingOverlay) {
+            this.loadingOverlay.classList.add('d-none');
+            this.tableElement.style.minHeight = '';
+        }
     }
 }

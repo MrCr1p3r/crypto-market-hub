@@ -249,7 +249,6 @@ export class Chart {
                 );
             } else {
                 await rerenderChart(this.chartInstance, fetchedKlineData);
-                toastr.success(`Chart updated with ${fetchedKlineData.length} data points`);
             }
         } catch (error) {
             toastr.error(`Failed to fetch chart data: ${error}`);

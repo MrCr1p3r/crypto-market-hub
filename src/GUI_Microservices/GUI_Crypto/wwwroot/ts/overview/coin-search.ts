@@ -6,7 +6,7 @@ export class CoinSearch {
     private readonly listedCoins: string[] = [];
     private readonly coinLookup: Map<string, CandidateCoin> = new Map();
 
-    public async fetchAndProcessCoins(): Promise<string[]> {
+    public async getCandidateCoins(): Promise<string[]> {
         const candidateCoins: CandidateCoin[] = await fetchCandidateCoins();
         this.listedCoins.length = 0;
         this.coinLookup.clear();

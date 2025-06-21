@@ -23,7 +23,14 @@
                 <div id="autoImportSettings">
                     <div class="form-group mb-3">
                         <label for="autoImportCoinCount" class="form-label">Number of Coins to Import</label>
-                        <input type="number" class="form-control bg-dark text-light" id="autoImportCoinCount" value="150" min="1" max="1000">
+                        <div class="input-group">
+                            <input type="number" class="form-control bg-dark text-light" id="autoImportCoinCount" value="50" min="1" max="1000">
+                            <button class="btn btn-outline-secondary" type="button" id="setMaxCoinsBtn" title="Set to maximum available">Max</button>
+                            <span class="input-group-text bg-dark text-light" id="maxCoinsDisplay">/ 0</span>
+                        </div>
+                        <div class="form-text text-muted mt-1">
+                            <small id="coinCountHelp">Enter number of coins to import (1 - 0 available)</small>
+                        </div>
                     </div>
                 </div>
 
