@@ -22,7 +22,7 @@ public static class HttpClientExtensions
             client =>
             {
                 var baseAddress =
-                    configuration["Services:SvcCoinsClient:BaseUrl"] ?? "http://localhost:5161";
+                    configuration["Services:SvcCoinsClient:BaseUrl"] ?? "http://localhost:5001";
                 client.BaseAddress = new Uri(baseAddress);
             }
         );
@@ -33,7 +33,7 @@ public static class HttpClientExtensions
             client =>
             {
                 var baseAddress =
-                    configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
+                    configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5003";
                 client.BaseAddress = new Uri(baseAddress);
             }
         );
@@ -44,7 +44,7 @@ public static class HttpClientExtensions
             client =>
             {
                 var baseAddress =
-                    configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5117";
+                    configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5002";
                 client.BaseAddress = new Uri(baseAddress);
             }
         );

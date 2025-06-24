@@ -79,7 +79,7 @@ public static class InfrastructureServiceExtensions
         services.AddHttpClient<ISvcBridgeClient, SvcBridgeClient>(client =>
         {
             var baseUrl =
-                configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5109";
+                configuration["Services:SvcBridgeClient:BaseUrl"] ?? "http://localhost:5004";
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromMinutes(20);
         });
@@ -95,7 +95,7 @@ public static class InfrastructureServiceExtensions
         services.AddHttpClient<ISvcExternalClient, SvcExternalClient>(client =>
         {
             var baseUrl =
-                configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
+                configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5003";
             client.BaseAddress = new Uri(baseUrl);
             client.Timeout = TimeSpan.FromMinutes(20);
         });

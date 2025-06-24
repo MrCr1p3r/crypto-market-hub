@@ -22,7 +22,7 @@ builder.Services.AddHttpClient(
     client =>
     {
         var baseAddress =
-            builder.Configuration["Services:SvcCoinsClient:BaseUrl"] ?? "http://localhost:5161";
+            builder.Configuration["Services:SvcCoinsClient:BaseUrl"] ?? "http://localhost:5001";
         client.BaseAddress = new Uri(baseAddress);
     }
 );
@@ -32,7 +32,7 @@ builder.Services.AddHttpClient(
     client =>
     {
         var baseAddress =
-            builder.Configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5135";
+            builder.Configuration["Services:SvcExternalClient:BaseUrl"] ?? "http://localhost:5003";
         client.BaseAddress = new Uri(baseAddress);
     }
 );
@@ -42,7 +42,7 @@ builder.Services.AddHttpClient(
     client =>
     {
         var baseAddress =
-            builder.Configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5117";
+            builder.Configuration["Services:SvcKlineClient:BaseUrl"] ?? "http://localhost:5002";
         client.BaseAddress = new Uri(baseAddress);
     }
 );
