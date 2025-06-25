@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using SVC_Coins.Domain.Entities;
+using SharedLibrary.Enums;
 using SVC_Coins.Infrastructure;
 using SVC_Coins.Repositories;
 
@@ -24,7 +24,7 @@ public class ExchangesRepositoryTests : IDisposable
         _seedContext = new CoinsDbContext(options);
         _actContext = new CoinsDbContext(options);
         _assertContext = new CoinsDbContext(options);
-        _seedContext.Database.EnsureCreated();
+        _seedContext.Database.EnsureCreated(); // This automatically seeds exchanges
 
         _testedRepository = new ExchangesRepository(_actContext);
     }
@@ -32,8 +32,7 @@ public class ExchangesRepositoryTests : IDisposable
     [Fact]
     public async Task GetAllExchanges_ReturnsAllExchanges()
     {
-        // Arrange
-        await SeedDatabase();
+        // Arrange - No manual seeding needed, exchanges are automatically seeded
 
         // Act
         var result = await _testedRepository.GetAllExchanges();
@@ -43,23 +42,12 @@ public class ExchangesRepositoryTests : IDisposable
         result.Should().HaveCount(3);
         result.Should().Contain(e => e.Name == "Binance");
         result.Should().Contain(e => e.Name == "Bybit");
-        result.Should().Contain(e => e.Name == "Kraken");
-    }
+        result.Should().Contain(e => e.Name == "Mexc");
 
-    [Fact]
-    public async Task GetAllExchanges_WhenNoExchangesExist_ReturnsEmpty()
-    {
-        // Act
-        var result = await _testedRepository.GetAllExchanges();
-
-        // Assert
-        result.Should().BeEmpty();
-    }
-
-    private async Task SeedDatabase()
-    {
-        await _seedContext.Exchanges.AddRangeAsync(TestData.GetExchanges());
-        await _seedContext.SaveChangesAsync();
+        // Verify the exchanges have the correct IDs from the enum
+        result.Should().Contain(e => e.Id == (int)Exchange.Binance && e.Name == "Binance");
+        result.Should().Contain(e => e.Id == (int)Exchange.Bybit && e.Name == "Bybit");
+        result.Should().Contain(e => e.Id == (int)Exchange.Mexc && e.Name == "Mexc");
     }
 
     public void Dispose()
@@ -77,15 +65,5 @@ public class ExchangesRepositoryTests : IDisposable
             _assertContext.Dispose();
             _connection.Dispose();
         }
-    }
-
-    public static class TestData
-    {
-        public static IEnumerable<ExchangesEntity> GetExchanges() =>
-            [
-                new ExchangesEntity { Name = "Binance" },
-                new ExchangesEntity { Name = "Bybit" },
-                new ExchangesEntity { Name = "Kraken" },
-            ];
     }
 }

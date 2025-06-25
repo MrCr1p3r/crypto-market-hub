@@ -87,7 +87,7 @@ public class TradingPairsRepositoryTests : IDisposable
         tradingPairsInDb
             .Should()
             .BeEquivalentTo(
-                TestData.InsertedTradingPairs,
+                TestData.GetInsertedTradingPairs(exchanges),
                 options =>
                     options
                         .Excluding(tp => tp.Id)
@@ -113,7 +113,7 @@ public class TradingPairsRepositoryTests : IDisposable
         result
             .Should()
             .BeEquivalentTo(
-                TestData.InsertedTradingPairs,
+                TestData.GetInsertedTradingPairs(exchanges),
                 options =>
                     options
                         .Excluding(tp => tp.Id)
@@ -154,7 +154,7 @@ public class TradingPairsRepositoryTests : IDisposable
         tradingPairsInDb
             .Should()
             .BeEquivalentTo(
-                TestData.NewInsertedTradingPairs,
+                TestData.GetNewInsertedTradingPairs(exchanges),
                 options =>
                     options
                         .Excluding(tp => tp.Id)
@@ -216,10 +216,10 @@ public class TradingPairsRepositoryTests : IDisposable
     private async Task SeedDatabase(bool addTradingPairs = false)
     {
         await _seedContext.Coins.AddRangeAsync(TestData.GetCoins());
-        var exchanges = TestData.GetExchanges().ToList();
-        await _seedContext.Exchanges.AddRangeAsync(exchanges);
+        // Exchanges are automatically seeded by the DbContext, no need to add them manually
         if (addTradingPairs)
         {
+            var exchanges = await _seedContext.Exchanges.ToListAsync();
             var tradingPairs = TestData.GetTradingPairs(exchanges);
             await _seedContext.TradingPairs.AddRangeAsync(tradingPairs);
         }
@@ -253,9 +253,6 @@ public class TradingPairsRepositoryTests : IDisposable
                 new CoinsEntity { Name = "Tether", Symbol = "USDT" },
             ];
 
-        public static IEnumerable<ExchangesEntity> GetExchanges() =>
-            [new ExchangesEntity { Name = "Binance" }, new ExchangesEntity { Name = "Kraken" }];
-
         public static IEnumerable<TradingPairsEntity> GetTradingPairs(
             List<ExchangesEntity> exchanges
         ) =>
@@ -264,13 +261,17 @@ public class TradingPairsRepositoryTests : IDisposable
                 {
                     IdCoinMain = 1,
                     IdCoinQuote = 2,
-                    Exchanges = exchanges,
+                    Exchanges =
+                    [
+                        exchanges.First(e => e.Name == "Binance"),
+                        exchanges.First(e => e.Name == "Bybit"),
+                    ],
                 },
                 new TradingPairsEntity
                 {
                     IdCoinMain = 2,
                     IdCoinQuote = 1,
-                    Exchanges = [exchanges[0]],
+                    Exchanges = [exchanges.First(e => e.Name == "Binance")],
                 },
             ];
 
@@ -286,25 +287,27 @@ public class TradingPairsRepositoryTests : IDisposable
             new TradingPairsEntity { IdCoinMain = 2, IdCoinQuote = 1 },
         ];
 
-        public static readonly IEnumerable<TradingPairsEntity> InsertedTradingPairs =
-        [
-            new TradingPairsEntity
-            {
-                IdCoinMain = 1,
-                IdCoinQuote = 2,
-                Exchanges =
-                [
-                    new ExchangesEntity { Name = "Binance" },
-                    new ExchangesEntity { Name = "Kraken" },
-                ],
-            },
-            new TradingPairsEntity
-            {
-                IdCoinMain = 2,
-                IdCoinQuote = 1,
-                Exchanges = [new ExchangesEntity { Name = "Binance" }],
-            },
-        ];
+        public static IEnumerable<TradingPairsEntity> GetInsertedTradingPairs(
+            List<ExchangesEntity> exchanges
+        ) =>
+            [
+                new TradingPairsEntity
+                {
+                    IdCoinMain = 1,
+                    IdCoinQuote = 2,
+                    Exchanges =
+                    [
+                        exchanges.First(e => e.Name == "Binance"),
+                        exchanges.First(e => e.Name == "Bybit"),
+                    ],
+                },
+                new TradingPairsEntity
+                {
+                    IdCoinMain = 2,
+                    IdCoinQuote = 1,
+                    Exchanges = [exchanges.First(e => e.Name == "Binance")],
+                },
+            ];
 
         public static IEnumerable<TradingPairsEntity> GetNewTradingPairs(
             List<ExchangesEntity> exchanges
@@ -314,58 +317,64 @@ public class TradingPairsRepositoryTests : IDisposable
                 {
                     IdCoinMain = 1,
                     IdCoinQuote = 3,
-                    Exchanges = exchanges,
+                    Exchanges =
+                    [
+                        exchanges.First(e => e.Name == "Binance"),
+                        exchanges.First(e => e.Name == "Bybit"),
+                    ],
                 },
                 new TradingPairsEntity
                 {
                     IdCoinMain = 2,
                     IdCoinQuote = 3,
-                    Exchanges = [exchanges[0]],
+                    Exchanges = [exchanges.First(e => e.Name == "Binance")],
                 },
             ];
 
-        public static readonly IEnumerable<TradingPairsEntity> NewInsertedTradingPairs =
-        [
-            new TradingPairsEntity
-            {
-                IdCoinMain = 1,
-                CoinMain = new CoinsEntity
+        public static IEnumerable<TradingPairsEntity> GetNewInsertedTradingPairs(
+            List<ExchangesEntity> exchanges
+        ) =>
+            [
+                new TradingPairsEntity
                 {
-                    Id = 1,
-                    Name = "Bitcoin",
-                    Symbol = "BTC",
+                    IdCoinMain = 1,
+                    CoinMain = new CoinsEntity
+                    {
+                        Id = 1,
+                        Name = "Bitcoin",
+                        Symbol = "BTC",
+                    },
+                    IdCoinQuote = 3,
+                    CoinQuote = new CoinsEntity
+                    {
+                        Id = 3,
+                        Name = "Tether",
+                        Symbol = "USDT",
+                    },
+                    Exchanges =
+                    [
+                        exchanges.First(e => e.Name == "Binance"),
+                        exchanges.First(e => e.Name == "Bybit"),
+                    ],
                 },
-                IdCoinQuote = 3,
-                CoinQuote = new CoinsEntity
+                new TradingPairsEntity
                 {
-                    Id = 3,
-                    Name = "Tether",
-                    Symbol = "USDT",
+                    IdCoinMain = 2,
+                    CoinMain = new CoinsEntity
+                    {
+                        Id = 2,
+                        Name = "Ethereum",
+                        Symbol = "ETH",
+                    },
+                    IdCoinQuote = 3,
+                    CoinQuote = new CoinsEntity
+                    {
+                        Id = 3,
+                        Name = "Tether",
+                        Symbol = "USDT",
+                    },
+                    Exchanges = [exchanges.First(e => e.Name == "Binance")],
                 },
-                Exchanges =
-                [
-                    new ExchangesEntity { Name = "Binance" },
-                    new ExchangesEntity { Name = "Kraken" },
-                ],
-            },
-            new TradingPairsEntity
-            {
-                IdCoinMain = 2,
-                CoinMain = new CoinsEntity
-                {
-                    Id = 2,
-                    Name = "Ethereum",
-                    Symbol = "ETH",
-                },
-                IdCoinQuote = 3,
-                CoinQuote = new CoinsEntity
-                {
-                    Id = 3,
-                    Name = "Tether",
-                    Symbol = "USDT",
-                },
-                Exchanges = [new ExchangesEntity { Name = "Binance" }],
-            },
-        ];
+            ];
     }
 }

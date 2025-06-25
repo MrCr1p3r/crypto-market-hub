@@ -1,4 +1,5 @@
 using CryptoChartAnalyzer.ServiceDefaults;
+using SVC_Coins.Infrastructure;
 using SVC_Coins.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,13 @@ builder
     .AddWebApiServices();
 
 var app = builder.Build();
+
+// Ensure database exists and create all tables
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<CoinsDbContext>();
+    await context.Database.EnsureCreatedAsync();
+}
 
 // Middleware pipeline
 app.UseExceptionHandler();

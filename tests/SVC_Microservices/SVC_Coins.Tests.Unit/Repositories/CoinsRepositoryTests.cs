@@ -528,19 +528,19 @@ public class CoinsRepositoryTests : IDisposable
         var tradingPairsInDb = await _assertContext.TradingPairs.ToListAsync();
         tradingPairsInDb.Should().BeEmpty();
         var exchangesInDb = await _assertContext.Exchanges.ToListAsync();
-        exchangesInDb.Should().HaveCount(2);
+        exchangesInDb.Should().HaveCount(3); // Exchanges are automatically seeded and should remain
     }
 
     private async Task SeedDatabase(bool addTradingPairs = false)
     {
         var coins = TestData.GetCoins();
         await _seedContext.Coins.AddRangeAsync(coins);
-        var exchanges = TestData.GetExchanges();
-        await _seedContext.Exchanges.AddRangeAsync(exchanges);
 
         if (addTradingPairs)
         {
-            var tradingPairs = TestData.GetTradingPairs([.. exchanges]);
+            // Get the automatically seeded exchanges from the database
+            var exchanges = await _seedContext.Exchanges.ToListAsync();
+            var tradingPairs = TestData.GetTradingPairs(exchanges);
             await _seedContext.TradingPairs.AddRangeAsync(tradingPairs);
         }
 
@@ -594,9 +594,6 @@ public class CoinsRepositoryTests : IDisposable
                 },
             ];
 
-        public static IEnumerable<ExchangesEntity> GetExchanges() =>
-            [new ExchangesEntity { Name = "Binance" }, new ExchangesEntity { Name = "Bybit" }];
-
         public static IEnumerable<TradingPairsEntity> GetTradingPairs(
             List<ExchangesEntity> exchanges
         ) =>
@@ -605,13 +602,17 @@ public class CoinsRepositoryTests : IDisposable
                 {
                     IdCoinMain = 1,
                     IdCoinQuote = 3,
-                    Exchanges = [exchanges[0]],
+                    Exchanges = [exchanges.First(e => e.Name == "Binance")],
                 },
                 new TradingPairsEntity
                 {
                     IdCoinMain = 2,
                     IdCoinQuote = 1,
-                    Exchanges = [exchanges[0], exchanges[1]],
+                    Exchanges =
+                    [
+                        exchanges.First(e => e.Name == "Binance"),
+                        exchanges.First(e => e.Name == "Bybit"),
+                    ],
                 },
             ];
 

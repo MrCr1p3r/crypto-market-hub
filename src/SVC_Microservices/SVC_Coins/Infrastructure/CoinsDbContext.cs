@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SharedLibrary.Enums;
 using SVC_Coins.Domain.Entities;
 
 namespace SVC_Coins.Infrastructure;
@@ -14,6 +15,8 @@ public class CoinsDbContext(DbContextOptions<CoinsDbContext> options) : DbContex
 
     public DbSet<ExchangesEntity> Exchanges { get; set; } = null!;
 
+    public DbSet<KlineDataEntity> KlineData { get; set; } = null!;
+
     /// <summary>
     /// Configures the model and relationships using Fluent API.
     /// </summary>
@@ -24,6 +27,8 @@ public class CoinsDbContext(DbContextOptions<CoinsDbContext> options) : DbContex
 
         ConfigureCoinEntity(modelBuilder);
         ConfigureTradingPairsExchanges(modelBuilder);
+        ConfigureKlineData(modelBuilder);
+        ConfigureExchanges(modelBuilder);
     }
 
     private static void ConfigureCoinEntity(ModelBuilder modelBuilder)
@@ -57,5 +62,40 @@ public class CoinsDbContext(DbContextOptions<CoinsDbContext> options) : DbContex
                 j => j.HasOne<TradingPairsEntity>().WithMany().HasForeignKey("IdTradingPair"),
                 j => j.HasKey("IdTradingPair", "IdExchange")
             );
+    }
+
+    private static void ConfigureKlineData(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<KlineDataEntity>(entity =>
+        {
+            entity
+                .HasKey(e => new { e.IdTradingPair, e.OpenTime })
+                .HasName("PK__KlineDat__031B42F9984E192C");
+
+            entity.Property(e => e.ClosePrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.HighPrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.LowPrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.OpenPrice).HasMaxLength(100).IsUnicode(true);
+            entity.Property(e => e.Volume).HasMaxLength(200).IsUnicode(true);
+
+            entity
+                .HasOne(d => d.IdTradePairNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.IdTradingPair)
+                .HasConstraintName("FK_KlineData_TradingPairs");
+        });
+    }
+
+    // Adds exchanges to the database on first run. It's being triggered by the Database.EnsureCreatedAsync() method.
+    private static void ConfigureExchanges(ModelBuilder modelBuilder)
+    {
+        var exchanges = Enum.GetValues<Exchange>()
+            .Select(exchange => new ExchangesEntity
+            {
+                Id = (int)exchange,
+                Name = exchange.ToString(),
+            });
+
+        modelBuilder.Entity<ExchangesEntity>().HasData(exchanges);
     }
 }
