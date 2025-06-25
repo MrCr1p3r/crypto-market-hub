@@ -1,0 +1,46 @@
+{
+    "name": "CryptoChartAnalyzer - Demo",
+	"dockerComposeFile": "docker-compose.yml",
+    "service": "app",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "features": {
+        "ghcr.io/devcontainers/features/docker-in-docker:1": {},
+        // Install Node.js for frontend compilation.
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        }
+    },
+
+    "containerEnv": {
+        "DATABASE__SERVER": "localhost,1433",
+        "DATABASE__USER": "sa",
+        "DATABASE__PASSWORD": "P@ssw0rd",
+        "DATABASE__NAME": "CryptoCoinsDB",
+        "COINGECKO_API_KEY": "CG-KW5jXW4dxWJKZSxsWdQsR69x"
+    },
+    "remoteEnv": {
+        "COINGECKO_API_KEY": "${codespaceSecret:COINGECKO_API_KEY}"
+    },
+        
+    "forwardPorts": [
+        5000,
+        15120
+    ],
+    "portsAttributes": {
+        "5000": {
+            "label": "GUI_Crypto",
+            "onAutoForward": "notify",
+            "protocol": "http"
+        },
+        "15120": {
+            "label": "Aspire Dashboard",
+            "onAutoForward": "notify",
+            "protocol": "http"
+        }
+    },
+    "postCreateCommand": "dotnet run --project ./src/Aspire/CryptoChartAnalyzer.AppHost/ --launch-profile http"
+    // TODO: Uncomment if needed.
+    // "mounts": [
+    //     "source=codespace-dotnet-nuget,target=/home/vscode/.nuget,type=volume"
+    // ]
+}
