@@ -17,7 +17,7 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
     /// <summary>
     /// Gets or sets the DbSet for trading pair entities.
     /// </summary>
-    public DbSet<TradingPairEntity> TradingPair { get; set; } = null!;
+    public DbSet<TradingPairsEntity> TradingPair { get; set; } = null!;
 
     /// <summary>
     /// Configures the model and relationships using Fluent API.
@@ -46,6 +46,6 @@ public class KlineDataDbContext(DbContextOptions<KlineDataDbContext> options) : 
                 .HasConstraintName("FK_KlineData_TradingPairs");
         });
 
-        modelBuilder.Entity<TradingPairEntity>().ToTable("TradingPair").HasKey(e => e.Id);
+        modelBuilder.Entity<TradingPairsEntity>().ToTable("TradingPairs").HasKey(e => e.Id);
     }
 }

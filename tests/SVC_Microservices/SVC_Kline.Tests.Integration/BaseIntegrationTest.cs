@@ -28,10 +28,10 @@ public abstract class BaseIntegrationTest(CustomWebApplicationFactory factory) :
         return scope.ServiceProvider.GetRequiredService<KlineDataDbContext>();
     }
 
-    protected async Task<TradingPairEntity> CreateTradingPairAsync()
+    protected async Task<TradingPairsEntity> CreateTradingPairAsync()
     {
         using var dbContext = GetDbContext();
-        var tradingPair = new TradingPairEntity();
+        var tradingPair = new TradingPairsEntity();
         dbContext.TradingPair.Add(tradingPair);
         await dbContext.SaveChangesAsync();
         return tradingPair;

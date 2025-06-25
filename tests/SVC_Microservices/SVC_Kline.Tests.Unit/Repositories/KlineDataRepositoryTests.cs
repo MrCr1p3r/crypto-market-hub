@@ -27,9 +27,9 @@ public class KlineDataRepositoryTests : IDisposable
         _repository = new KlineDataRepository(_context);
     }
 
-    private async Task<TradingPairEntity> CreateTradingPairAsync()
+    private async Task<TradingPairsEntity> CreateTradingPairAsync()
     {
-        var tradingPair = new TradingPairEntity();
+        var tradingPair = new TradingPairsEntity();
         _context.TradingPair.Add(tradingPair);
         await _context.SaveChangesAsync();
         return tradingPair;

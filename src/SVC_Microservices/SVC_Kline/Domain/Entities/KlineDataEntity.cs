@@ -65,5 +65,5 @@ public class KlineDataEntity
     /// <summary>
     /// The trading pair for which the Kline data is recorded.
     /// </summary>
-    public TradingPairEntity IdTradePairNavigation { get; set; } = null!;
+    public TradingPairsEntity IdTradePairNavigation { get; set; } = null!;
 }
