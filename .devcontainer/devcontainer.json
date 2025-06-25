@@ -4,11 +4,8 @@
     "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "features": {
-        "ghcr.io/devcontainers/features/docker-in-docker:1": {},
-        // Install Node.js for frontend compilation.
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "lts"
-        }
+        "ghcr.io/devcontainers/features/node:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:1": {}
     },
 
     "containerEnv": {
@@ -38,9 +35,8 @@
             "protocol": "http"
         }
     },
-    "postCreateCommand": "dotnet run --project ./src/Aspire/CryptoChartAnalyzer.AppHost/ --launch-profile http"
-    // TODO: Uncomment if needed.
-    // "mounts": [
-    //     "source=codespace-dotnet-nuget,target=/home/vscode/.nuget,type=volume"
-    // ]
+    
+    "postCreateCommand": "dotnet build",
+    "waitFor": "postCreateCommand",
+    "postStartCommand": "dotnet run --project ./src/Aspire/CryptoChartAnalyzer.AppHost/ --launch-profile http"
 }

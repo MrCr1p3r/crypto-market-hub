@@ -2,9 +2,7 @@ version: '3'
 
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm
     volumes:
       - ../..:/workspaces:cached
     command: sleep infinity
