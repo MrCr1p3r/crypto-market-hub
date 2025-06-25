@@ -18,4 +18,15 @@
     <ProjectReference Include="..\..\Aspire\CryptoChartAnalyzer.ServiceDefaults\CryptoChartAnalyzer.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <!-- Frontend Build Integration -->
+  <Target Name="NpmInstall" BeforeTargets="BeforeBuild" Condition="!Exists('node_modules')">
+    <Message Text="Restoring npm packages..." Importance="high" />
+    <Exec Command="npm install" ContinueOnError="false" />
+  </Target>
+
+  <Target Name="NpmBuild" BeforeTargets="BeforeBuild" DependsOnTargets="NpmInstall">
+    <Message Text="Building frontend assets..." Importance="high" />
+    <Exec Command="npm run build" ContinueOnError="false" />
+  </Target>
+
 </Project>
