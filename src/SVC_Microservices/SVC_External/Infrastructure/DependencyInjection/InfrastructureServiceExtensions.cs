@@ -99,7 +99,7 @@ public static class InfrastructureServiceExtensions
             {
                 // Actual limit is 500 (as of 21.06.2025),
                 // but we want to leave some room for inconsistencies
-                PermitLimit = 480,
+                PermitLimit = 300,
                 Window = TimeSpan.FromSeconds(10),
                 SegmentsPerWindow = 100,
                 QueueLimit = int.MaxValue,
