@@ -108,15 +108,5 @@ yarn-error.log*
 # Any sensitive or config files
 secrets.json
 
-# wwwroot exclusions/inclusions
-
-# Ignore all files and folders inside any wwwroot directory
-**/wwwroot/*
-
-# Include the js folder itself but exclude its contents
-!**/wwwroot/js/
-**/wwwroot/js/*
-
-# Allow specific subdirectories
-!**/wwwroot/ts
-!**/wwwroot/css
+# wwwroot
+**/wwwroot/js/
