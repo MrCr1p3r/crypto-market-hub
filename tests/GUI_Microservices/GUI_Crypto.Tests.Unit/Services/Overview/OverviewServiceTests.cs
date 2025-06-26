@@ -317,6 +317,54 @@ public class OverviewServiceTests
         result.Value.Should().HaveCount(4); // All spot coins become candidates
     }
 
+    [Fact]
+    public async Task GetCandidateCoins_WhenSpotCoinsHaveDuplicateCoinGeckoIdsWithDbCoins_ShouldExcludeDuplicates()
+    {
+        // Arrange
+        _mockExternalClient
+            .Setup(client => client.GetAllSpotCoins())
+            .ReturnsAsync(Result.Ok(TestData.SpotCoinsWithDuplicateCoinGeckoIds));
+
+        _mockCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Ok(TestData.DbCoinsWithMatchingCoinGeckoIds));
+
+        // Act
+        var result = await _overviewService.GetCandidateCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty(); // Both spot coins should be excluded due to duplicate CoinGecko IDs
+
+        // Verify client calls
+        _mockExternalClient.Verify(client => client.GetAllSpotCoins(), Times.Once);
+        _mockCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetCandidateCoins_WhenSpotCoinsHaveDuplicateSymbolNamePairsWithDbCoins_ShouldExcludeDuplicates()
+    {
+        // Arrange
+        _mockExternalClient
+            .Setup(client => client.GetAllSpotCoins())
+            .ReturnsAsync(Result.Ok(TestData.SpotCoinsWithDuplicateSymbolNamePairs));
+
+        _mockCoinsClient
+            .Setup(client => client.GetAllCoins())
+            .ReturnsAsync(Result.Ok(TestData.DbCoinsWithMatchingSymbolNamePairs));
+
+        // Act
+        var result = await _overviewService.GetCandidateCoins();
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().BeEmpty(); // Both spot coins should be excluded due to duplicate Symbol-Name pairs
+
+        // Verify client calls
+        _mockExternalClient.Verify(client => client.GetAllSpotCoins(), Times.Once);
+        _mockCoinsClient.Verify(client => client.GetAllCoins(), Times.Once);
+    }
+
     #endregion
 
     #region CreateCoins Tests
@@ -1046,6 +1094,167 @@ public class OverviewServiceTests
                         ClosePrice = 51500m,
                         Volume = 150m,
                         CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<SvcExternal.Responses.Coins.Coin> SpotCoinsWithDuplicateCoinGeckoIds =
+        [
+            new SvcExternal.Responses.Coins.Coin
+            {
+                Symbol = "ADA",
+                Name = "Cardano",
+                Category = null,
+                IdCoinGecko = "cardano", // Same CoinGecko ID
+                TradingPairs =
+                [
+                    new SvcExternal.Responses.Coins.TradingPair
+                    {
+                        CoinQuote = new SvcExternal.Responses.Coins.TradingPairCoinQuote
+                        {
+                            Symbol = "USDT",
+                            Name = "Tether",
+                            Category = CoinCategory.Stablecoin,
+                            IdCoinGecko = "tether",
+                        },
+                        ExchangeInfos =
+                        [
+                            new SvcExternal.Responses.Coins.TradingPairExchangeInfo
+                            {
+                                Exchange = Exchange.Binance,
+                            },
+                        ],
+                    },
+                ],
+            },
+            new SvcExternal.Responses.Coins.Coin
+            {
+                Symbol = "ADA-FAKE",
+                Name = "Cardano Fake",
+                Category = null,
+                IdCoinGecko = "cardano", // Same CoinGecko ID as above
+                TradingPairs =
+                [
+                    new SvcExternal.Responses.Coins.TradingPair
+                    {
+                        CoinQuote = new SvcExternal.Responses.Coins.TradingPairCoinQuote
+                        {
+                            Symbol = "USDT",
+                            Name = "Tether",
+                            Category = CoinCategory.Stablecoin,
+                            IdCoinGecko = "tether",
+                        },
+                        ExchangeInfos =
+                        [
+                            new SvcExternal.Responses.Coins.TradingPairExchangeInfo
+                            {
+                                Exchange = Exchange.Bybit,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<SvcExternal.Responses.Coins.Coin> SpotCoinsWithDuplicateSymbolNamePairs =
+        [
+            new SvcExternal.Responses.Coins.Coin
+            {
+                Symbol = "ADA",
+                Name = "Cardano",
+                Category = null,
+                IdCoinGecko = "cardano",
+                TradingPairs =
+                [
+                    new SvcExternal.Responses.Coins.TradingPair
+                    {
+                        CoinQuote = new SvcExternal.Responses.Coins.TradingPairCoinQuote
+                        {
+                            Symbol = "USDT",
+                            Name = "Tether",
+                            Category = CoinCategory.Stablecoin,
+                            IdCoinGecko = "tether",
+                        },
+                        ExchangeInfos =
+                        [
+                            new SvcExternal.Responses.Coins.TradingPairExchangeInfo
+                            {
+                                Exchange = Exchange.Binance,
+                            },
+                        ],
+                    },
+                ],
+            },
+            new SvcExternal.Responses.Coins.Coin
+            {
+                Symbol = "ADA", // Same Symbol-Name pair
+                Name = "Cardano", // Same Symbol-Name pair
+                Category = null,
+                IdCoinGecko = "cardano-duplicate", // Different CoinGecko ID
+                TradingPairs =
+                [
+                    new SvcExternal.Responses.Coins.TradingPair
+                    {
+                        CoinQuote = new SvcExternal.Responses.Coins.TradingPairCoinQuote
+                        {
+                            Symbol = "USDT",
+                            Name = "Tether",
+                            Category = CoinCategory.Stablecoin,
+                            IdCoinGecko = "tether",
+                        },
+                        ExchangeInfos =
+                        [
+                            new SvcExternal.Responses.Coins.TradingPairExchangeInfo
+                            {
+                                Exchange = Exchange.Bybit,
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+
+        public static readonly IEnumerable<SvcCoins.Responses.Coin> DbCoinsWithMatchingCoinGeckoIds =
+        [
+            new SvcCoins.Responses.Coin
+            {
+                Id = 1,
+                Symbol = "BTC",
+                Name = "Bitcoin",
+                Category = null,
+                MarketCapUsd = 1_200_000_000_000,
+                PriceUsd = "50000.00",
+                PriceChangePercentage24h = 3.5m,
+                IdCoinGecko = "cardano", // Matches CoinGecko ID from spot coins
+                TradingPairs = [],
+            },
+        ];
+
+        public static readonly IEnumerable<SvcCoins.Responses.Coin> DbCoinsWithMatchingSymbolNamePairs =
+        [
+            new SvcCoins.Responses.Coin
+            {
+                Id = 1,
+                Symbol = "ADA",
+                Name = "Cardano",
+                Category = null,
+                MarketCapUsd = 15_000_000_000,
+                PriceUsd = "0.45",
+                PriceChangePercentage24h = 5.2m,
+                IdCoinGecko = "cardano-existing",
+                TradingPairs = // Main coin - has trading pairs
+                [
+                    new SvcCoins.Responses.TradingPair
+                    {
+                        Id = 1,
+                        CoinQuote = new SvcCoins.Responses.TradingPairCoinQuote
+                        {
+                            Id = 5,
+                            Symbol = "USDT",
+                            Name = "Tether",
+                        },
+                        Exchanges = [Exchange.Binance],
                     },
                 ],
             },

@@ -174,10 +174,16 @@ public class OverviewService(
 
             var dbMainCoinsSymbolNamePairs = dbCoinsArray
                 .Where(coin => coin.TradingPairs.Any())
-                .Select(coin => (coin.Symbol, coin.Name));
+                .Select(coin => (coin.Symbol.ToLowerInvariant(), coin.Name!.ToLowerInvariant()));
 
-            var spotCoinsWithoutDbMainCoins = spotCoins.Where(coin =>
-                coin.Name != null && !dbMainCoinsSymbolNamePairs.Contains((coin.Symbol, coin.Name!))
+            // Select new coins that are not main coins in the database
+            // and do not have duplicate CoinGecko ids in the database.
+            var newCoins = spotCoins.Where(coin =>
+                coin.Name != null
+                && !dbMainCoinsSymbolNamePairs.Contains(
+                    (coin.Symbol.ToLowerInvariant(), coin.Name.ToLowerInvariant())
+                )
+                && !dbCoinsArray.Any(dbCoin => dbCoin.IdCoinGecko == coin.IdCoinGecko)
             );
 
             var dbCoinIdBySymbolName = dbCoinsArray.ToDictionary(
@@ -185,7 +191,7 @@ public class OverviewService(
                 coin => coin.Id
             );
 
-            var candidateCoins = spotCoinsWithoutDbMainCoins.Select(coin => new CandidateCoin
+            var candidateCoins = newCoins.Select(coin => new CandidateCoin
             {
                 Id = GetCandidateCoinId(coin.Symbol, coin.Name!, dbCoinIdBySymbolName),
                 Symbol = coin.Symbol,
