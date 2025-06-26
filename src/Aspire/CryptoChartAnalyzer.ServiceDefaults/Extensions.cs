@@ -14,8 +14,7 @@ using Serilog.Events;
 namespace CryptoChartAnalyzer.ServiceDefaults;
 
 // Adds common .NET Aspire services: service discovery, resilience, health checks, and OpenTelemetry.
-// This project should be referenced by each service project in your solution.
-// To learn more about using this project, see https://aka.ms/dotnet/aspire/service-defaults
+// This project should be referenced by each service project in the solution.
 public static class Extensions
 {
     public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder)
@@ -30,18 +29,9 @@ public static class Extensions
 
         builder.Services.ConfigureHttpClientDefaults(http =>
         {
-            // Turn on resilience by default
-            //http.AddStandardResilienceHandler(); TODO: Uncomment this if needed
-
             // Turn on service discovery by default
             http.AddServiceDiscovery();
         });
-
-        // Uncomment the following to restrict the allowed schemes for service discovery.
-        // builder.Services.Configure<ServiceDiscoveryOptions>(options =>
-        // {
-        //     options.AllowedSchemes = ["https"];
-        // });
 
         return builder;
     }
