@@ -1,4 +1,4 @@
-using CryptoChartAnalyzer.ServiceDefaults;
+using CryptoMarketHub.ServiceDefaults;
 using GUI_Crypto.Hubs;
 using GUI_Crypto.Infrastructure.DependencyInjection;
 using GUI_Crypto.MicroserviceClients.SvcCoins;

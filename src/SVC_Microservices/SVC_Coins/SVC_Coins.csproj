@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Shared\SharedLibrary\SharedLibrary.csproj" />
-    <ProjectReference Include="..\..\Aspire\CryptoChartAnalyzer.ServiceDefaults\CryptoChartAnalyzer.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\Aspire\CryptoMarketHub.ServiceDefaults\CryptoMarketHub.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

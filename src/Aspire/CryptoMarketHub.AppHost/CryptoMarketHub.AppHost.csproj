@@ -20,7 +20,7 @@
     <ProjectReference Include="..\..\SVC_Microservices\SVC_Bridge\SVC_Bridge.csproj" />
     <ProjectReference Include="..\..\SVC_Microservices\SVC_Scheduler\SVC_Scheduler.csproj" />
     <ProjectReference Include="..\..\GUI_Microservices\GUI_Crypto\GUI_Crypto.csproj" />
-    <ProjectReference Include="..\CryptoChartAnalyzer.ServiceDefaults\CryptoChartAnalyzer.ServiceDefaults.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\CryptoMarketHub.ServiceDefaults\CryptoMarketHub.ServiceDefaults.csproj" IsAspireProjectResource="false" />
   </ItemGroup>
 
 </Project>

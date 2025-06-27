@@ -1,4 +1,4 @@
-using CryptoChartAnalyzer.ServiceDefaults;
+using CryptoMarketHub.ServiceDefaults;
 using SVC_Bridge.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,5 +1,5 @@
 {
-    "name": "CryptoChartAnalyzer - Demo",
+    "name": "CryptoMarketHub - Demo",
 	"dockerComposeFile": "docker-compose.yml",
     "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -35,5 +35,5 @@
     
     "postCreateCommand": "dotnet build",
     "waitFor": "postCreateCommand",
-    "postStartCommand": "dotnet run --project ./src/Aspire/CryptoChartAnalyzer.AppHost/ --launch-profile http"
+    "postStartCommand": "dotnet run --project ./src/Aspire/CryptoMarketHub.AppHost/ --launch-profile http"
 }

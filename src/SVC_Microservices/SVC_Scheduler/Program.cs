@@ -1,5 +1,5 @@
 using Coravel;
-using CryptoChartAnalyzer.ServiceDefaults;
+using CryptoMarketHub.ServiceDefaults;
 using RabbitMQ.Client;
 using SharedLibrary.Infrastructure;
 using SVC_Scheduler.Infrastructure.DependencyInjection;

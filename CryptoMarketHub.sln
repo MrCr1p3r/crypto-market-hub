@@ -51,9 +51,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GUI_Crypto.Tests.Integratio
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Aspire", "Aspire", "{761BAB15-BCD9-47BB-852D-6DABD392F164}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoChartAnalyzer.AppHost", "src\Aspire\CryptoChartAnalyzer.AppHost\CryptoChartAnalyzer.AppHost.csproj", "{81C3EC8C-C0A3-4049-8A90-2E98225C4267}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoMarketHub.AppHost", "src\Aspire\CryptoMarketHub.AppHost\CryptoMarketHub.AppHost.csproj", "{81C3EC8C-C0A3-4049-8A90-2E98225C4267}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoChartAnalyzer.ServiceDefaults", "src\Aspire\CryptoChartAnalyzer.ServiceDefaults\CryptoChartAnalyzer.ServiceDefaults.csproj", "{D18ACB7E-10AA-42DD-8DD4-CE4D3ACB09FA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoMarketHub.ServiceDefaults", "src\Aspire\CryptoMarketHub.ServiceDefaults\CryptoMarketHub.ServiceDefaults.csproj", "{D18ACB7E-10AA-42DD-8DD4-CE4D3ACB09FA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{762AD00E-3371-4115-AA96-00342FF653B2}"
 EndProject
