@@ -34,6 +34,5 @@
     },
     
     "postCreateCommand": "dotnet build",
-    "waitFor": "postCreateCommand",
-    "postStartCommand": "dotnet run --project ./src/Aspire/CryptoMarketHub.AppHost/ --launch-profile http"
+    "waitFor": "postCreateCommand"
 }
