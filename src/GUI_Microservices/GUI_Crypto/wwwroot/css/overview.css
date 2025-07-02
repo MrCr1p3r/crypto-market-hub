@@ -38,17 +38,40 @@ body {
     opacity: 1;
 }
 
-/* Search input styles */
+/* Dark theme form controls - comprehensive fix */
+.form-control.bg-dark,
+.form-select.bg-dark,
 #tableSearch {
-    max-width: 300px;
-    margin-left: auto;
-    border: 1px solid #6c757d;
+    background-color: #343a40 !important;
+    border: 1px solid #6c757d !important;
+    color: #ffffff !important;
     transition: border-color 0.2s;
 }
 
+.form-control.bg-dark:focus,
+.form-select.bg-dark:focus,
 #tableSearch:focus {
-    border-color: #a29bfe;
+    background-color: #343a40 !important;
+    border-color: #a29bfe !important;
+    color: #ffffff !important;
     box-shadow: 0 0 0 0.2rem rgba(162, 155, 254, 0.25);
+}
+
+.form-control.bg-dark::placeholder,
+#tableSearch::placeholder {
+    color: #adb5bd !important;
+    opacity: 1;
+}
+
+/* Fix dropdown arrow for dark theme select elements */
+.form-select.bg-dark {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") !important;
+}
+
+/* Search input specific styles */
+#tableSearch {
+    max-width: 300px;
+    margin-left: auto;
 }
 
 /* Scrollbar styles */
@@ -212,6 +235,7 @@ body {
 
 #pageInfo {
     font-size: 0.9rem;
+    color: #ffffff !important;
 }
 
 #pageInfo strong {

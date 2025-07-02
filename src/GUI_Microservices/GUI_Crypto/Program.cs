@@ -61,35 +61,35 @@ builder.Services.AddScoped<ICryptoViewModelFactory, CryptoViewModelFactory>();
 // Add messaging services (RabbitMQ, SignalR, message handlers)
 builder.Services.AddMessagingServices(builder.Configuration);
 
+// Add exception handling middleware
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-var app = builder.Build();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Map health check endpoints
-app.MapDefaultEndpoints();
+var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
+app.UseHttpsRedirection();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.MapDefaultEndpoints();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseAuthorization();
 
-app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 // Map SignalR hubs
 app.MapHub<CryptoHub>("/hubs/crypto");
