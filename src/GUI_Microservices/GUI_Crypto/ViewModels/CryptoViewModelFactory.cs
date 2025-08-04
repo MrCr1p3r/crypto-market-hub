@@ -2,7 +2,6 @@ using GUI_Crypto.ServiceModels;
 using GUI_Crypto.ViewModels.Chart;
 using GUI_Crypto.ViewModels.Chart.Models;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts.Responses;
-using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace GUI_Crypto.ViewModels;
 
@@ -37,7 +36,7 @@ public class CryptoViewModelFactory : ICryptoViewModelFactory
                 SelectedQuoteCoinSymbol = data
                     .Coin.TradingPairs.First(tp => tp.Id == data.KlineResponse.IdTradingPair)
                     .CoinQuote.Symbol,
-                KlineData = ToCoinChartKlineData(data.KlineResponse.KlineData),
+                Klines = data.KlineResponse.Klines,
             };
 
         private static IEnumerable<TradingPair> ToCoinChartTradingPairs(
@@ -53,20 +52,6 @@ public class CryptoViewModelFactory : ICryptoViewModelFactory
                     Name = tp.CoinQuote.Name,
                 },
                 Exchanges = tp.Exchanges,
-            });
-
-        private static IEnumerable<KlineData> ToCoinChartKlineData(
-            IEnumerable<SvcExternal.KlineData> klineData
-        ) =>
-            klineData.Select(kline => new KlineData
-            {
-                OpenTime = kline.OpenTime,
-                OpenPrice = kline.OpenPrice,
-                HighPrice = kline.HighPrice,
-                LowPrice = kline.LowPrice,
-                ClosePrice = kline.ClosePrice,
-                Volume = kline.Volume,
-                CloseTime = kline.CloseTime,
             });
     }
 }

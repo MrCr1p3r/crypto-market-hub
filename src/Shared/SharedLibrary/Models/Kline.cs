@@ -3,40 +3,40 @@ namespace SharedLibrary.Models;
 /// <summary>
 /// Represents Kline (candlestick) data for a trading pair.
 /// </summary>
-public class Kline
+public record Kline
 {
     /// <summary>
     /// The opening time of the Kline in milliseconds since the Unix epoch.
     /// </summary>
-    public long OpenTime { get; set; }
+    public required long OpenTime { get; set; }
 
     /// <summary>
     /// The opening price at the start of the Kline period.
     /// </summary>
-    public decimal OpenPrice { get; set; }
+    public required string OpenPrice { get; set; }
 
     /// <summary>
     /// The highest price during the Kline period.
     /// </summary>
-    public decimal HighPrice { get; set; }
+    public required string HighPrice { get; set; }
 
     /// <summary>
     /// The lowest price during the Kline period.
     /// </summary>
-    public decimal LowPrice { get; set; }
+    public required string LowPrice { get; set; }
 
     /// <summary>
     /// The closing price at the end of the Kline period.
     /// </summary>
-    public decimal ClosePrice { get; set; }
+    public required string ClosePrice { get; set; }
 
     /// <summary>
     /// The total volume traded during the Kline period.
     /// </summary>
-    public decimal Volume { get; set; }
+    public required string Volume { get; set; }
 
     /// <summary>
     /// The closing time of the Kline in milliseconds since the Unix epoch.
     /// </summary>
-    public long CloseTime { get; set; }
+    public required long CloseTime { get; set; }
 }

@@ -2,9 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GUI_Crypto.ApiContracts.Requests.KlineData;
-using GUI_Crypto.ApiContracts.Responses;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions.Testing;
+using SharedLibrary.Models;
 using WireMock.Admin.Mappings;
 
 namespace GUI_Crypto.Tests.Integration.Controllers;
@@ -123,21 +123,21 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
         // Verify first kline data point
         var firstKline = result![0];
         firstKline.OpenTime.Should().Be(1640995200000);
-        firstKline.OpenPrice.Should().Be(46000.50m);
-        firstKline.HighPrice.Should().Be(47000.75m);
-        firstKline.LowPrice.Should().Be(45500.25m);
-        firstKline.ClosePrice.Should().Be(46800.00m);
-        firstKline.Volume.Should().Be(123.456m);
+        firstKline.OpenPrice.Should().Be("46000.50");
+        firstKline.HighPrice.Should().Be("47000.75");
+        firstKline.LowPrice.Should().Be("45500.25");
+        firstKline.ClosePrice.Should().Be("46800.00");
+        firstKline.Volume.Should().Be("123.456");
         firstKline.CloseTime.Should().Be(1640998800000);
 
         // Verify second kline data point
         var secondKline = result[1];
         secondKline.OpenTime.Should().Be(1640998800000);
-        secondKline.OpenPrice.Should().Be(46800.00m);
-        secondKline.HighPrice.Should().Be(48000.00m);
-        secondKline.LowPrice.Should().Be(46500.00m);
-        secondKline.ClosePrice.Should().Be(47500.50m);
-        secondKline.Volume.Should().Be(234.567m);
+        secondKline.OpenPrice.Should().Be("46800.00");
+        secondKline.HighPrice.Should().Be("48000.00");
+        secondKline.LowPrice.Should().Be("46500.00");
+        secondKline.ClosePrice.Should().Be("47500.50");
+        secondKline.Volume.Should().Be("234.567");
         secondKline.CloseTime.Should().Be(1641002400000);
     }
 
@@ -380,26 +380,26 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
         public static readonly dynamic SvcExternalKlineResponse = new
         {
             idTradingPair = 101,
-            klineData = new[]
+            klines = new[]
             {
                 new
                 {
                     openTime = 1640995200000L,
-                    openPrice = 46000.50m,
-                    highPrice = 47000.75m,
-                    lowPrice = 45500.25m,
-                    closePrice = 46800.00m,
-                    volume = 123.456m,
+                    openPrice = "46000.50",
+                    highPrice = "47000.75",
+                    lowPrice = "45500.25",
+                    closePrice = "46800.00",
+                    volume = "123.456",
                     closeTime = 1640998800000L,
                 },
                 new
                 {
                     openTime = 1640998800000L,
-                    openPrice = 46800.00m,
-                    highPrice = 48000.00m,
-                    lowPrice = 46500.00m,
-                    closePrice = 47500.50m,
-                    volume = 234.567m,
+                    openPrice = "46800.00",
+                    highPrice = "48000.00",
+                    lowPrice = "46500.00",
+                    closePrice = "47500.50",
+                    volume = "234.567",
                     closeTime = 1641002400000L,
                 },
             },
@@ -408,22 +408,22 @@ public class ChartControllerTests(CustomWebApplicationFactory factory)
         public static readonly dynamic SvcExternalEmptyKlineResponse = new
         {
             idTradingPair = 101,
-            klineData = Array.Empty<object>(),
+            klines = Array.Empty<object>(),
         };
 
         public static readonly dynamic SvcExternalCustomKlineResponse = new
         {
             idTradingPair = 101,
-            klineData = new[]
+            klines = new[]
             {
                 new
                 {
                     openTime = 1704067200000L, // 2024-01-01T00:00:00Z
-                    openPrice = 42000.00m,
-                    highPrice = 42500.00m,
-                    lowPrice = 41800.00m,
-                    closePrice = 42200.00m,
-                    volume = 100.123m,
+                    openPrice = "42000.00",
+                    highPrice = "42500.00",
+                    lowPrice = "41800.00",
+                    closePrice = "42200.00",
+                    volume = "100.123",
                     closeTime = 1704068100000L, // 15 minutes later
                 },
             },

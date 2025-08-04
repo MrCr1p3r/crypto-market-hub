@@ -3,7 +3,6 @@ using SharedLibrary.Extensions.HttpClient.Internal;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
-using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace SVC_Bridge.MicroserviceClients.SvcExternal;
 

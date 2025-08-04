@@ -1,3 +1,5 @@
+using SharedLibrary.Models;
+
 namespace GUI_Crypto.ViewModels.Chart.Models;
 
 /// <summary>
@@ -31,7 +33,7 @@ public class CoinChart
     public required string SelectedQuoteCoinSymbol { get; set; }
 
     /// <summary>
-    /// List of KlineData objects associated with the coin.
+    /// List of Kline objects associated with the coin.
     /// </summary>
-    public required IEnumerable<KlineData> KlineData { get; set; }
+    public required IEnumerable<Kline> Klines { get; set; }
 }

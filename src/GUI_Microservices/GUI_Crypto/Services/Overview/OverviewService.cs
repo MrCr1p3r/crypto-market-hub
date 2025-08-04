@@ -1,6 +1,5 @@
 using FluentResults;
 using GUI_Crypto.ApiContracts.Requests.CoinCreation;
-using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.ApiContracts.Responses.CandidateCoin;
 using GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
@@ -106,7 +105,7 @@ public class OverviewService(
         /// </summary>
         public static IEnumerable<OverviewCoin> ToOverviewCoins(
             IEnumerable<SvcCoins.Responses.Coin> coins,
-            IEnumerable<MicroserviceClients.SvcKline.Contracts.Responses.KlineDataResponse> allKlineData
+            IEnumerable<MicroserviceClients.SvcKline.Contracts.KlineDataResponse> allKlineData
         )
         {
             var mainCoins = coins.Where(coin => coin.TradingPairs.Any());
@@ -116,7 +115,7 @@ public class OverviewService(
 
         private static OverviewCoin ToOverviewCoin(
             SvcCoins.Responses.Coin coin,
-            IEnumerable<MicroserviceClients.SvcKline.Contracts.Responses.KlineDataResponse> allKlineData
+            IEnumerable<MicroserviceClients.SvcKline.Contracts.KlineDataResponse> allKlineData
         )
         {
             // Find the trading pair that has kline data available
@@ -130,16 +129,7 @@ public class OverviewService(
             {
                 var klines = allKlineData
                     .First(response => response.IdTradingPair == currentTradingPair.Id)
-                    .KlineData.Select(kline => new Kline
-                    {
-                        OpenTime = kline.OpenTime,
-                        OpenPrice = kline.OpenPrice,
-                        HighPrice = kline.HighPrice,
-                        LowPrice = kline.LowPrice,
-                        ClosePrice = kline.ClosePrice,
-                        Volume = kline.Volume,
-                        CloseTime = kline.CloseTime,
-                    });
+                    .Klines;
 
                 klineData = new KlineData
                 {

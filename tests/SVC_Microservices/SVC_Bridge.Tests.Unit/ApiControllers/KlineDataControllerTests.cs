@@ -109,21 +109,21 @@ public class KlineDataControllerTests
                     new()
                     {
                         OpenTime = 1640995200000, // 2022-01-01 00:00:00 UTC
-                        OpenPrice = 47000m,
-                        HighPrice = 48000m,
-                        LowPrice = 46000m,
-                        ClosePrice = 47500m,
-                        Volume = 1000m,
+                        OpenPrice = "47000",
+                        HighPrice = "48000",
+                        LowPrice = "46000",
+                        ClosePrice = "47500",
+                        Volume = "1000",
                         CloseTime = 1641081599999, // 2022-01-01 23:59:59 UTC
                     },
                     new()
                     {
                         OpenTime = 1641081600000, // 2022-01-02 00:00:00 UTC
-                        OpenPrice = 47500m,
-                        HighPrice = 49000m,
-                        LowPrice = 47000m,
-                        ClosePrice = 48500m,
-                        Volume = 1200m,
+                        OpenPrice = "47500",
+                        HighPrice = "49000",
+                        LowPrice = "47000",
+                        ClosePrice = "48500",
+                        Volume = "1200",
                         CloseTime = 1641167999999, // 2022-01-02 23:59:59 UTC
                     },
                 ],
@@ -136,21 +136,21 @@ public class KlineDataControllerTests
                     new()
                     {
                         OpenTime = 1640995200000,
-                        OpenPrice = 3700m,
-                        HighPrice = 3800m,
-                        LowPrice = 3600m,
-                        ClosePrice = 3750m,
-                        Volume = 500m,
+                        OpenPrice = "3700",
+                        HighPrice = "3800",
+                        LowPrice = "3600",
+                        ClosePrice = "3750",
+                        Volume = "500",
                         CloseTime = 1641081599999,
                     },
                     new()
                     {
                         OpenTime = 1641081600000,
-                        OpenPrice = 3750m,
-                        HighPrice = 3900m,
-                        LowPrice = 3700m,
-                        ClosePrice = 3850m,
-                        Volume = 600m,
+                        OpenPrice = "3750",
+                        HighPrice = "3900",
+                        LowPrice = "3700",
+                        ClosePrice = "3850",
+                        Volume = "600",
                         CloseTime = 1641167999999,
                     },
                 ],
@@ -163,21 +163,21 @@ public class KlineDataControllerTests
                     new()
                     {
                         OpenTime = 1640995200000,
-                        OpenPrice = 1.2m,
-                        HighPrice = 1.3m,
-                        LowPrice = 1.1m,
-                        ClosePrice = 1.25m,
-                        Volume = 10000m,
+                        OpenPrice = "1.2",
+                        HighPrice = "1.3",
+                        LowPrice = "1.1",
+                        ClosePrice = "1.25",
+                        Volume = "10000",
                         CloseTime = 1641081599999,
                     },
                     new()
                     {
                         OpenTime = 1641081600000,
-                        OpenPrice = 1.25m,
-                        HighPrice = 1.35m,
-                        LowPrice = 1.2m,
-                        ClosePrice = 1.3m,
-                        Volume = 12000m,
+                        OpenPrice = "1.25",
+                        HighPrice = "1.35",
+                        LowPrice = "1.2",
+                        ClosePrice = "1.3",
+                        Volume = "12000",
                         CloseTime = 1641167999999,
                     },
                 ],

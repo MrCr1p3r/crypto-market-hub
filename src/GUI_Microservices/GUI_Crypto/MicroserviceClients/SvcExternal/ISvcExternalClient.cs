@@ -1,7 +1,7 @@
 using FluentResults;
 using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Requests;
+using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
-using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 
 namespace GUI_Crypto.MicroserviceClients.SvcExternal;
 

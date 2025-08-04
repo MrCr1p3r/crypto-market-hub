@@ -1,6 +1,5 @@
 using FluentResults;
 using SharedLibrary.Enums;
-using SharedLibrary.Models;
 using SVC_Bridge.ApiContracts.Responses.KlineData;
 using SVC_Bridge.MicroserviceClients.SvcCoins;
 using SVC_Bridge.MicroserviceClients.SvcCoins.Contracts.Responses;
@@ -10,7 +9,7 @@ using SVC_Bridge.MicroserviceClients.SvcKline;
 using SVC_Bridge.MicroserviceClients.SvcKline.Contracts.Requests;
 using SVC_Bridge.Services.Interfaces;
 using static SharedLibrary.Errors.GenericErrors;
-using SvcExternal = SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
+using SvcExternal = SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
 using SvcKline = SVC_Bridge.MicroserviceClients.SvcKline.Contracts.Responses;
 
 namespace SVC_Bridge.Services;
@@ -129,16 +128,10 @@ public class KlineDataService(
             IEnumerable<SvcExternal.KlineDataResponse> klineDataResponses
         ) =>
             klineDataResponses.SelectMany(response =>
-                response.KlineData.Select(klineData => new KlineDataCreationRequest
+                response.Klines.Select(kline => new KlineDataCreationRequest
                 {
                     IdTradingPair = response.IdTradingPair,
-                    OpenTime = klineData.OpenTime,
-                    OpenPrice = klineData.OpenPrice,
-                    HighPrice = klineData.HighPrice,
-                    LowPrice = klineData.LowPrice,
-                    ClosePrice = klineData.ClosePrice,
-                    Volume = klineData.Volume,
-                    CloseTime = klineData.CloseTime,
+                    Kline = kline,
                 })
             );
 
@@ -151,16 +144,7 @@ public class KlineDataService(
             svcKlineResponses.Select(response => new KlineDataResponse
             {
                 IdTradingPair = response.IdTradingPair,
-                Klines = response.KlineData.Select(klineData => new Kline
-                {
-                    OpenTime = klineData.OpenTime,
-                    OpenPrice = klineData.OpenPrice,
-                    HighPrice = klineData.HighPrice,
-                    LowPrice = klineData.LowPrice,
-                    ClosePrice = klineData.ClosePrice,
-                    Volume = klineData.Volume,
-                    CloseTime = klineData.CloseTime,
-                }),
+                Klines = response.Klines,
             });
     }
 }

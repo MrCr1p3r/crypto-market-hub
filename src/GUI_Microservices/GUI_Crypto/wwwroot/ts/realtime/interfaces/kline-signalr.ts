@@ -1,4 +1,4 @@
-import { Kline } from '../../overview/interfaces/kline';
+import { Kline } from '../../shared/interfaces/kline';
 
 /**
  * Kline Data SignalR Interfaces

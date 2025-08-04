@@ -1,9 +1,9 @@
 using FluentResults;
+using SharedLibrary.Models;
 using SVC_External.ApiContracts.Requests;
 using SVC_External.ApiContracts.Responses.Exchanges.KlineData;
 using SVC_External.ExternalClients.Exchanges;
 using SVC_External.ExternalClients.Exchanges.Contracts.Requests;
-using SVC_External.ExternalClients.Exchanges.Contracts.Responses;
 using SVC_External.Services.Exchanges.Interfaces;
 using SVC_External.Services.Exchanges.Logging;
 using static SharedLibrary.Errors.GenericErrors;
@@ -56,7 +56,7 @@ public class KlineDataService(
             return _exchangeClients.First(client => client.CurrentExchange == exchange);
         });
 
-    private static async Task<IEnumerable<ExchangeKlineData>> GetKlineDataForTradingPair(
+    private static async Task<IEnumerable<Kline>> GetKlineDataForTradingPair(
         IEnumerable<IExchangesClient> suitableClients,
         ExchangeKlineDataRequest formattedRequest
     )
@@ -89,7 +89,7 @@ public class KlineDataService(
             var response = new KlineDataResponse
             {
                 IdTradingPair = result.Value.Key,
-                KlineData = result.Value.Value,
+                Klines = result.Value.Value,
             };
             responses.Add(response);
         }
@@ -97,7 +97,7 @@ public class KlineDataService(
         return responses;
     }
 
-    private async Task<Result<KeyValuePair<int, IEnumerable<KlineData>>>> ProcessKlineDataRequest(
+    private async Task<Result<KeyValuePair<int, IEnumerable<Kline>>>> ProcessKlineDataRequest(
         KlineDataBatchRequest request,
         KlineDataRequestCoinMain mainCoin
     )
@@ -113,11 +113,7 @@ public class KlineDataService(
             var klineData = await GetKlineDataForTradingPair(suitableClients, formattedRequest);
             if (klineData.Any())
             {
-                var klineDataOutput = klineData.Select(Mapping.ToOutputKlineData);
-                var kvp = new KeyValuePair<int, IEnumerable<KlineData>>(
-                    tradingPair.Id,
-                    klineDataOutput
-                );
+                var kvp = new KeyValuePair<int, IEnumerable<Kline>>(tradingPair.Id, klineData);
                 return Result.Ok(kvp);
             }
         }
@@ -163,24 +159,7 @@ public class KlineDataService(
 
         public static KlineDataResponse ToOutputKlineDataRequestResponse(
             int idTradingPair,
-            IEnumerable<ExchangeKlineData> klineData
-        ) =>
-            new()
-            {
-                IdTradingPair = idTradingPair,
-                KlineData = klineData.Select(ToOutputKlineData),
-            };
-
-        public static KlineData ToOutputKlineData(ExchangeKlineData klineData) =>
-            new()
-            {
-                OpenTime = klineData.OpenTime,
-                OpenPrice = klineData.OpenPrice,
-                HighPrice = klineData.HighPrice,
-                LowPrice = klineData.LowPrice,
-                ClosePrice = klineData.ClosePrice,
-                Volume = klineData.Volume,
-                CloseTime = klineData.CloseTime,
-            };
+            IEnumerable<Kline> klines
+        ) => new() { IdTradingPair = idTradingPair, Klines = klines };
     }
 }

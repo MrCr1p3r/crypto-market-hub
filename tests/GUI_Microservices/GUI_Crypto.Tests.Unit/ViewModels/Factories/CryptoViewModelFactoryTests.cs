@@ -1,9 +1,9 @@
 using GUI_Crypto.ServiceModels;
 using GUI_Crypto.ViewModels;
-using GUI_Crypto.ViewModels.Chart.Models;
 using SharedLibrary.Enums;
+using SharedLibrary.Models;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts.Responses;
-using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
+using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses;
 
 namespace GUI_Crypto.Tests.Unit.ViewModels.Factories;
 
@@ -37,7 +37,7 @@ public class CryptoViewModelFactoryTests
         coinChart.Name.Should().Be("Bitcoin");
         coinChart.SelectedQuoteCoinSymbol.Should().Be("USDT");
         coinChart.TradingPairs.Should().HaveCount(2);
-        coinChart.KlineData.Should().HaveCount(2);
+        coinChart.Klines.Should().HaveCount(2);
 
         // Verify trading pairs mapping
         var tradingPairs = coinChart.TradingPairs.ToList();
@@ -50,9 +50,9 @@ public class CryptoViewModelFactoryTests
         tradingPairs[1].Exchanges.Should().BeEquivalentTo([Exchange.Bybit]);
 
         // Verify kline data mapping
-        var klineData = coinChart.KlineData.ToList();
-        klineData[0].Should().BeEquivalentTo(TestData.ExpectedFirstKlineData);
-        klineData[1].Should().BeEquivalentTo(TestData.ExpectedSecondKlineData);
+        var klineData = coinChart.Klines.ToList();
+        klineData[0].Should().BeEquivalentTo(TestData.ExpectedFirstKline);
+        klineData[1].Should().BeEquivalentTo(TestData.ExpectedSecondKline);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class CryptoViewModelFactoryTests
         var result = _factory.CreateChartViewModel(chartData);
 
         // Assert
-        result.Coin.KlineData.Should().BeEmpty();
+        result.Coin.Klines.Should().BeEmpty();
         result.Coin.SelectedQuoteCoinSymbol.Should().Be("USDT");
         result.Coin.TradingPairs.Should().HaveCount(1);
     }
@@ -126,7 +126,7 @@ public class CryptoViewModelFactoryTests
         result.Coin.Name.Should().Be("Tether");
         result.Coin.SelectedQuoteCoinSymbol.Should().Be("USD");
         result.Coin.TradingPairs.Should().HaveCount(1);
-        result.Coin.KlineData.Should().HaveCount(1);
+        result.Coin.Klines.Should().HaveCount(1);
     }
 
     [Fact]
@@ -139,25 +139,25 @@ public class CryptoViewModelFactoryTests
         var result = _factory.CreateChartViewModel(chartData);
 
         // Assert
-        var klineData = result.Coin.KlineData.ToList();
+        var klineData = result.Coin.Klines.ToList();
         klineData.Should().HaveCount(3);
 
         // Verify detailed mapping of first kline data point
         klineData[0].OpenTime.Should().Be(1640995200000);
-        klineData[0].OpenPrice.Should().Be(46000.50m);
-        klineData[0].HighPrice.Should().Be(47000.75m);
-        klineData[0].LowPrice.Should().Be(45500.25m);
-        klineData[0].ClosePrice.Should().Be(46800.00m);
-        klineData[0].Volume.Should().Be(123.456m);
+        klineData[0].OpenPrice.Should().Be("46000.50");
+        klineData[0].HighPrice.Should().Be("47000.75");
+        klineData[0].LowPrice.Should().Be("45500.25");
+        klineData[0].ClosePrice.Should().Be("46800.00");
+        klineData[0].Volume.Should().Be("123.456");
         klineData[0].CloseTime.Should().Be(1640998800000);
 
         // Verify second kline data point with different values
         klineData[1].OpenTime.Should().Be(1640998800000);
-        klineData[1].OpenPrice.Should().Be(46800.00m);
-        klineData[1].HighPrice.Should().Be(48000.00m);
-        klineData[1].LowPrice.Should().Be(46500.00m);
-        klineData[1].ClosePrice.Should().Be(47500.50m);
-        klineData[1].Volume.Should().Be(234.567m);
+        klineData[1].OpenPrice.Should().Be("46800.00");
+        klineData[1].HighPrice.Should().Be("48000.00");
+        klineData[1].LowPrice.Should().Be("46500.00");
+        klineData[1].ClosePrice.Should().Be("47500.50");
+        klineData[1].Volume.Should().Be("234.567");
         klineData[1].CloseTime.Should().Be(1641002400000);
     }
 
@@ -202,26 +202,26 @@ public class CryptoViewModelFactoryTests
         public static readonly SvcExternal.KlineDataResponse BitcoinKlineResponse = new()
         {
             IdTradingPair = 101,
-            KlineData =
+            Klines =
             [
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640995200000,
-                    OpenPrice = 46000.50m,
-                    HighPrice = 47000.75m,
-                    LowPrice = 45500.25m,
-                    ClosePrice = 46800.00m,
-                    Volume = 123.456m,
+                    OpenPrice = "46000.50",
+                    HighPrice = "47000.75",
+                    LowPrice = "45500.25",
+                    ClosePrice = "46800.00",
+                    Volume = "123.456",
                     CloseTime = 1640998800000,
                 },
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640998800000,
-                    OpenPrice = 46800.00m,
-                    HighPrice = 48000.00m,
-                    LowPrice = 46500.00m,
-                    ClosePrice = 47500.50m,
-                    Volume = 234.567m,
+                    OpenPrice = "46800.00",
+                    HighPrice = "48000.00",
+                    LowPrice = "46500.00",
+                    ClosePrice = "47500.50",
+                    Volume = "234.567",
                     CloseTime = 1641002400000,
                 },
             ],
@@ -281,16 +281,16 @@ public class CryptoViewModelFactoryTests
         public static readonly SvcExternal.KlineDataResponse EthereumKlineResponse = new()
         {
             IdTradingPair = 202, // ETH/BTC pair
-            KlineData =
+            Klines =
             [
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640995200000,
-                    OpenPrice = 0.075m,
-                    HighPrice = 0.078m,
-                    LowPrice = 0.074m,
-                    ClosePrice = 0.076m,
-                    Volume = 50.123m,
+                    OpenPrice = "0.075",
+                    HighPrice = "0.078",
+                    LowPrice = "0.074",
+                    ClosePrice = "0.076",
+                    Volume = "50.123",
                     CloseTime = 1640998800000,
                 },
             ],
@@ -305,7 +305,7 @@ public class CryptoViewModelFactoryTests
         public static readonly SvcExternal.KlineDataResponse EmptyKlineResponse = new()
         {
             IdTradingPair = 101,
-            KlineData = [],
+            Klines = [],
         };
 
         public static readonly ChartData BitcoinChartDataWithEmptyKline = new()
@@ -360,16 +360,16 @@ public class CryptoViewModelFactoryTests
         public static readonly SvcExternal.KlineDataResponse AdaKlineResponse = new()
         {
             IdTradingPair = 103,
-            KlineData =
+            Klines =
             [
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640995200000,
-                    OpenPrice = 1.25m,
-                    HighPrice = 1.30m,
-                    LowPrice = 1.20m,
-                    ClosePrice = 1.28m,
-                    Volume = 1000.789m,
+                    OpenPrice = "1.25",
+                    HighPrice = "1.30",
+                    LowPrice = "1.20",
+                    ClosePrice = "1.28",
+                    Volume = "1000.789",
                     CloseTime = 1640998800000,
                 },
             ],
@@ -407,16 +407,16 @@ public class CryptoViewModelFactoryTests
         public static readonly SvcExternal.KlineDataResponse UsdtKlineResponse = new()
         {
             IdTradingPair = 501,
-            KlineData =
+            Klines =
             [
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640995200000,
-                    OpenPrice = 1.0001m,
-                    HighPrice = 1.0002m,
-                    LowPrice = 0.9999m,
-                    ClosePrice = 1.0000m,
-                    Volume = 10000.0m,
+                    OpenPrice = "1.0001",
+                    HighPrice = "1.0002",
+                    LowPrice = "0.9999",
+                    ClosePrice = "1.0000",
+                    Volume = "10000.0",
                     CloseTime = 1640998800000,
                 },
             ],
@@ -431,36 +431,36 @@ public class CryptoViewModelFactoryTests
         public static readonly SvcExternal.KlineDataResponse ComplexKlineResponse = new()
         {
             IdTradingPair = 101,
-            KlineData =
+            Klines =
             [
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640995200000,
-                    OpenPrice = 46000.50m,
-                    HighPrice = 47000.75m,
-                    LowPrice = 45500.25m,
-                    ClosePrice = 46800.00m,
-                    Volume = 123.456m,
+                    OpenPrice = "46000.50",
+                    HighPrice = "47000.75",
+                    LowPrice = "45500.25",
+                    ClosePrice = "46800.00",
+                    Volume = "123.456",
                     CloseTime = 1640998800000,
                 },
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640998800000,
-                    OpenPrice = 46800.00m,
-                    HighPrice = 48000.00m,
-                    LowPrice = 46500.00m,
-                    ClosePrice = 47500.50m,
-                    Volume = 234.567m,
+                    OpenPrice = "46800.00",
+                    HighPrice = "48000.00",
+                    LowPrice = "46500.00",
+                    ClosePrice = "47500.50",
+                    Volume = "234.567",
                     CloseTime = 1641002400000,
                 },
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1641002400000,
-                    OpenPrice = 47500.50m,
-                    HighPrice = 49000.00m,
-                    LowPrice = 47000.00m,
-                    ClosePrice = 48750.25m,
-                    Volume = 345.678m,
+                    OpenPrice = "47500.50",
+                    HighPrice = "49000.00",
+                    LowPrice = "47000.00",
+                    ClosePrice = "48750.25",
+                    Volume = "345.678",
                     CloseTime = 1641006000000,
                 },
             ],
@@ -473,25 +473,25 @@ public class CryptoViewModelFactoryTests
         };
 
         // Expected results for verification
-        public static readonly KlineData ExpectedFirstKlineData = new()
+        public static readonly Kline ExpectedFirstKline = new()
         {
             OpenTime = 1640995200000,
-            OpenPrice = 46000.50m,
-            HighPrice = 47000.75m,
-            LowPrice = 45500.25m,
-            ClosePrice = 46800.00m,
-            Volume = 123.456m,
+            OpenPrice = "46000.50",
+            HighPrice = "47000.75",
+            LowPrice = "45500.25",
+            ClosePrice = "46800.00",
+            Volume = "123.456",
             CloseTime = 1640998800000,
         };
 
-        public static readonly KlineData ExpectedSecondKlineData = new()
+        public static readonly Kline ExpectedSecondKline = new()
         {
             OpenTime = 1640998800000,
-            OpenPrice = 46800.00m,
-            HighPrice = 48000.00m,
-            LowPrice = 46500.00m,
-            ClosePrice = 47500.50m,
-            Volume = 234.567m,
+            OpenPrice = "46800.00",
+            HighPrice = "48000.00",
+            LowPrice = "46500.00",
+            ClosePrice = "47500.50",
+            Volume = "234.567",
             CloseTime = 1641002400000,
         };
     }

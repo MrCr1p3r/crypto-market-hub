@@ -1,5 +1,6 @@
 using AutoFixture.AutoMoq;
 using Microsoft.AspNetCore.Mvc;
+using SharedLibrary.Models;
 using SVC_Kline.ApiContracts.Requests;
 using SVC_Kline.ApiContracts.Responses;
 using SVC_Kline.ApiControllers;
@@ -26,8 +27,8 @@ public class KlineDataControllerTests
         // Arrange
         var klineDataResponses = new List<KlineDataResponse>
         {
-            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(2) },
-            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(1) },
+            new() { IdTradingPair = 1, Klines = _fixture.CreateMany<Kline>(2) },
+            new() { IdTradingPair = 2, Klines = _fixture.CreateMany<Kline>(1) },
         };
         _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataResponses);
 
@@ -44,8 +45,8 @@ public class KlineDataControllerTests
         // Arrange
         var klineDataResponses = new List<KlineDataResponse>
         {
-            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(2) },
-            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(1) },
+            new() { IdTradingPair = 1, Klines = _fixture.CreateMany<Kline>(2) },
+            new() { IdTradingPair = 2, Klines = _fixture.CreateMany<Kline>(1) },
         };
         _mockRepository.Setup(repo => repo.GetAllKlineData()).ReturnsAsync(klineDataResponses);
 
@@ -67,8 +68,8 @@ public class KlineDataControllerTests
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToList();
         var expectedResponse = new List<KlineDataResponse>
         {
-            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(3) },
-            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(2) },
+            new() { IdTradingPair = 1, Klines = _fixture.CreateMany<Kline>(3) },
+            new() { IdTradingPair = 2, Klines = _fixture.CreateMany<Kline>(2) },
         };
         _mockRepository
             .Setup(repo => repo.InsertKlineData(klineDataList))
@@ -88,8 +89,8 @@ public class KlineDataControllerTests
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToList();
         var expectedResponse = new List<KlineDataResponse>
         {
-            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(3) },
-            new() { IdTradingPair = 2, KlineData = _fixture.CreateMany<KlineData>(2) },
+            new() { IdTradingPair = 1, Klines = _fixture.CreateMany<Kline>(3) },
+            new() { IdTradingPair = 2, Klines = _fixture.CreateMany<Kline>(2) },
         };
         _mockRepository
             .Setup(repo => repo.InsertKlineData(klineDataList))
@@ -113,7 +114,7 @@ public class KlineDataControllerTests
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToArray();
         var expectedResponse = new List<KlineDataResponse>
         {
-            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(5) },
+            new() { IdTradingPair = 1, Klines = _fixture.CreateMany<Kline>(5) },
         };
         _mockRepository
             .Setup(repo => repo.ReplaceAllKlineData(klineDataList))
@@ -133,7 +134,7 @@ public class KlineDataControllerTests
         var klineDataList = _fixture.CreateMany<KlineDataCreationRequest>(5).ToArray();
         var expectedResponse = new List<KlineDataResponse>
         {
-            new() { IdTradingPair = 1, KlineData = _fixture.CreateMany<KlineData>(5) },
+            new() { IdTradingPair = 1, Klines = _fixture.CreateMany<Kline>(5) },
         };
         _mockRepository
             .Setup(repo => repo.ReplaceAllKlineData(klineDataList))

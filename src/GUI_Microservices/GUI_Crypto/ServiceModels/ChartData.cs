@@ -1,5 +1,5 @@
 using GUI_Crypto.MicroserviceClients.SvcCoins.Contracts.Responses;
-using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
+using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses;
 
 namespace GUI_Crypto.ServiceModels;
 

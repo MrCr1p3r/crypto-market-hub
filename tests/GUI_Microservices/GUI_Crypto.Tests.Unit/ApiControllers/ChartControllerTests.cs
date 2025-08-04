@@ -1,7 +1,6 @@
 using FluentAssertions.ArgumentMatchers.Moq;
 using FluentResults;
 using GUI_Crypto.ApiContracts.Requests.KlineData;
-using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.ApiControllers;
 using GUI_Crypto.ServiceModels;
 using GUI_Crypto.Services.Chart;
@@ -10,8 +9,9 @@ using GUI_Crypto.ViewModels.Chart;
 using Microsoft.AspNetCore.Mvc;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
+using SharedLibrary.Models;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts.Responses;
-using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
+using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses;
 
 namespace GUI_Crypto.Tests.Unit.ApiControllers;
 
@@ -396,26 +396,26 @@ public class ChartControllerTests : IDisposable
         public static readonly SvcExternal.KlineDataResponse BitcoinKlineResponse = new()
         {
             IdTradingPair = 101,
-            KlineData =
+            Klines =
             [
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640995200000,
-                    OpenPrice = 46000.50m,
-                    HighPrice = 47000.75m,
-                    LowPrice = 45500.25m,
-                    ClosePrice = 46800.00m,
-                    Volume = 123.456m,
+                    OpenPrice = "46000.50",
+                    HighPrice = "47000.75",
+                    LowPrice = "45500.25",
+                    ClosePrice = "46800.00",
+                    Volume = "123.456",
                     CloseTime = 1640998800000,
                 },
-                new SvcExternal.KlineData
+                new Kline
                 {
                     OpenTime = 1640998800000,
-                    OpenPrice = 46800.00m,
-                    HighPrice = 48000.00m,
-                    LowPrice = 46500.00m,
-                    ClosePrice = 47500.50m,
-                    Volume = 234.567m,
+                    OpenPrice = "46800.00",
+                    HighPrice = "48000.00",
+                    LowPrice = "46500.00",
+                    ClosePrice = "47500.50",
+                    Volume = "234.567",
                     CloseTime = 1641002400000,
                 },
             ],
@@ -436,7 +436,7 @@ public class ChartControllerTests : IDisposable
                 Name = "Bitcoin",
                 SelectedQuoteCoinSymbol = "USDT",
                 TradingPairs = [],
-                KlineData = [],
+                Klines = [],
             },
         };
 
@@ -445,21 +445,21 @@ public class ChartControllerTests : IDisposable
             new Kline
             {
                 OpenTime = 1640995200000,
-                OpenPrice = 46000.50m,
-                HighPrice = 47000.75m,
-                LowPrice = 45500.25m,
-                ClosePrice = 46800.00m,
-                Volume = 123.456m,
+                OpenPrice = "46000.50",
+                HighPrice = "47000.75",
+                LowPrice = "45500.25",
+                ClosePrice = "46800.00",
+                Volume = "123.456",
                 CloseTime = 1640998800000,
             },
             new Kline
             {
                 OpenTime = 1640998800000,
-                OpenPrice = 46800.00m,
-                HighPrice = 48000.00m,
-                LowPrice = 46500.00m,
-                ClosePrice = 47500.50m,
-                Volume = 234.567m,
+                OpenPrice = "46800.00",
+                HighPrice = "48000.00",
+                LowPrice = "46500.00",
+                ClosePrice = "47500.50",
+                Volume = "234.567",
                 CloseTime = 1641002400000,
             },
         ];

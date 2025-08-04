@@ -7,6 +7,7 @@ using GUI_Crypto.MicroserviceClients.SvcKline;
 using GUI_Crypto.Services.Overview;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
+using SharedLibrary.Models;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 using SvcKline = GUI_Crypto.MicroserviceClients.SvcKline.Contracts;
@@ -594,70 +595,70 @@ public class OverviewServiceTests
             },
         ];
 
-        public static readonly IEnumerable<SvcKline.Responses.KlineDataResponse> BitcoinAndEthereumKlineData =
+        public static readonly IEnumerable<SvcKline.KlineDataResponse> BitcoinAndEthereumKlineData =
         [
-            new SvcKline.Responses.KlineDataResponse
+            new SvcKline.KlineDataResponse
             {
                 IdTradingPair = 1,
-                KlineData =
+                Klines =
                 [
-                    new SvcKline.Responses.KlineData
+                    new Kline
                     {
                         OpenTime = DateTimeOffset.UtcNow.AddHours(-2).ToUnixTimeMilliseconds(),
-                        OpenPrice = 50000m,
-                        HighPrice = 51000m,
-                        LowPrice = 49000m,
-                        ClosePrice = 50500m,
-                        Volume = 100m,
+                        OpenPrice = "50000",
+                        HighPrice = "51000",
+                        LowPrice = "49000",
+                        ClosePrice = "50500",
+                        Volume = "100",
                         CloseTime = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeMilliseconds(),
                     },
-                    new SvcKline.Responses.KlineData
+                    new Kline
                     {
                         OpenTime = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeMilliseconds(),
-                        OpenPrice = 50500m,
-                        HighPrice = 52000m,
-                        LowPrice = 50000m,
-                        ClosePrice = 51500m,
-                        Volume = 150m,
+                        OpenPrice = "50500",
+                        HighPrice = "52000",
+                        LowPrice = "50000",
+                        ClosePrice = "51500",
+                        Volume = "150",
                         CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                     },
                 ],
             },
-            new SvcKline.Responses.KlineDataResponse
+            new SvcKline.KlineDataResponse
             {
                 IdTradingPair = 2,
-                KlineData =
+                Klines =
                 [
-                    new SvcKline.Responses.KlineData
+                    new Kline
                     {
                         OpenTime = DateTimeOffset.UtcNow.AddHours(-2).ToUnixTimeMilliseconds(),
-                        OpenPrice = 3000m,
-                        HighPrice = 3100m,
-                        LowPrice = 2900m,
-                        ClosePrice = 3050m,
-                        Volume = 200m,
+                        OpenPrice = "3000",
+                        HighPrice = "3100",
+                        LowPrice = "2900",
+                        ClosePrice = "3050",
+                        Volume = "200",
                         CloseTime = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeMilliseconds(),
                     },
-                    new SvcKline.Responses.KlineData
+                    new Kline
                     {
                         OpenTime = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeMilliseconds(),
-                        OpenPrice = 3050m,
-                        HighPrice = 3200m,
-                        LowPrice = 3000m,
-                        ClosePrice = 3150m,
-                        Volume = 250m,
+                        OpenPrice = "3050",
+                        HighPrice = "3200",
+                        LowPrice = "3000",
+                        ClosePrice = "3150",
+                        Volume = "250",
                         CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                     },
                 ],
             },
         ];
 
-        public static readonly IEnumerable<SvcKline.Responses.KlineDataResponse> UnmatchedKlineData =
+        public static readonly IEnumerable<SvcKline.KlineDataResponse> UnmatchedKlineData =
         [
-            new SvcKline.Responses.KlineDataResponse
+            new SvcKline.KlineDataResponse
             {
                 IdTradingPair = 999, // Non-existent trading pair
-                KlineData = [],
+                Klines = [],
             },
         ];
 
@@ -1068,31 +1069,31 @@ public class OverviewServiceTests
             },
         ];
 
-        public static readonly IEnumerable<SvcKline.Responses.KlineDataResponse> BitcoinKlineDataOnly =
+        public static readonly IEnumerable<SvcKline.KlineDataResponse> BitcoinKlineDataOnly =
         [
-            new SvcKline.Responses.KlineDataResponse
+            new SvcKline.KlineDataResponse
             {
                 IdTradingPair = 1,
-                KlineData =
+                Klines =
                 [
-                    new SvcKline.Responses.KlineData
+                    new Kline
                     {
                         OpenTime = DateTimeOffset.UtcNow.AddHours(-2).ToUnixTimeMilliseconds(),
-                        OpenPrice = 50000m,
-                        HighPrice = 51000m,
-                        LowPrice = 49000m,
-                        ClosePrice = 50500m,
-                        Volume = 100m,
+                        OpenPrice = "50000",
+                        HighPrice = "51000",
+                        LowPrice = "49000",
+                        ClosePrice = "50500",
+                        Volume = "100",
                         CloseTime = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeMilliseconds(),
                     },
-                    new SvcKline.Responses.KlineData
+                    new Kline
                     {
                         OpenTime = DateTimeOffset.UtcNow.AddHours(-1).ToUnixTimeMilliseconds(),
-                        OpenPrice = 50500m,
-                        HighPrice = 52000m,
-                        LowPrice = 50000m,
-                        ClosePrice = 51500m,
-                        Volume = 150m,
+                        OpenPrice = "50500",
+                        HighPrice = "52000",
+                        LowPrice = "50000",
+                        ClosePrice = "51500",
+                        Volume = "150",
                         CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                     },
                 ],

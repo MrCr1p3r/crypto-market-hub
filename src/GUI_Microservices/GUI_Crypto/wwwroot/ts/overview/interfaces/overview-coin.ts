@@ -1,4 +1,4 @@
-import { Kline } from './kline';
+import { Kline } from '../../shared/interfaces/kline';
 
 export interface OverviewCoin {
     id: number;

@@ -1,5 +1,6 @@
 using FluentResults;
 using SharedLibrary.Enums;
+using SharedLibrary.Models;
 using SVC_External.ExternalClients.Exchanges.Contracts.Requests;
 using SVC_External.ExternalClients.Exchanges.Contracts.Responses;
 
@@ -32,5 +33,5 @@ public interface IExchangesClient
     /// Success: Result containing a collection of retrieved Kline data objects. <br/>
     /// Failure: Result with an error object describing the failure inside.
     /// </returns>
-    Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(ExchangeKlineDataRequest request);
+    Task<Result<IEnumerable<Kline>>> GetKlineData(ExchangeKlineDataRequest request);
 }

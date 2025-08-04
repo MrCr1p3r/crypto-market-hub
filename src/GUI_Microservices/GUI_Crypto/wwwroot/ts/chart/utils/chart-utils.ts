@@ -1,9 +1,9 @@
 import ApexCharts, { ApexOptions } from 'apexcharts';
-import { KlineData } from '../interfaces/kline-data';
+import { Kline } from '../../shared/interfaces/kline';
 
 export function renderChart(
     chartContainer: HTMLElement,
-    klineData: KlineData[],
+    klineData: Kline[],
     coinSymbol: string
 ): ApexCharts {
     const options: ApexOptions = {
@@ -118,11 +118,8 @@ export function renderChart(
     return chartInstance;
 }
 
-export async function rerenderChart(
-    chartInstance: ApexCharts,
-    klineData: KlineData[]
-): Promise<void> {
-    const updatedSeries = klineData.map((k: KlineData) => ({
+export async function rerenderChart(chartInstance: ApexCharts, klineData: Kline[]): Promise<void> {
+    const updatedSeries = klineData.map((k: Kline) => ({
         x: new Date(k.openTime),
         y: [k.openPrice, k.highPrice, k.lowPrice, k.closePrice],
     }));

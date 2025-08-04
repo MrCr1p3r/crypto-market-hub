@@ -1,12 +1,12 @@
 using FluentAssertions.ArgumentMatchers.Moq;
 using FluentResults;
 using GUI_Crypto.ApiContracts.Requests.KlineData;
-using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.Services.Chart;
 using SharedLibrary.Enums;
 using SharedLibrary.Errors;
+using SharedLibrary.Models;
 using SvcCoins = GUI_Crypto.MicroserviceClients.SvcCoins.Contracts;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 
@@ -168,8 +168,8 @@ public class ChartServiceTests
         result.Value.Should().HaveCount(2);
 
         var klineDataList = result.Value.ToList();
-        klineDataList[0].Should().BeEquivalentTo(TestData.ExpectedFirstKlineData);
-        klineDataList[1].Should().BeEquivalentTo(TestData.ExpectedSecondKlineData);
+        klineDataList[0].Should().BeEquivalentTo(TestData.ExpectedFirstKline);
+        klineDataList[1].Should().BeEquivalentTo(TestData.ExpectedSecondKline);
 
         // Verify client call with custom parameters (not defaults)
         _mockExternalClient.Verify(
@@ -248,37 +248,37 @@ public class ChartServiceTests
             Limit = 500,
         };
 
-        public static readonly SvcExternal.Responses.KlineData.KlineDataResponse BitcoinKlineDataResponse =
+        public static readonly SvcExternal.Responses.KlineDataResponse BitcoinKlineDataResponse =
             new()
             {
                 IdTradingPair = 101,
-                KlineData =
+                Klines =
                 [
-                    new SvcExternal.Responses.KlineData.KlineData
+                    new Kline
                     {
                         OpenTime = 1640995200000, // 2022-01-01T00:00:00Z
-                        OpenPrice = 46000.50m,
-                        HighPrice = 47000.75m,
-                        LowPrice = 45500.25m,
-                        ClosePrice = 46800.00m,
-                        Volume = 123.456m,
+                        OpenPrice = "46000.50",
+                        HighPrice = "47000.75",
+                        LowPrice = "45500.25",
+                        ClosePrice = "46800.00",
+                        Volume = "123.456",
                         CloseTime = 1640998800000, // 2022-01-01T01:00:00Z
                     },
-                    new SvcExternal.Responses.KlineData.KlineData
+                    new Kline
                     {
                         OpenTime = 1640998800000, // 2022-01-01T01:00:00Z
-                        OpenPrice = 46800.00m,
-                        HighPrice = 48000.00m,
-                        LowPrice = 46500.00m,
-                        ClosePrice = 47500.50m,
-                        Volume = 234.567m,
+                        OpenPrice = "46800.00",
+                        HighPrice = "48000.00",
+                        LowPrice = "46500.00",
+                        ClosePrice = "47500.50",
+                        Volume = "234.567",
                         CloseTime = 1641002400000, // 2022-01-01T02:00:00Z
                     },
                 ],
             };
 
-        public static readonly SvcExternal.Responses.KlineData.KlineDataResponse EmptyKlineDataResponse =
-            new() { IdTradingPair = 101, KlineData = [] };
+        public static readonly SvcExternal.Responses.KlineDataResponse EmptyKlineDataResponse =
+            new() { IdTradingPair = 101, Klines = [] };
 
         public static readonly SvcCoins.Responses.Coin BitcoinCoin = new()
         {
@@ -357,25 +357,25 @@ public class ChartServiceTests
             };
 
         // Expected mapped API responses
-        public static readonly Kline ExpectedFirstKlineData = new()
+        public static readonly Kline ExpectedFirstKline = new()
         {
             OpenTime = 1640995200000,
-            OpenPrice = 46000.50m,
-            HighPrice = 47000.75m,
-            LowPrice = 45500.25m,
-            ClosePrice = 46800.00m,
-            Volume = 123.456m,
+            OpenPrice = "46000.50",
+            HighPrice = "47000.75",
+            LowPrice = "45500.25",
+            ClosePrice = "46800.00",
+            Volume = "123.456",
             CloseTime = 1640998800000,
         };
 
-        public static readonly Kline ExpectedSecondKlineData = new()
+        public static readonly Kline ExpectedSecondKline = new()
         {
             OpenTime = 1640998800000,
-            OpenPrice = 46800.00m,
-            HighPrice = 48000.00m,
-            LowPrice = 46500.00m,
-            ClosePrice = 47500.50m,
-            Volume = 234.567m,
+            OpenPrice = "46800.00",
+            HighPrice = "48000.00",
+            LowPrice = "46500.00",
+            ClosePrice = "47500.50",
+            Volume = "234.567",
             CloseTime = 1641002400000,
         };
     }

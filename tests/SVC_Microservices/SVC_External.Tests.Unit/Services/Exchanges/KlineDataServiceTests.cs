@@ -3,10 +3,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions.Testing;
+using SharedLibrary.Models;
 using SVC_External.ApiContracts.Requests;
 using SVC_External.ExternalClients.Exchanges;
 using SVC_External.ExternalClients.Exchanges.Contracts.Requests;
-using SVC_External.ExternalClients.Exchanges.Contracts.Responses;
 using SVC_External.Services.Exchanges;
 
 namespace SVC_External.Tests.Unit.Services.Exchanges;
@@ -42,12 +42,12 @@ public class KlineDataServiceTests
     {
         // Arrange
         var request = TestData.KlineDataRequest();
-        var exchangeKlineData = _fixture.CreateMany<ExchangeKlineData>();
+        var exchangeKlineData = _fixture.CreateMany<Kline>();
         var expectedResult = Result.Ok(exchangeKlineData);
 
         _firstClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
             .ReturnsAsync(expectedResult);
@@ -58,8 +58,8 @@ public class KlineDataServiceTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.IdTradingPair.Should().Be(request.TradingPair.Id);
-        result.Value.KlineData.Should().HaveCount(exchangeKlineData.Count());
-        result.Value.KlineData.Should().BeEquivalentTo(exchangeKlineData);
+        result.Value.Klines.Should().HaveCount(exchangeKlineData.Count());
+        result.Value.Klines.Should().BeEquivalentTo(exchangeKlineData);
         _firstClientMock.Verify(
             client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()),
             Times.Once
@@ -75,7 +75,7 @@ public class KlineDataServiceTests
     {
         // Arrange
         var request = TestData.KlineDataRequest();
-        var exchangeKlineData = _fixture.CreateMany<ExchangeKlineData>();
+        var exchangeKlineData = _fixture.CreateMany<Kline>();
         var expectedResult = Result.Ok(exchangeKlineData);
 
         _firstClientMock
@@ -88,8 +88,8 @@ public class KlineDataServiceTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.IdTradingPair.Should().Be(request.TradingPair.Id);
-        result.Value.KlineData.Should().HaveCount(exchangeKlineData.Count());
-        result.Value.KlineData.Should().BeEquivalentTo(exchangeKlineData);
+        result.Value.Klines.Should().HaveCount(exchangeKlineData.Count());
+        result.Value.Klines.Should().BeEquivalentTo(exchangeKlineData);
     }
 
     [Fact]
@@ -99,10 +99,10 @@ public class KlineDataServiceTests
         var request = TestData.KlineDataRequest();
         _firstClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         // Act
         var result = await _klineDataService.GetKlineDataForTradingPair(request);
@@ -119,10 +119,10 @@ public class KlineDataServiceTests
         var request = TestData.KlineDataRequest();
         _firstClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         // Act
         await _klineDataService.GetKlineDataForTradingPair(request);
@@ -136,7 +136,7 @@ public class KlineDataServiceTests
     {
         // Arrange
         var request = TestData.CreateKlineDataBatchRequest();
-        var exchangeKlineData = _fixture.CreateMany<ExchangeKlineData>();
+        var exchangeKlineData = _fixture.CreateMany<Kline>();
         var expectedResult = Result.Ok(exchangeKlineData);
 
         _firstClientMock
@@ -148,7 +148,7 @@ public class KlineDataServiceTests
 
         // Assert
         result.Should().HaveCount(request.MainCoins.Count());
-        result.All(response => response.KlineData.Any()).Should().BeTrue();
+        result.All(response => response.Klines.Any()).Should().BeTrue();
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class KlineDataServiceTests
     {
         // Arrange
         var request = TestData.CreateKlineDataBatchRequest(2);
-        var exchangeKlineData = _fixture.CreateMany<ExchangeKlineData>();
+        var exchangeKlineData = _fixture.CreateMany<Kline>();
         var expectedResult = Result.Ok(exchangeKlineData);
 
         // Setup first client to succeed for first coin but fail for second coin
@@ -178,12 +178,12 @@ public class KlineDataServiceTests
                     )
                 )
             )
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         // Setup second client to fail for both coins
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         // Act
         var result = await _klineDataService.GetFirstSuccessfulKlineDataPerCoin(request);
@@ -192,7 +192,7 @@ public class KlineDataServiceTests
         result.Should().HaveCount(1);
         var tradingPairId = request.MainCoins.First().TradingPairs.First().Id;
         var response = result.Should().ContainSingle(r => r.IdTradingPair == tradingPairId).Subject;
-        response.KlineData.Should().HaveCount(exchangeKlineData.Count());
+        response.Klines.Should().HaveCount(exchangeKlineData.Count());
     }
 
     [Fact]
@@ -203,10 +203,10 @@ public class KlineDataServiceTests
 
         _firstClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         // Act
         await _klineDataService.GetFirstSuccessfulKlineDataPerCoin(request);
@@ -223,10 +223,10 @@ public class KlineDataServiceTests
 
         _firstClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         // Act
         var result = await _klineDataService.GetFirstSuccessfulKlineDataPerCoin(request);
@@ -240,7 +240,7 @@ public class KlineDataServiceTests
     {
         // Arrange
         var request = TestData.KlineDataBatchRequestWithMultipleTradingPairs();
-        var exchangeKlineData = _fixture.CreateMany<ExchangeKlineData>().ToList();
+        var exchangeKlineData = _fixture.CreateMany<Kline>().ToList();
 
         // First trading pair fails, second succeeds
         _firstClientMock
@@ -252,7 +252,7 @@ public class KlineDataServiceTests
                     )
                 )
             )
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
 
         _firstClientMock
             .Setup(client =>
@@ -279,11 +279,11 @@ public class KlineDataServiceTests
     {
         // Arrange
         var request = TestData.KlineDataBatchRequestWithMultipleExchanges();
-        var exchangeKlineData = _fixture.CreateMany<ExchangeKlineData>().ToList();
+        var exchangeKlineData = _fixture.CreateMany<Kline>().ToList();
 
         _firstClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
-            .ReturnsAsync(Result.Ok<IEnumerable<ExchangeKlineData>>([]));
+            .ReturnsAsync(Result.Ok<IEnumerable<Kline>>([]));
         _secondClientMock
             .Setup(client => client.GetKlineData(It.IsAny<ExchangeKlineDataRequest>()))
             .ReturnsAsync(exchangeKlineData);

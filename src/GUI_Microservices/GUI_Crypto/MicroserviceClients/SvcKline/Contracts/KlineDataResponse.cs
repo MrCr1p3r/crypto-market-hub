@@ -1,4 +1,6 @@
-namespace GUI_Crypto.MicroserviceClients.SvcKline.Contracts.Responses;
+using SharedLibrary.Models;
+
+namespace GUI_Crypto.MicroserviceClients.SvcKline.Contracts;
 
 /// <summary>
 /// Represents kline data api response format.
@@ -11,7 +13,7 @@ public class KlineDataResponse
     public int IdTradingPair { get; set; }
 
     /// <summary>
-    /// The Kline data for the trading pair.
+    /// The klines for the trading pair.
     /// </summary>
-    public IEnumerable<KlineData> KlineData { get; set; } = [];
+    public IEnumerable<Kline> Klines { get; set; } = [];
 }

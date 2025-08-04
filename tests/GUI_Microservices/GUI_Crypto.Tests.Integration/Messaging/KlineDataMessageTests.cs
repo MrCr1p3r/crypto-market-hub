@@ -48,18 +48,18 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
         btcPairData.Klines.Should().HaveCount(2, "BTC pair should have 2 klines");
 
         var firstBtcKline = btcPairData.Klines.First();
-        firstBtcKline.OpenPrice.Should().Be(46000.50m);
-        firstBtcKline.ClosePrice.Should().Be(46800.00m);
-        firstBtcKline.Volume.Should().Be(123.456m);
+        firstBtcKline.OpenPrice.Should().Be("46000.50");
+        firstBtcKline.ClosePrice.Should().Be("46800.00");
+        firstBtcKline.Volume.Should().Be("123.456");
 
         // Verify ETH/USDT trading pair data
         var ethPairData = received.First(pair => pair.IdTradingPair == 102);
         ethPairData.Klines.Should().HaveCount(2, "ETH pair should have 2 klines");
 
         var firstEthKline = ethPairData.Klines.First();
-        firstEthKline.OpenPrice.Should().Be(3000.00m);
-        firstEthKline.ClosePrice.Should().Be(3050.00m);
-        firstEthKline.Volume.Should().Be(200.000m);
+        firstEthKline.OpenPrice.Should().Be("3000.00");
+        firstEthKline.ClosePrice.Should().Be("3050.00");
+        firstEthKline.Volume.Should().Be("200.000");
     }
 
     [Fact]
@@ -299,21 +299,21 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
             new()
             {
                 OpenTime = 1640995200000L,
-                OpenPrice = 46000.50m,
-                HighPrice = 47000.75m,
-                LowPrice = 45500.25m,
-                ClosePrice = 46800.00m,
-                Volume = 123.456m,
+                OpenPrice = "46000.50",
+                HighPrice = "47000.75",
+                LowPrice = "45500.25",
+                ClosePrice = "46800.00",
+                Volume = "123.456",
                 CloseTime = 1640998800000L,
             },
             new()
             {
                 OpenTime = 1640998800000L,
-                OpenPrice = 46800.00m,
-                HighPrice = 48000.00m,
-                LowPrice = 46500.00m,
-                ClosePrice = 47500.50m,
-                Volume = 234.567m,
+                OpenPrice = "46800.00",
+                HighPrice = "48000.00",
+                LowPrice = "46500.00",
+                ClosePrice = "47500.50",
+                Volume = "234.567",
                 CloseTime = 1641002400000L,
             },
         ];
@@ -323,21 +323,21 @@ public class KlineDataMessageTests(CustomWebApplicationFactory factory)
             new()
             {
                 OpenTime = 1640995200000L,
-                OpenPrice = 3000.00m,
-                HighPrice = 3100.00m,
-                LowPrice = 2900.00m,
-                ClosePrice = 3050.00m,
-                Volume = 200.000m,
+                OpenPrice = "3000.00",
+                HighPrice = "3100.00",
+                LowPrice = "2900.00",
+                ClosePrice = "3050.00",
+                Volume = "200.000",
                 CloseTime = 1640998800000L,
             },
             new()
             {
                 OpenTime = 1640998800000L,
-                OpenPrice = 3050.00m,
-                HighPrice = 3200.00m,
-                LowPrice = 3000.00m,
-                ClosePrice = 3150.00m,
-                Volume = 250.000m,
+                OpenPrice = "3050.00",
+                HighPrice = "3200.00",
+                LowPrice = "3000.00",
+                ClosePrice = "3150.00",
+                Volume = "250.000",
                 CloseTime = 1641002400000L,
             },
         ];

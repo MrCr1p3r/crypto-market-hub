@@ -192,11 +192,11 @@ public class KlineDataMessageHandlerTests
         {
             OpenTime = 1640995200000, // 2022-01-01T00:00:00Z
             CloseTime = 1640998800000, // 2022-01-01T01:00:00Z
-            OpenPrice = 46000.50m,
-            HighPrice = 47000.75m,
-            LowPrice = 45500.25m,
-            ClosePrice = 46800.00m,
-            Volume = 123.456m,
+            OpenPrice = "46000.50",
+            HighPrice = "47000.75",
+            LowPrice = "45500.25",
+            ClosePrice = "46800.00",
+            Volume = "123.456",
         };
 
         var klineDataMessages = new List<KlineData>
@@ -229,11 +229,11 @@ public class KlineDataMessageHandlerTests
                         data.Single().IdTradingPair == 42
                         && data.Single().Klines.Single().OpenTime == 1640995200000
                         && data.Single().Klines.Single().CloseTime == 1640998800000
-                        && data.Single().Klines.Single().OpenPrice == 46000.50m
-                        && data.Single().Klines.Single().HighPrice == 47000.75m
-                        && data.Single().Klines.Single().LowPrice == 45500.25m
-                        && data.Single().Klines.Single().ClosePrice == 46800.00m
-                        && data.Single().Klines.Single().Volume == 123.456m
+                        && data.Single().Klines.Single().OpenPrice == "46000.50"
+                        && data.Single().Klines.Single().HighPrice == "47000.75"
+                        && data.Single().Klines.Single().LowPrice == "45500.25"
+                        && data.Single().Klines.Single().ClosePrice == "46800.00"
+                        && data.Single().Klines.Single().Volume == "123.456"
                     )
                 ),
             Times.Once
@@ -289,11 +289,11 @@ public class KlineDataMessageHandlerTests
         {
             OpenTime = baseTime,
             CloseTime = baseTime + 3600000, // 1 hour later
-            OpenPrice = price,
-            HighPrice = price * 1.05m,
-            LowPrice = price * 0.95m,
-            ClosePrice = price * 1.02m,
-            Volume = 100m + id,
+            OpenPrice = price.ToString(),
+            HighPrice = (price * 1.05m).ToString(),
+            LowPrice = (price * 0.95m).ToString(),
+            ClosePrice = (price * 1.02m).ToString(),
+            Volume = (100m + id).ToString(),
         };
     }
 

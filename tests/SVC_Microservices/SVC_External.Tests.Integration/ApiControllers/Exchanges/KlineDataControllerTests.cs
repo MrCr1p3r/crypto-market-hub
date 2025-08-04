@@ -31,8 +31,8 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
         var result = await response.Content.ReadFromJsonAsync<KlineDataResponse>();
 
         result.Should().NotBeNull();
-        result!.KlineData.Should().NotBeNull();
-        result.KlineData.Should().HaveCount(2);
+        result!.Klines.Should().NotBeNull();
+        result.Klines.Should().HaveCount(2);
     }
 
     [Fact]

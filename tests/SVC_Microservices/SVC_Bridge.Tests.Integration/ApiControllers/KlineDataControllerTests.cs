@@ -40,13 +40,13 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
 
         firstTradingPairData.Should().NotBeNull();
         firstTradingPairData!.Klines.Should().HaveCount(2);
-        firstTradingPairData.Klines.First().OpenPrice.Should().Be(47000m);
-        firstTradingPairData.Klines.First().ClosePrice.Should().Be(47500m);
+        firstTradingPairData.Klines.First().OpenPrice.Should().Be("47000");
+        firstTradingPairData.Klines.First().ClosePrice.Should().Be("47500");
 
         secondTradingPairData.Should().NotBeNull();
         secondTradingPairData!.Klines.Should().HaveCount(2);
-        secondTradingPairData.Klines.First().OpenPrice.Should().Be(3700m);
-        secondTradingPairData.Klines.First().ClosePrice.Should().Be(3750m);
+        secondTradingPairData.Klines.First().OpenPrice.Should().Be("3700");
+        secondTradingPairData.Klines.First().ClosePrice.Should().Be("3750");
     }
 
     [Fact]
@@ -457,26 +457,26 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 1,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L, // 2022-01-01 00:00:00 UTC
-                        openPrice = 47000m,
-                        highPrice = 48000m,
-                        lowPrice = 46000m,
-                        closePrice = 47500m,
-                        volume = 1000m,
+                        openPrice = "47000",
+                        highPrice = "48000",
+                        lowPrice = "46000",
+                        closePrice = "47500",
+                        volume = "1000",
                         closeTime = 1641081599999L, // 2022-01-01 23:59:59 UTC
                     },
                     new
                     {
                         openTime = 1641081600000L, // 2022-01-02 00:00:00 UTC
-                        openPrice = 47500m,
-                        highPrice = 49000m,
-                        lowPrice = 47000m,
-                        closePrice = 48500m,
-                        volume = 1200m,
+                        openPrice = "47500",
+                        highPrice = "49000",
+                        lowPrice = "47000",
+                        closePrice = "48500",
+                        volume = "1200",
                         closeTime = 1641167999999L, // 2022-01-02 23:59:59 UTC
                     },
                 },
@@ -484,26 +484,26 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 2,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 3700m,
-                        highPrice = 3800m,
-                        lowPrice = 3600m,
-                        closePrice = 3750m,
-                        volume = 500m,
+                        openPrice = "3700",
+                        highPrice = "3800",
+                        lowPrice = "3600",
+                        closePrice = "3750",
+                        volume = "500",
                         closeTime = 1641081599999L,
                     },
                     new
                     {
                         openTime = 1641081600000L,
-                        openPrice = 3750m,
-                        highPrice = 3900m,
-                        lowPrice = 3700m,
-                        closePrice = 3850m,
-                        volume = 600m,
+                        openPrice = "3750",
+                        highPrice = "3900",
+                        lowPrice = "3700",
+                        closePrice = "3850",
+                        volume = "600",
                         closeTime = 1641167999999L,
                     },
                 },
@@ -515,16 +515,16 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 1,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 47000m,
-                        highPrice = 48000m,
-                        lowPrice = 46000m,
-                        closePrice = 47500m,
-                        volume = 1000m,
+                        openPrice = "47000m",
+                        highPrice = "48000",
+                        lowPrice = "46000",
+                        closePrice = "47500",
+                        volume = "1000",
                         closeTime = 1641081599999L,
                     },
                 },
@@ -536,26 +536,26 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 1,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 47000m,
-                        highPrice = 48000m,
-                        lowPrice = 46000m,
-                        closePrice = 47500m,
-                        volume = 1000m,
+                        openPrice = "47000",
+                        highPrice = "48000",
+                        lowPrice = "46000",
+                        closePrice = "47500",
+                        volume = "1000",
                         closeTime = 1641081599999L,
                     },
                     new
                     {
                         openTime = 1641081600000L,
-                        openPrice = 47500m,
-                        highPrice = 49000m,
-                        lowPrice = 47000m,
-                        closePrice = 48500m,
-                        volume = 1200m,
+                        openPrice = "47500",
+                        highPrice = "49000",
+                        lowPrice = "47000",
+                        closePrice = "48500",
+                        volume = "1200",
                         closeTime = 1641167999999L,
                     },
                 },
@@ -563,26 +563,26 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 2,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 3700m,
-                        highPrice = 3800m,
-                        lowPrice = 3600m,
-                        closePrice = 3750m,
-                        volume = 500m,
+                        openPrice = "3700",
+                        highPrice = "3800",
+                        lowPrice = "3600",
+                        closePrice = "3750",
+                        volume = "500",
                         closeTime = 1641081599999L,
                     },
                     new
                     {
                         openTime = 1641081600000L,
-                        openPrice = 3750m,
-                        highPrice = 3900m,
-                        lowPrice = 3700m,
-                        closePrice = 3850m,
-                        volume = 600m,
+                        openPrice = "3750",
+                        highPrice = "3900",
+                        lowPrice = "3700",
+                        closePrice = "3850",
+                        volume = "600",
                         closeTime = 1641167999999L,
                     },
                 },
@@ -594,16 +594,16 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 1,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 47000m,
-                        highPrice = 48000m,
-                        lowPrice = 46000m,
-                        closePrice = 47500m,
-                        volume = 1000m,
+                        openPrice = "47000",
+                        highPrice = "48000",
+                        lowPrice = "46000",
+                        closePrice = "47500",
+                        volume = "1000",
                         closeTime = 1641081599999L,
                     },
                 },

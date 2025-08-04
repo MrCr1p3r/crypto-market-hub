@@ -1,9 +1,10 @@
 using System.Net;
 using GUI_Crypto.MicroserviceClients.SvcKline;
-using GUI_Crypto.MicroserviceClients.SvcKline.Contracts.Responses;
+using GUI_Crypto.MicroserviceClients.SvcKline.Contracts;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Testing;
 using Moq.Contrib.HttpClient;
+using SharedLibrary.Models;
 using static SharedLibrary.Errors.GenericErrors;
 
 namespace GUI_Crypto.Tests.Unit.MicroserviceClients.SvcKline;
@@ -147,13 +148,13 @@ public class SvcKlineClientTests
         var tradingPair1Data = new KlineDataResponse
         {
             IdTradingPair = 1,
-            KlineData = [.. _fixture.CreateMany<KlineData>(5)],
+            Klines = [.. _fixture.CreateMany<Kline>(5)],
         };
 
         var tradingPair2Data = new KlineDataResponse
         {
             IdTradingPair = 2,
-            KlineData = [.. _fixture.CreateMany<KlineData>(3)],
+            Klines = [.. _fixture.CreateMany<Kline>(3)],
         };
 
         var expectedResponse = new List<KlineDataResponse> { tradingPair1Data, tradingPair2Data };
@@ -171,17 +172,17 @@ public class SvcKlineClientTests
         result.Value.Should().BeEquivalentTo(expectedResponse);
 
         var tradingPair1Result = result.Value.First(response => response.IdTradingPair == 1);
-        tradingPair1Result.KlineData.Should().HaveCount(5);
+        tradingPair1Result.Klines.Should().HaveCount(5);
 
         var tradingPair2Result = result.Value.First(response => response.IdTradingPair == 2);
-        tradingPair2Result.KlineData.Should().HaveCount(3);
+        tradingPair2Result.Klines.Should().HaveCount(3);
     }
 
     [Fact]
     public async Task GetAllKlineData_WithEmptyKlineDataCollections_ReturnsSuccessWithEmptyKlineData()
     {
         // Arrange
-        var tradingPairData = new KlineDataResponse { IdTradingPair = 1, KlineData = [] };
+        var tradingPairData = new KlineDataResponse { IdTradingPair = 1, Klines = [] };
 
         var expectedResponse = new List<KlineDataResponse> { tradingPairData };
 
@@ -195,7 +196,7 @@ public class SvcKlineClientTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().HaveCount(1);
-        result.Value.First().KlineData.Should().BeEmpty();
+        result.Value.First().Klines.Should().BeEmpty();
     }
 
     #endregion

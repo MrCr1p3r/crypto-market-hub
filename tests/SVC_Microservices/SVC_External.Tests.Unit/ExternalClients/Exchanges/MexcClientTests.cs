@@ -3,6 +3,7 @@ using FluentResults.Extensions.FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq.Contrib.HttpClient;
 using SharedLibrary.Enums;
+using SharedLibrary.Models;
 using SVC_External.ExternalClients.Exchanges.Contracts.Requests;
 using SVC_External.ExternalClients.Exchanges.Contracts.Responses;
 using SVC_External.ExternalClients.Exchanges.Mexc;
@@ -81,14 +82,14 @@ public class MexcClientTests
             .Value.First()
             .Should()
             .BeEquivalentTo(
-                new
+                new Kline
                 {
                     OpenTime = 123456789,
-                    OpenPrice = 0.001m,
-                    HighPrice = 0.002m,
-                    LowPrice = 0.0005m,
-                    ClosePrice = 0.0015m,
-                    Volume = 100m,
+                    OpenPrice = "0.001",
+                    HighPrice = "0.002",
+                    LowPrice = "0.0005",
+                    ClosePrice = "0.0015",
+                    Volume = "100",
                     CloseTime = 123456799,
                 }
             );

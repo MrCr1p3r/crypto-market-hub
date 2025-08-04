@@ -672,26 +672,26 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 101,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 46000.50m,
-                        highPrice = 47000.75m,
-                        lowPrice = 45500.25m,
-                        closePrice = 46800.00m,
-                        volume = 123.456m,
+                        openPrice = "46000.50",
+                        highPrice = "47000.75",
+                        lowPrice = "45500.25",
+                        closePrice = "46800.00",
+                        volume = "123.456",
                         closeTime = 1640998800000L,
                     },
                     new
                     {
                         openTime = 1640998800000L,
-                        openPrice = 46800.00m,
-                        highPrice = 48000.00m,
-                        lowPrice = 46500.00m,
-                        closePrice = 47500.50m,
-                        volume = 234.567m,
+                        openPrice = "46800.00",
+                        highPrice = "48000.00",
+                        lowPrice = "46500.00",
+                        closePrice = "47500.50",
+                        volume = "234.567",
                         closeTime = 1641002400000L,
                     },
                 },
@@ -699,26 +699,26 @@ public class OverviewControllerTests(CustomWebApplicationFactory factory)
             new
             {
                 idTradingPair = 102,
-                klineData = new[]
+                klines = new[]
                 {
                     new
                     {
                         openTime = 1640995200000L,
-                        openPrice = 3000.00m,
-                        highPrice = 3100.00m,
-                        lowPrice = 2900.00m,
-                        closePrice = 3050.00m,
-                        volume = 200.000m,
+                        openPrice = "3000.00",
+                        highPrice = "3100.00",
+                        lowPrice = "2900.00",
+                        closePrice = "3050.00",
+                        volume = "200.000",
                         closeTime = 1640998800000L,
                     },
                     new
                     {
                         openTime = 1640998800000L,
-                        openPrice = 3050.00m,
-                        highPrice = 3200.00m,
-                        lowPrice = 3000.00m,
-                        closePrice = 3150.00m,
-                        volume = 250.000m,
+                        openPrice = "3050.00",
+                        highPrice = "3200.00",
+                        lowPrice = "3000.00",
+                        closePrice = "3150.00",
+                        volume = "250.000",
                         closeTime = 1641002400000L,
                     },
                 },

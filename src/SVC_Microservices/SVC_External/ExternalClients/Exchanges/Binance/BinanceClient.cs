@@ -2,6 +2,7 @@ using System.Text.Json;
 using FluentResults;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions.HttpClient.External;
+using SharedLibrary.Models;
 using SVC_External.ExternalClients.Exchanges.Contracts.Requests;
 using SVC_External.ExternalClients.Exchanges.Contracts.Responses;
 
@@ -37,9 +38,7 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
     }
 
     /// <inheritdoc />
-    public async Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(
-        ExchangeKlineDataRequest request
-    )
+    public async Task<Result<IEnumerable<Kline>>> GetKlineData(ExchangeKlineDataRequest request)
     {
         var endpoint = Mapping.ToBinanceKlineEndpoint(request);
         var response = await _httpClient.GetFromJsonSafeAsync<List<List<JsonElement>>>(
@@ -117,15 +116,15 @@ public class BinanceClient(IHttpClientFactory httpClientFactory, ILogger<Binance
                 _ => throw new ArgumentException($"Unsupported TimeFrame: {timeFrame}"),
             };
 
-        public static ExchangeKlineData ToKlineData(List<JsonElement> data) =>
+        public static Kline ToKlineData(List<JsonElement> data) =>
             new()
             {
                 OpenTime = data[0].GetInt64(),
-                OpenPrice = Convert.ToDecimal(data[1].GetString()),
-                HighPrice = Convert.ToDecimal(data[2].GetString()),
-                LowPrice = Convert.ToDecimal(data[3].GetString()),
-                ClosePrice = Convert.ToDecimal(data[4].GetString()),
-                Volume = Convert.ToDecimal(data[5].GetString()),
+                OpenPrice = data[1].GetString() ?? string.Empty,
+                HighPrice = data[2].GetString() ?? string.Empty,
+                LowPrice = data[3].GetString() ?? string.Empty,
+                ClosePrice = data[4].GetString() ?? string.Empty,
+                Volume = data[5].GetString() ?? string.Empty,
                 CloseTime = data[6].GetInt64(),
             };
         #endregion

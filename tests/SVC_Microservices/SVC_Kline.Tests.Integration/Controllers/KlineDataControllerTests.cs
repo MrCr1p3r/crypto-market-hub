@@ -46,10 +46,10 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
         responseList.Should().HaveCount(2);
 
         var tradingPair1Response = responseList.First(r => r.IdTradingPair == tradingPair1.Id);
-        tradingPair1Response.KlineData.Should().HaveCount(2);
+        tradingPair1Response.Klines.Should().HaveCount(2);
 
         var tradingPair2Response = responseList.First(r => r.IdTradingPair == tradingPair2.Id);
-        tradingPair2Response.KlineData.Should().HaveCount(1);
+        tradingPair2Response.Klines.Should().HaveCount(1);
     }
 
     [Fact]
@@ -97,10 +97,10 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
         responseList.Should().HaveCount(2);
 
         var tradingPair1Response = responseList.First(r => r.IdTradingPair == tradingPair1.Id);
-        tradingPair1Response.KlineData.Should().HaveCount(3);
+        tradingPair1Response.Klines.Should().HaveCount(3);
 
         var tradingPair2Response = responseList.First(r => r.IdTradingPair == tradingPair2.Id);
-        tradingPair2Response.KlineData.Should().HaveCount(2);
+        tradingPair2Response.Klines.Should().HaveCount(2);
 
         // Verify in database
         using var dbContext = GetDbContext();
@@ -151,7 +151,7 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
 
         var response1 = responseList[0];
         response1.IdTradingPair.Should().Be(newTradingPair.Id);
-        response1.KlineData.Should().HaveCount(2);
+        response1.Klines.Should().HaveCount(2);
 
         // Verify the data was replaced
         using var dbContext = GetDbContext();
@@ -165,23 +165,11 @@ public class KlineDataControllerTests(CustomWebApplicationFactory factory)
         return _fixture
             .Build<KlineDataEntity>()
             .With(x => x.IdTradingPair, tradingPairId)
-            .With(
-                x => x.OpenPrice,
-                _fixture.Create<decimal>().ToString(CultureInfo.InvariantCulture)
-            )
-            .With(
-                x => x.HighPrice,
-                _fixture.Create<decimal>().ToString(CultureInfo.InvariantCulture)
-            )
-            .With(
-                x => x.LowPrice,
-                _fixture.Create<decimal>().ToString(CultureInfo.InvariantCulture)
-            )
-            .With(
-                x => x.ClosePrice,
-                _fixture.Create<decimal>().ToString(CultureInfo.InvariantCulture)
-            )
-            .With(x => x.Volume, _fixture.Create<decimal>().ToString(CultureInfo.InvariantCulture))
+            .With(x => x.OpenPrice, _fixture.Create<string>())
+            .With(x => x.HighPrice, _fixture.Create<string>())
+            .With(x => x.LowPrice, _fixture.Create<string>())
+            .With(x => x.ClosePrice, _fixture.Create<string>())
+            .With(x => x.Volume, _fixture.Create<long>().ToString(CultureInfo.InvariantCulture))
             .Without(x => x.IdTradePairNavigation)
             .Create();
     }

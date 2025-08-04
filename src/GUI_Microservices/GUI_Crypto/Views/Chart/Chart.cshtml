@@ -24,7 +24,7 @@
         <span class="ms-2">Chart</span>
     </h2>
     <div id="chartData" 
-         data-kline-data='@Html.Raw(Json.Serialize(Model.Coin.KlineData))'
+         data-kline-data='@Html.Raw(Json.Serialize(Model.Coin.Klines))'
          data-main-coin-id="@Model.Coin.Id"
          data-main-coin-name="@Model.Coin.Name"
          data-main-coin-symbol="@Model.Coin.Symbol"

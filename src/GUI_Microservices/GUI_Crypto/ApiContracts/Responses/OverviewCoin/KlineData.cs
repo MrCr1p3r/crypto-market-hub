@@ -1,3 +1,5 @@
+using SharedLibrary.Models;
+
 namespace GUI_Crypto.ApiContracts.Responses.OverviewCoin;
 
 /// <summary>
@@ -13,5 +15,5 @@ public class KlineData
     /// <summary>
     /// The klines for the trading pair.
     /// </summary>
-    public required IEnumerable<Kline> Klines { get; set; } = [];
+    public required IEnumerable<Kline> Klines { get; set; }
 }

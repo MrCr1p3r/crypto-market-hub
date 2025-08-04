@@ -1,6 +1,7 @@
 using FluentResults;
 using SharedLibrary.Enums;
 using SharedLibrary.Extensions.HttpClient.External;
+using SharedLibrary.Models;
 using SVC_External.ExternalClients.Exchanges.Contracts.Requests;
 using SVC_External.ExternalClients.Exchanges.Contracts.Responses;
 using static SharedLibrary.Errors.GenericErrors;
@@ -44,9 +45,7 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
     }
 
     /// <inheritdoc />
-    public async Task<Result<IEnumerable<ExchangeKlineData>>> GetKlineData(
-        ExchangeKlineDataRequest request
-    )
+    public async Task<Result<IEnumerable<Kline>>> GetKlineData(ExchangeKlineDataRequest request)
     {
         var endpoint = Mapping.ToBybitKlineEndpoint(request);
         var response = await _httpClient.GetFromJsonSafeAsync<BybitDtos.BybitKlineResponse>(
@@ -138,18 +137,15 @@ public class BybitClient(IHttpClientFactory httpClientFactory, ILogger<BybitClie
                 _ => throw new ArgumentException($"Unsupported TimeFrame: {interval}"),
             };
 
-        public static ExchangeKlineData ToKlineData(
-            ExchangeKlineDataRequest request,
-            List<string> data
-        ) =>
+        public static Kline ToKlineData(ExchangeKlineDataRequest request, List<string> data) =>
             new()
             {
                 OpenTime = Convert.ToInt64(data[0]),
-                OpenPrice = Convert.ToDecimal(data[1]),
-                HighPrice = Convert.ToDecimal(data[2]),
-                LowPrice = Convert.ToDecimal(data[3]),
-                ClosePrice = Convert.ToDecimal(data[4]),
-                Volume = Convert.ToDecimal(data[5]),
+                OpenPrice = data[1],
+                HighPrice = data[2],
+                LowPrice = data[3],
+                ClosePrice = data[4],
+                Volume = data[5],
                 CloseTime = CalculateCloseTime(data[0], request.Interval),
             };
 

@@ -47,31 +47,31 @@ public class KlineDataRepositoryTests : IDisposable
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair1.Id)
-                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
+                .With(x => x.OpenPrice, _fixture.Create<string>())
+                .With(x => x.HighPrice, _fixture.Create<string>())
+                .With(x => x.LowPrice, _fixture.Create<string>())
+                .With(x => x.ClosePrice, _fixture.Create<string>())
+                .With(x => x.Volume, _fixture.Create<string>())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair1.Id)
-                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
+                .With(x => x.OpenPrice, _fixture.Create<string>())
+                .With(x => x.HighPrice, _fixture.Create<string>())
+                .With(x => x.LowPrice, _fixture.Create<string>())
+                .With(x => x.ClosePrice, _fixture.Create<string>())
+                .With(x => x.Volume, _fixture.Create<string>())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair2.Id)
-                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
+                .With(x => x.OpenPrice, _fixture.Create<string>())
+                .With(x => x.HighPrice, _fixture.Create<string>())
+                .With(x => x.LowPrice, _fixture.Create<string>())
+                .With(x => x.ClosePrice, _fixture.Create<string>())
+                .With(x => x.Volume, _fixture.Create<string>())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
         };
@@ -86,10 +86,10 @@ public class KlineDataRepositoryTests : IDisposable
         responseList.Should().HaveCount(2);
 
         var tradingPair1Response = responseList.First(r => r.IdTradingPair == tradingPair1.Id);
-        tradingPair1Response.KlineData.Should().HaveCount(2);
+        tradingPair1Response.Klines.Should().HaveCount(2);
 
         var tradingPair2Response = responseList.First(r => r.IdTradingPair == tradingPair2.Id);
-        tradingPair2Response.KlineData.Should().HaveCount(1);
+        tradingPair2Response.Klines.Should().HaveCount(1);
     }
 
     [Fact]
@@ -134,10 +134,10 @@ public class KlineDataRepositoryTests : IDisposable
         responseList.Should().HaveCount(2);
 
         var tradingPair1Response = responseList.First(r => r.IdTradingPair == tradingPair1.Id);
-        tradingPair1Response.KlineData.Should().HaveCount(3);
+        tradingPair1Response.Klines.Should().HaveCount(3);
 
         var tradingPair2Response = responseList.First(r => r.IdTradingPair == tradingPair2.Id);
-        tradingPair2Response.KlineData.Should().HaveCount(2);
+        tradingPair2Response.Klines.Should().HaveCount(2);
     }
 
     [Fact]
@@ -152,31 +152,31 @@ public class KlineDataRepositoryTests : IDisposable
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair1.Id)
-                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
+                .With(x => x.OpenPrice, _fixture.Create<string>())
+                .With(x => x.HighPrice, _fixture.Create<string>())
+                .With(x => x.LowPrice, _fixture.Create<string>())
+                .With(x => x.ClosePrice, _fixture.Create<string>())
+                .With(x => x.Volume, _fixture.Create<string>())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair1.Id)
-                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
+                .With(x => x.OpenPrice, _fixture.Create<string>())
+                .With(x => x.HighPrice, _fixture.Create<string>())
+                .With(x => x.LowPrice, _fixture.Create<string>())
+                .With(x => x.ClosePrice, _fixture.Create<string>())
+                .With(x => x.Volume, _fixture.Create<string>())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
             _fixture
                 .Build<KlineDataEntity>()
                 .With(x => x.IdTradingPair, tradingPair2.Id)
-                .With(x => x.OpenPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.HighPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.LowPrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.ClosePrice, _fixture.Create<decimal>().ToString())
-                .With(x => x.Volume, _fixture.Create<decimal>().ToString())
+                .With(x => x.OpenPrice, _fixture.Create<string>())
+                .With(x => x.HighPrice, _fixture.Create<string>())
+                .With(x => x.LowPrice, _fixture.Create<string>())
+                .With(x => x.ClosePrice, _fixture.Create<string>())
+                .With(x => x.Volume, _fixture.Create<string>())
                 .Without(x => x.IdTradePairNavigation)
                 .Create(),
         };
@@ -213,7 +213,7 @@ public class KlineDataRepositoryTests : IDisposable
 
         var response = responseList[0];
         response.IdTradingPair.Should().Be(newTradingPair.Id);
-        response.KlineData.Should().HaveCount(3);
+        response.Klines.Should().HaveCount(3);
     }
 
     public void Dispose()

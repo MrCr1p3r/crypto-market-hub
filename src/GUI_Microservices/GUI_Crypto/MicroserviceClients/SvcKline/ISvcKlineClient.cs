@@ -1,5 +1,5 @@
 using FluentResults;
-using GUI_Crypto.MicroserviceClients.SvcKline.Contracts.Responses;
+using GUI_Crypto.MicroserviceClients.SvcKline.Contracts;
 
 namespace GUI_Crypto.MicroserviceClients.SvcKline;
 

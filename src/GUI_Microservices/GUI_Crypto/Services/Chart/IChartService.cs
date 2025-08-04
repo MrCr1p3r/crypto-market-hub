@@ -1,7 +1,7 @@
 using FluentResults;
 using GUI_Crypto.ApiContracts.Requests.KlineData;
-using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.ServiceModels;
+using SharedLibrary.Models;
 
 namespace GUI_Crypto.Services.Chart;
 

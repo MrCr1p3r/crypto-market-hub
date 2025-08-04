@@ -1,5 +1,5 @@
 import ApexCharts, { ApexOptions } from 'apexcharts';
-import { KlineData } from '../../chart/interfaces/kline-data';
+import { Kline } from '../../shared/interfaces/kline';
 
 // Add CSS styles for unrendered charts and messages
 const style = document.createElement('style');
@@ -50,7 +50,7 @@ export function renderMiniCharts(elements: Element[]): void {
         }
 
         try {
-            const klineData = JSON.parse(klineDataStr) as KlineData[];
+            const klineData = JSON.parse(klineDataStr) as Kline[];
             if (klineData.length === 0) {
                 element.classList.remove('not-rendered');
                 element.innerHTML =

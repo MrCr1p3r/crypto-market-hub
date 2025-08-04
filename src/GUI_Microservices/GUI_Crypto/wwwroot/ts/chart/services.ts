@@ -1,7 +1,7 @@
 import { KlineDataRequest } from './interfaces/kline-data-request';
-import { KlineData } from './interfaces/kline-data';
+import { Kline } from '../shared/interfaces/kline';
 
-export async function fetchKlineData(request: KlineDataRequest): Promise<KlineData[]> {
+export async function fetchKlineData(request: KlineDataRequest): Promise<Kline[]> {
     const response = await fetch(`/chart/klines/query`, {
         method: 'POST',
         headers: {

@@ -1,3 +1,5 @@
+using SharedLibrary.Models;
+
 namespace SVC_Bridge.MicroserviceClients.SvcKline.Contracts.Requests;
 
 /// <summary>
@@ -8,40 +10,10 @@ public record KlineDataCreationRequest
     /// <summary>
     /// Id of the trading pair for which the Kline data is recorded.
     /// </summary>
-    public int IdTradingPair { get; set; }
+    public required int IdTradingPair { get; set; }
 
     /// <summary>
-    /// The opening time of the Kline in milliseconds since the Unix epoch.
+    /// The new kline data for the trading pair.
     /// </summary>
-    public long OpenTime { get; set; }
-
-    /// <summary>
-    /// The opening price at the start of the Kline period.
-    /// </summary>
-    public decimal OpenPrice { get; set; }
-
-    /// <summary>
-    /// The highest price during the Kline period.
-    /// </summary>
-    public decimal HighPrice { get; set; }
-
-    /// <summary>
-    /// The lowest price during the Kline period.
-    /// </summary>
-    public decimal LowPrice { get; set; }
-
-    /// <summary>
-    /// The closing price at the end of the Kline period.
-    /// </summary>
-    public decimal ClosePrice { get; set; }
-
-    /// <summary>
-    /// The total volume traded during the Kline period.
-    /// </summary>
-    public decimal Volume { get; set; }
-
-    /// <summary>
-    /// The closing time of the Kline in milliseconds since the Unix epoch.
-    /// </summary>
-    public long CloseTime { get; set; }
+    public required Kline Kline { get; set; }
 }

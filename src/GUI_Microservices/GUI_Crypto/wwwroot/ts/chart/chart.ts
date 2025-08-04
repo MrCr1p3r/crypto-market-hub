@@ -1,4 +1,4 @@
-import { KlineData } from './interfaces/kline-data';
+import { Kline } from '../shared/interfaces/kline';
 import { KlineDataRequest, ExchangeKlineInterval, Exchange } from './interfaces/kline-data-request';
 import { fetchKlineData } from './services';
 import { renderChart, rerenderChart } from './utils/chart-utils';
@@ -30,7 +30,7 @@ export class Chart {
     };
     private currentExchanges: Exchange[] = [];
 
-    private constructor(klineData: KlineData[], coinSymbol: string) {
+    private constructor(klineData: Kline[], coinSymbol: string) {
         initializeToastr();
         this.initializeElements();
         this.extractChartData();
@@ -39,7 +39,7 @@ export class Chart {
         this.setupEventListeners();
     }
 
-    public static initialize(klineData: KlineData[], coinSymbol: string): Chart {
+    public static initialize(klineData: Kline[], coinSymbol: string): Chart {
         if (!Chart.instance) {
             Chart.instance = new Chart(klineData, coinSymbol);
         }
@@ -56,7 +56,9 @@ export class Chart {
                 return;
             }
 
-            const klineData = JSON.parse(klineDataElement.getAttribute('data-kline-data') || '[]');
+            const klineData = JSON.parse(
+                klineDataElement.getAttribute('data-kline-data') || '[]'
+            ) as Kline[];
             const coinSymbol = coinSymbolElement.textContent || '';
 
             if (!klineData.length || !coinSymbol) {

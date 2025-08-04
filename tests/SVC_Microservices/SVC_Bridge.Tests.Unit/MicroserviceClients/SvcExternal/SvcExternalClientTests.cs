@@ -6,7 +6,6 @@ using SVC_Bridge.MicroserviceClients.SvcExternal;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Requests;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses;
 using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
-using SVC_Bridge.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 using static SharedLibrary.Errors.GenericErrors;
 
 namespace SVC_Bridge.Tests.Unit.MicroserviceClients.SvcExternal;

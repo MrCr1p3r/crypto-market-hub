@@ -1,11 +1,11 @@
 using FluentResults;
 using GUI_Crypto.ApiContracts.Requests.KlineData;
-using GUI_Crypto.ApiContracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcCoins;
 using GUI_Crypto.MicroserviceClients.SvcCoins.Contracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.ServiceModels;
 using SharedLibrary.Enums;
+using SharedLibrary.Models;
 using static SharedLibrary.Errors.GenericErrors;
 using SvcExternal = GUI_Crypto.MicroserviceClients.SvcExternal.Contracts;
 
@@ -61,13 +61,9 @@ public class ChartService(ISvcCoinsClient coinsClient, ISvcExternalClient extern
     {
         var klineRequest = Mapping.ToKlineDataRequest(request);
         var klineDataResult = await _externalClient.GetKlineData(klineRequest);
-        if (klineDataResult.IsFailed)
-        {
-            return Result.Fail(klineDataResult.Errors);
-        }
-
-        var response = klineDataResult.Value.KlineData.Select(Mapping.ToKlineDataApiResponse);
-        return Result.Ok(response);
+        return klineDataResult.IsFailed
+            ? Result.Fail(klineDataResult.Errors)
+            : Result.Ok(klineDataResult.Value.Klines);
     }
 
     private static class Mapping
@@ -163,23 +159,6 @@ public class ChartService(ISvcCoinsClient coinsClient, ISvcExternalClient extern
                 Id = request.Id,
                 Symbol = request.Symbol,
                 Name = request.Name,
-            };
-
-        /// <summary>
-        /// Converts a service client response to an API response.
-        /// </summary>
-        public static Kline ToKlineDataApiResponse(
-            SvcExternal.Responses.KlineData.KlineData klineData
-        ) =>
-            new()
-            {
-                OpenTime = klineData.OpenTime,
-                OpenPrice = klineData.OpenPrice,
-                HighPrice = klineData.HighPrice,
-                LowPrice = klineData.LowPrice,
-                ClosePrice = klineData.ClosePrice,
-                Volume = klineData.Volume,
-                CloseTime = klineData.CloseTime,
             };
     }
 }

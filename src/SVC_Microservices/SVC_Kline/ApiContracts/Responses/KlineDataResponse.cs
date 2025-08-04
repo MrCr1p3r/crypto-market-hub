@@ -1,3 +1,5 @@
+using SharedLibrary.Models;
+
 namespace SVC_Kline.ApiContracts.Responses;
 
 /// <summary>
@@ -11,7 +13,7 @@ public class KlineDataResponse
     public int IdTradingPair { get; set; }
 
     /// <summary>
-    /// The Kline data for the trading pair.
+    /// The klines for the trading pair.
     /// </summary>
-    public IEnumerable<KlineData> KlineData { get; set; } = [];
+    public IEnumerable<Kline> Klines { get; set; } = [];
 }

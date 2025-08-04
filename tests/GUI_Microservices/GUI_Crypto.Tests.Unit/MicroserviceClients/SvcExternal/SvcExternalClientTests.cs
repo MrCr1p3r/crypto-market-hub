@@ -1,11 +1,12 @@
 using System.Net;
 using GUI_Crypto.MicroserviceClients.SvcExternal;
 using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Requests;
+using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses;
 using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.Coins;
-using GUI_Crypto.MicroserviceClients.SvcExternal.Contracts.Responses.KlineData;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Testing;
 using Moq.Contrib.HttpClient;
+using SharedLibrary.Models;
 using static SharedLibrary.Errors.GenericErrors;
 
 namespace GUI_Crypto.Tests.Unit.MicroserviceClients.SvcExternal;
@@ -278,7 +279,7 @@ public class SvcExternalClientTests
         var expectedResponse = new KlineDataResponse
         {
             IdTradingPair = _fixture.Create<int>(),
-            KlineData = [],
+            Klines = [],
         };
 
         _httpMessageHandlerMock
@@ -291,7 +292,7 @@ public class SvcExternalClientTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEquivalentTo(expectedResponse);
-        result.Value.KlineData.Should().BeEmpty();
+        result.Value.Klines.Should().BeEmpty();
     }
 
     [Fact]
@@ -299,11 +300,11 @@ public class SvcExternalClientTests
     {
         // Arrange
         var request = _fixture.Create<KlineDataRequest>();
-        var expectedKlineData = _fixture.CreateMany<KlineData>(10).ToList();
+        var expectedKlineData = _fixture.CreateMany<Kline>(10).ToList();
         var expectedResponse = new KlineDataResponse
         {
             IdTradingPair = _fixture.Create<int>(),
-            KlineData = expectedKlineData,
+            Klines = expectedKlineData,
         };
 
         _httpMessageHandlerMock
@@ -316,8 +317,8 @@ public class SvcExternalClientTests
         // Assert
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEquivalentTo(expectedResponse);
-        result.Value.KlineData.Should().HaveCount(10);
-        result.Value.KlineData.Should().BeEquivalentTo(expectedKlineData);
+        result.Value.Klines.Should().HaveCount(10);
+        result.Value.Klines.Should().BeEquivalentTo(expectedKlineData);
     }
 
     #endregion
